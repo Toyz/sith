@@ -52,13 +52,14 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, index: usize) {
             app.image_zoom.set((260.0 / longest).clamp(1.0, 8.0).round());
         }
 
+        let key = (app.doc_index(), index);
         let mut cache = app.textures.borrow_mut();
-        let tex = cache.entry(index).or_insert_with(|| {
+        let tex = cache.entry(key).or_insert_with(|| {
             let color =
                 egui::ColorImage::from_rgba_unmultiplied([img.width, img.height], &img.rgba);
             // Nearest-neighbour keeps 16-color pixel art legible when zoomed.
             ui.ctx()
-                .load_texture(format!("res{index}"), color, egui::TextureOptions::NEAREST)
+                .load_texture(format!("res{}-{index}", key.0), color, egui::TextureOptions::NEAREST)
         });
         let size = tex.size_vec2();
 

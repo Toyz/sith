@@ -510,11 +510,27 @@ pub mod col {
     }
 
     pub fn hover() -> Color32 {
-        tint(current().accent, 0.12)
+        tint(current().accent, 0.09)
     }
 
+    /// Background of the selected row.
+    ///
+    /// Deliberately faint. Selection is marked by the bar at the edge, not by
+    /// the wash: a strong fill turns the row into a block of color and drags
+    /// every value on it down to whatever contrast the accent happens to
+    /// allow, which is the one thing a listing cannot afford.
     pub fn selected() -> Color32 {
-        tint(current().accent, 0.28)
+        tint(current().accent, 0.16)
+    }
+
+    /// Same, for a row that is both selected and under the pointer.
+    pub fn selected_hover() -> Color32 {
+        tint(current().accent, 0.24)
+    }
+
+    /// The outline that marks the selected row.
+    pub fn selected_outline() -> Color32 {
+        current().accent.gamma_multiply(0.55)
     }
 
     fn tint(c: Color32, alpha: f32) -> Color32 {

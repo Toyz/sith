@@ -12,6 +12,7 @@ use crate::widgets;
 use eframe::egui::{self, Color32, Ui};
 use ne_analysis::FuncKind;
 use std::collections::BTreeMap;
+use crate::widgets::human;
 
 pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
     ui.add_space(6.0);
@@ -188,7 +189,7 @@ fn segments_section(
                     // A size bar makes the shape of the binary obvious at a
                     // glance: which segment holds the bulk of the code.
                     bar(ui, s.length as f32 / biggest as f32, color);
-                    ui.label(mono_c(format!("{:>6}", human(s.length as usize)), col::faint()));
+                    ui.label(mono_c(format!("{:>6}", human(s.length as u64)), col::faint()));
                     if !s.relocs.is_empty() {
                         widgets::chip(ui, &format!("{}", s.relocs.len()), col::orange());
                     }
@@ -206,7 +207,6 @@ fn segments_section(
                     widgets::hover_row(ui, "alloc", format!("{} bytes", s.min_alloc), col::text());
                     widgets::hover_row(ui, "fixups", s.relocs.len().to_string(), col::text());
                     if !flags.is_empty() {
-                        ui.add_space(4.0);
                         ui.horizontal_wrapped(|ui| {
                             for f in flags {
                                 widgets::chip(ui, f, col::dim());
@@ -298,14 +298,35 @@ fn function_row(
         FuncKind::Called => ("sub", col::dim()),
         FuncKind::Prologue => ("?", col::faint()),
     };
-    let (_, resp) = widgets::row(
+    let key = (f.addr.segment, f.addr.offset);
+    let params = f.frame.parameters();
+    let open = app.expanded_fns.borrow().contains(&key);
+    let (chevron, resp) = widgets::row(
         ui,
         ui.id().with(("navfn", f.addr.segment, f.addr.offset)),
         selected,
         false,
         |ui| {
             ui.spacing_mut().item_spacing.x = 6.0;
-            ui.add_space(4.0);
+            // A disclosure only where there is something to disclose, so the
+            // rows that take nothing stay flush with the rest.
+            let (r, _) = ui.allocate_exact_size(egui::vec2(9.0, 9.0), egui::Sense::hover());
+            if !params.is_empty() {
+                // Drawn here, but interacted with from outside: the row claims
+                // the whole width after its content is laid out, so a widget
+                // inside it never sees a click. Which half of the row was hit
+                // is decided from the pointer instead.
+                let hot = ui
+                    .ctx()
+                    .pointer_latest_pos()
+                    .is_some_and(|p| r.expand(3.0).contains(p));
+                icons::draw(
+                    ui.painter(),
+                    r,
+                    if open { Icon::Down } else { Icon::Forward },
+                    if hot { col::text() } else { col::faint() },
+                );
+            }
             ui.label(mono_c(format!("{:04X}", f.addr.offset), col::addr()));
             widgets::chip(ui, kind_label, kind_color);
             let user_named = app.user_name(f.addr.segment, f.addr.offset).is_some();
@@ -333,8 +354,34 @@ fn function_row(
                     }
                 },
             ));
+            // The count sits at the far end so a scan down the column shows
+            // which functions take work and which take none.
+            if !params.is_empty() {
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.label(mono_c(
+                        format!("{} arg{}", params.len(), if params.len() == 1 { "" } else { "s" }),
+                        col::faint(),
+                    ));
+                });
+            }
+            r
         },
     );
+    // A click on the disclosure opens the arguments; anywhere else on the row
+    // still navigates.
+    let hit_chevron = !params.is_empty()
+        && resp.clicked()
+        && resp
+            .interact_pointer_pos()
+            .is_some_and(|p| chevron.expand(3.0).contains(p));
+    if hit_chevron {
+        let mut set = app.expanded_fns.borrow_mut();
+        if open {
+            set.remove(&key);
+        } else {
+            set.insert(key);
+        }
+    }
     let external: Vec<String> = app
         .doc()
         .map(|d| d.program.external_calls_of(f))
@@ -349,11 +396,18 @@ fn function_row(
             widgets::hover_row(ui, "instructions", f.insn_count.to_string(), col::text());
             widgets::hover_row(ui, "calls", f.calls.len().to_string(), col::text());
             widgets::hover_row(ui, "frame", f.frame.describe(), col::text());
+            if !params.is_empty() {
+                widgets::hover_row(
+                    ui,
+                    "signature",
+                    f.frame.signature(&app.label(f)),
+                    col::symbol(),
+                );
+            }
             if app.user_name(f.addr.segment, f.addr.offset).is_some() {
                 widgets::hover_row(ui, "generated", f.label(), col::faint());
             }
             if !external.is_empty() {
-                ui.add_space(4.0);
                 ui.label(
                     egui::RichText::new("calls out to")
                         .size(10.0)
@@ -375,7 +429,7 @@ fn function_row(
             widgets::hover_note(ui, f.kind.describe());
         },
     );
-    if resp.clicked() {
+    if resp.clicked() && !hit_chevron {
         act.push(Action::Goto(f.addr));
     }
     if resp.middle_clicked() {
@@ -386,6 +440,9 @@ fn function_row(
             segment: f.addr.segment,
             offset: f.addr.offset,
         });
+    }
+    if open && !params.is_empty() {
+        parameter_rows(ui, f, &params);
     }
     resp.context_menu(|ui| {
         if ui.button("Name this function…").clicked() {
@@ -400,6 +457,81 @@ fn function_row(
             ui.close();
         }
     });
+}
+
+/// The reconstructed arguments of a function, as children of its row.
+///
+/// Nothing here is authoritative. The stack frame is evidence -- how many
+/// bytes the callee popped, which displacements the body touched, whether a
+/// slot was ever loaded into a segment register -- and the column that says
+/// so is the one worth reading.
+fn parameter_rows(ui: &mut Ui, f: &ne_analysis::Function, params: &[ne_analysis::Param]) {
+    use ne_analysis::ParamKind;
+    let guide = ui.painter().add(egui::Shape::Noop);
+    let top = ui.cursor().top();
+
+    ui.spacing_mut().item_spacing.y = 0.0;
+    for p in params {
+        widgets::row_sized(
+            ui,
+            ui.id().with(("navarg", f.addr.segment, f.addr.offset, p.offset)),
+            16.0,
+            false,
+            false,
+            |ui| {
+                ui.spacing_mut().item_spacing.x = 6.0;
+                ui.add_space(22.0);
+                ui.label(mono_c(format!("bp+{:X}", p.offset), col::faint()));
+                ui.label(mono_c(
+                    p.name(),
+                    if p.read { col::text() } else { col::faint() },
+                ));
+                widgets::chip(
+                    ui,
+                    p.kind.type_name(),
+                    match p.kind {
+                        ParamKind::FarPointer => col::cyan(),
+                        ParamKind::Byte => col::purple(),
+                        ParamKind::Word => col::dim(),
+                    },
+                );
+                if !p.read {
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        // Worth calling out: a slot the caller pushes and the
+                        // callee never looks at is either dead weight or a
+                        // sign the boundary was read wrong.
+                        ui.label(mono_c("never read", col::faint()));
+                    });
+                }
+            },
+        );
+    }
+
+    if let Some(n) = f.frame.local_bytes.filter(|n| *n > 0) {
+        widgets::row_sized(
+            ui,
+            ui.id().with(("navloc", f.addr.segment, f.addr.offset)),
+            16.0,
+            false,
+            false,
+            |ui| {
+                ui.spacing_mut().item_spacing.x = 6.0;
+                ui.add_space(22.0);
+                ui.label(mono_c(format!("{n} bytes of locals"), col::faint()));
+            },
+        );
+    }
+
+    // A guide down the left, so a long argument list still reads as belonging
+    // to the row above it.
+    let x = ui.max_rect().min.x + 12.0;
+    ui.painter().set(
+        guide,
+        egui::Shape::line_segment(
+            [egui::pos2(x, top), egui::pos2(x, ui.cursor().top() - 3.0)],
+            egui::Stroke::new(1.0, col::border()),
+        ),
+    );
 }
 
 fn resources_section(
@@ -471,11 +603,10 @@ fn resource_row(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, index: usize)
         false,
         |ui| {
             ui.spacing_mut().item_spacing.x = 6.0;
-            ui.add_space(4.0);
             thumbnail(app, ui, index);
             ui.label(mono_c(r.res_id.to_string(), col::text()));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.label(mono_c(human(r.length as usize), col::faint()));
+                ui.label(mono_c(human(r.length as u64), col::faint()));
             });
         },
     );
@@ -494,22 +625,27 @@ fn thumbnail(app: &SithApp, ui: &mut Ui, index: usize) {
         return;
     };
     let size = egui::vec2(16.0, 16.0);
+    let key = (app.doc_index(), index);
 
     let mut cache = app.textures.borrow_mut();
-    if !cache.contains_key(&index) {
+    // Only ask for a picture of the resource types that are pictures. A
+    // dialog template is a run of bytes that a decoder will happily read as
+    // a DIB header, and a dialog wearing a thumbnail of its own header is
+    // worse than no thumbnail at all.
+    if icons::resource_is_image(r.type_id.as_id()) && !cache.contains_key(&key) {
         // Decoding is only done once per resource and the texture is shared
         // with the preview pane, so the tree costs nothing extra to draw.
         if let Some(img) = doc.ne.resource_image(r) {
             let color = egui::ColorImage::from_rgba_unmultiplied([img.width, img.height], &img.rgba);
             let tex = ui.ctx().load_texture(
-                format!("res{index}"),
+                format!("res{}-{index}", key.0),
                 color,
                 egui::TextureOptions::NEAREST,
             );
-            cache.insert(index, tex);
+            cache.insert(key, tex);
         }
     }
-    match cache.get(&index) {
+    match cache.get(&key) {
         Some(tex) => {
             let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
             ui.painter().image(
@@ -520,13 +656,8 @@ fn thumbnail(app: &SithApp, ui: &mut Ui, index: usize) {
             );
         }
         None => {
-            let icon = match r.type_id.as_id() {
-                Some(4) => Icon::Entries,
-                Some(5) => Icon::Overview,
-                Some(6) => Icon::Strings,
-                _ => Icon::Resource,
-            };
             let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
+            let icon = icons::for_resource(r.type_id.as_id());
             icons::draw(ui.painter(), rect.shrink(2.0), icon, col::dim());
         }
     }
@@ -626,12 +757,3 @@ fn bar(ui: &mut Ui, frac: f32, color: Color32) {
     p.rect_filled(fill, egui::CornerRadius::same(2), color.gamma_multiply(0.6));
 }
 
-fn human(n: usize) -> String {
-    if n >= 1024 * 1024 {
-        format!("{:.1}M", n as f64 / (1024.0 * 1024.0))
-    } else if n >= 1024 {
-        format!("{:.1}K", n as f64 / 1024.0)
-    } else {
-        format!("{n}")
-    }
-}

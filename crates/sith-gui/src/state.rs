@@ -11,7 +11,7 @@ use ne_analysis::{Addr, Program};
 use ne_core::project::Project;
 use ne_core::{ExportIndex, NeFile};
 use std::cell::{Cell, RefCell};
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 /// What a tab is showing.
@@ -356,7 +356,14 @@ pub struct SithApp {
     pub min_string_len: usize,
 
     /// Texture cache for resource previews, keyed by resource index.
-    pub textures: RefCell<HashMap<usize, egui::TextureHandle>>,
+    /// Functions whose reconstructed arguments are showing in the tree.
+    pub expanded_fns: RefCell<HashSet<(u16, u32)>>,
+    /// Decoded resource previews, keyed by `(document, resource)`.
+    ///
+    /// The document has to be part of the key. Several binaries are open at
+    /// once and resource indices start at zero in each, so keying on the
+    /// resource alone hands one file's thumbnails to another's tree.
+    pub textures: RefCell<HashMap<(usize, usize), egui::TextureHandle>>,
     pub image_zoom: Cell<f32>,
     pub zoom_index: Cell<Option<usize>>,
 
@@ -416,6 +423,7 @@ impl SithApp {
             show_navigator: true,
             show_bytes: true,
             min_string_len: 4,
+            expanded_fns: Default::default(),
             textures: Default::default(),
             image_zoom: Cell::new(1.0),
             zoom_index: Cell::new(None),
@@ -464,6 +472,11 @@ impl SithApp {
     /// The document the active tab is showing.
     pub fn doc(&self) -> Option<&Doc> {
         self.docs.get(self.tab()?.doc)
+    }
+
+    /// Which document the active tab is showing.
+    pub fn doc_index(&self) -> usize {
+        self.tab().map(|t| t.doc).unwrap_or(0)
     }
 
     /// What the active tab is showing, or `Nav::Overview` when nothing is open.

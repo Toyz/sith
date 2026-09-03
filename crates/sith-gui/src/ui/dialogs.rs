@@ -4,6 +4,7 @@ use crate::icons::{self, Icon};
 use crate::state::{Action, SithApp};
 use crate::theme::{col, *};
 use eframe::egui::{self, Context, Key};
+use crate::widgets::tail;
 
 pub fn show(app: &SithApp, ctx: &Context, act: &mut Vec<Action>) {
     if app.goto_open {
@@ -63,21 +64,6 @@ fn goto(app: &SithApp, ctx: &Context, act: &mut Vec<Action>) {
     }
 }
 
-/// The end of a path, which is the part that identifies it.
-fn tail(path: &str, max: usize) -> String {
-    if path.chars().count() <= max {
-        return path.to_string();
-    }
-    let kept: String = path
-        .chars()
-        .rev()
-        .take(max - 1)
-        .collect::<Vec<_>>()
-        .into_iter()
-        .rev()
-        .collect();
-    format!("\u{2026}{kept}")
-}
 
 /// Binaries a project points at that are not on disk.
 ///

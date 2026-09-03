@@ -15,6 +15,7 @@ use eframe::egui::{self, Color32, Pos2, Rect, Response, Sense, Stroke, Ui, Vec2}
 pub enum Icon {
     Back,
     Forward,
+    Down,
     Target,
     Search,
     Open,
@@ -43,6 +44,23 @@ pub enum Icon {
     IconBadge,
     Accelerator,
     Version,
+}
+
+/// Whether a resource of this type has a picture worth previewing.
+///
+/// Deliberately a whitelist. Anything else is a structure or a blob, and
+/// asking an image decoder about it invites a false positive.
+pub fn resource_is_image(type_id: Option<u16>) -> bool {
+    use ne_core::resource::rt;
+    matches!(
+        type_id,
+        Some(rt::BITMAP)
+            | Some(rt::ICON)
+            | Some(rt::CURSOR)
+            | Some(rt::GROUP_ICON)
+            | Some(rt::GROUP_CURSOR)
+            | Some(rt::FONT)
+    )
 }
 
 /// The icon for a resource type.
@@ -80,6 +98,7 @@ pub fn draw(painter: &egui::Painter, rect: Rect, icon: Icon, color: Color32) {
     match icon {
         Icon::Back => path(vec![p(10.0, 3.0), p(5.0, 8.0), p(10.0, 13.0)]),
         Icon::Forward => path(vec![p(6.0, 3.0), p(11.0, 8.0), p(6.0, 13.0)]),
+        Icon::Down => path(vec![p(3.0, 6.0), p(8.0, 11.0), p(13.0, 6.0)]),
         Icon::Target => {
             painter.circle_stroke(p(8.0, 8.0), 4.5 * s, stroke);
             painter.circle_filled(p(8.0, 8.0), 1.3 * s, color);

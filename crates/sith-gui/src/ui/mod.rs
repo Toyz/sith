@@ -10,6 +10,7 @@ use crate::state::{Action, Nav, SithApp};
 use crate::theme::{col, *};
 use crate::views;
 use eframe::egui::{self, Ui};
+use crate::widgets::human;
 
 pub fn frame(app: &mut SithApp, ui: &mut Ui) {
     let mut act: Vec<Action> = Vec::new();
@@ -53,10 +54,13 @@ pub fn frame(app: &mut SithApp, ui: &mut Ui) {
         .show(ui, |ui| status_bar(app, ui, &mut act));
 
     if app.show_navigator {
+        // Both bounds matter. Without a maximum a panel can be dragged over
+        // the listing until there is nothing left to read, and the listing is
+        // the point of the window.
         egui::Panel::left("navigator")
             .resizable(true)
             .default_size(300.0)
-            .min_size(180.0)
+            .size_range(220.0..=(ui.available_width() * 0.4).max(220.0))
             .show(ui, |ui| navigator::show(app, ui, &mut act));
     }
 
@@ -64,7 +68,7 @@ pub fn frame(app: &mut SithApp, ui: &mut Ui) {
         egui::Panel::right("inspector")
             .resizable(true)
             .default_size(320.0)
-            .min_size(200.0)
+            .size_range(240.0..=(ui.available_width() * 0.4).max(240.0))
             .show(ui, |ui| inspector::show(app, ui, &mut act));
     }
 
@@ -540,7 +544,7 @@ fn status_bar(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                     format!(
                         "{} fn  {} decoded  {} strings",
                         doc.program.functions.len(),
-                        human(doc.decoded_bytes()),
+                        human(doc.decoded_bytes() as u64),
                         doc.ne
                             .segments
                             .iter()
@@ -554,15 +558,6 @@ fn status_bar(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
     });
 }
 
-fn human(n: usize) -> String {
-    if n >= 1024 * 1024 {
-        format!("{:.1}M", n as f64 / (1024.0 * 1024.0))
-    } else if n >= 1024 {
-        format!("{:.1}K", n as f64 / 1024.0)
-    } else {
-        format!("{n}")
-    }
-}
 
 /// Shared empty-state message.
 pub fn empty(ui: &mut Ui, text: &str) {

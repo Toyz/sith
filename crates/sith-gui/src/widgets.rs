@@ -4,6 +4,9 @@ use crate::theme::{col, *};
 use eframe::egui::{self, Color32, CornerRadius, Response, Sense, Ui};
 
 /// One row of a listing, laid out at its natural height.
+/// Space between a row's highlight and its content, at each end.
+pub const ROW_PAD: f32 = 6.0;
+
 pub fn row<R>(
     ui: &mut Ui,
     id: egui::Id,
@@ -31,9 +34,12 @@ pub fn row_sized<R>(
     content: impl FnOnce(&mut Ui) -> R,
 ) -> (R, Response) {
     let bg = ui.painter().add(egui::Shape::Noop);
+    // The highlight runs the full width of the list, but the content must not:
+    // text that starts and ends flush with the highlight looks clipped by it.
     let width = ui.available_width();
+    ui.add_space(ROW_PAD);
     let inner = ui.allocate_ui_with_layout(
-        egui::vec2(width, height),
+        egui::vec2(width - ROW_PAD * 2.0, height),
         egui::Layout::left_to_right(egui::Align::Center),
         |ui| {
             ui.set_min_height(height);
@@ -52,22 +58,71 @@ pub fn row_sized<R>(
     rect.max.y = rect.min.y + height.max(inner.response.rect.height());
 
     let resp = ui.interact(rect, id, Sense::click());
-    let fill = if selected {
-        col::selected()
-    } else if resp.hovered() {
-        col::hover()
-    } else if striped {
-        col::stripe()
-    } else {
-        Color32::TRANSPARENT
+    let hovered = resp.hovered();
+    let fill = match (selected, hovered) {
+        (true, true) => col::selected_hover(),
+        (true, false) => col::selected(),
+        (false, true) => col::hover(),
+        (false, false) if striped => col::stripe(),
+        _ => Color32::TRANSPARENT,
     };
     if fill != Color32::TRANSPARENT {
+        // Inset and rounded, so a run of rows reads as a list with one of them
+        // picked out rather than a column with a band painted across it. The
+        // selected row is outlined as well as filled: the outline is what
+        // makes it read as selected, which lets the fill stay light enough to
+        // leave every value on the row at full contrast.
+        let mut body = rect;
+        body.min.x += 2.0;
+        body.max.x -= 2.0;
         ui.painter().set(
             bg,
-            egui::epaint::RectShape::filled(rect, CornerRadius::ZERO, fill),
+            egui::epaint::RectShape::new(
+                body,
+                CornerRadius::same(4),
+                fill,
+                if selected {
+                    egui::Stroke::new(1.0, col::selected_outline())
+                } else {
+                    egui::Stroke::NONE
+                },
+                egui::StrokeKind::Inside,
+            ),
         );
     }
     (inner.inner, resp)
+}
+
+/// A byte count in the shortest form that stays honest.
+pub fn human(n: impl Into<u64>) -> String {
+    let n: u64 = n.into();
+    if n >= 1024 * 1024 {
+        format!("{:.1}M", n as f64 / (1024.0 * 1024.0))
+    } else if n >= 1024 {
+        format!("{:.1}K", n as f64 / 1024.0)
+    } else {
+        format!("{n}")
+    }
+}
+
+/// The end of a long string, elided at the front.
+///
+/// Paths are elided from the front because the end is the part that
+/// identifies the file; cutting the other way leaves every row reading
+/// "/home/someone/work/pro..." and telling you nothing.
+pub fn tail(text: &str, max: usize) -> String {
+    if text.chars().count() <= max {
+        return text.to_string();
+    }
+    let kept: String = text
+        .chars()
+        .rev()
+        .take(max.saturating_sub(1))
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .collect();
+    format!("\u{2026}{kept}")
 }
 
 /// A clickable monospace reference.

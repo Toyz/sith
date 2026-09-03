@@ -13,6 +13,7 @@ use crate::widgets;
 use eframe::egui::{self, Ui};
 use ne_core::ModuleSummary;
 use std::path::PathBuf;
+use crate::widgets::{human, tail};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Step {
@@ -341,31 +342,7 @@ fn stat(ui: &mut Ui, value: &str, label: &str, color: egui::Color32) {
         });
 }
 
-/// The end of a path, which is the part that identifies it.
-fn tail(text: &str, max: usize) -> String {
-    if text.chars().count() <= max {
-        return text.to_string();
-    }
-    let kept: String = text
-        .chars()
-        .rev()
-        .take(max - 1)
-        .collect::<Vec<_>>()
-        .into_iter()
-        .rev()
-        .collect();
-    format!("\u{2026}{kept}")
-}
 
-fn human(n: u64) -> String {
-    if n >= 1024 * 1024 {
-        format!("{:.1} MB", n as f64 / (1024.0 * 1024.0))
-    } else if n >= 1024 {
-        format!("{:.0} KB", n as f64 / 1024.0)
-    } else {
-        format!("{n} B")
-    }
-}
 
 // ------------------------------------------------------------------ source
 
