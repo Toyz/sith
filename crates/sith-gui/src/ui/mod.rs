@@ -110,84 +110,121 @@ fn dropped_files(ctx: &egui::Context, act: &mut Vec<Action>) {
 }
 
 fn shortcuts(app: &SithApp, ctx: &egui::Context, act: &mut Vec<Action>) {
-    use egui::{Key, Modifiers};
+    use crate::keys::{Binding, Command, Scope};
+
+    // While a command is waiting for a key, the keyboard belongs to it and
+    // nothing else may claim a press -- otherwise binding Ctrl+W would close
+    // the tab on the way in.
+    if let Some(c) = app.capturing {
+        let pressed = ctx.input_mut(|i| {
+            let mods = i.modifiers;
+            i.events.iter().find_map(|e| match e {
+                egui::Event::Key {
+                    key,
+                    pressed: true,
+                    ..
+                } if !crate::keys::is_modifier_key(*key) => Some(Binding { mods, key: *key }),
+                _ => None,
+            })
+        });
+        if let Some(b) = pressed {
+            // Escape means "never mind", which is why it cannot be bound this
+            // way; it is still bound by default, and resetting brings it back.
+            if b.key == egui::Key::Escape && b.mods == egui::Modifiers::NONE {
+                act.push(Action::CaptureKeyCancel);
+            } else {
+                act.push(Action::BindKey(c, b));
+            }
+        }
+        ctx.input_mut(|i| i.events.clear());
+        return;
+    }
+
     // Any open dialog owns the keyboard. Listing shortcuts are single letters,
     // so leaving them live while a text box has focus types nothing and
     // renames something instead.
-    let modal_open =
-        app.goto_open || app.palette_open || app.wizard.is_some() || app.rename_at.is_some();
+    let modal_open = app.goto_open
+        || app.palette_open
+        || app.wizard.is_some()
+        || app.rename_at.is_some()
+        || app.keys_open;
     let typing = modal_open || ctx.egui_wants_keyboard_input();
+    let selection = match (app.nav(), app.tab().and_then(|t| t.sel)) {
+        (Nav::Segment(segment), Some(offset)) => Some((segment, offset)),
+        _ => None,
+    };
+
     ctx.input_mut(|i| {
-        if i.consume_key(Modifiers::COMMAND, Key::O) {
-            if let Some(p) = rfd::FileDialog::new().pick_file() {
-                act.push(Action::Open(p));
+        for c in Command::ALL {
+            let live = match c.scope() {
+                Scope::Global => true,
+                Scope::Listing => !typing,
+                Scope::Selection => !typing && selection.is_some(),
+            };
+            if !live {
+                continue;
             }
-        }
-        if i.consume_key(Modifiers::COMMAND, Key::G) {
-            act.push(Action::ShowGoto);
-        }
-        if i.consume_key(Modifiers::COMMAND, Key::P) {
-            act.push(Action::ShowPalette);
-        }
-        if i.consume_key(Modifiers::COMMAND, Key::W) {
-            act.push(Action::CloseTab(app.active));
-        }
-        if i.consume_key(Modifiers::COMMAND, Key::R) {
-            act.push(Action::Reload);
-        }
-        if i.consume_key(Modifiers::COMMAND, Key::S) {
-            act.push(Action::SaveProject);
-        }
-        if i.consume_key(Modifiers::ALT, Key::ArrowLeft) {
-            act.push(Action::Back);
-        }
-        if i.consume_key(Modifiers::ALT, Key::ArrowRight) {
-            act.push(Action::Forward);
-        }
-        if i.consume_key(Modifiers::NONE, Key::Escape) {
-            act.push(Action::Dismiss);
-        }
-        // Listing navigation, but only when no dialog owns the keyboard.
-        if !typing {
-            if i.consume_key(Modifiers::NONE, Key::ArrowDown) {
-                act.push(Action::MoveSelection(1));
+            let b = app.keys.binding(*c);
+            if !i.consume_key(b.mods, b.key) {
+                continue;
             }
-            if i.consume_key(Modifiers::NONE, Key::ArrowUp) {
-                act.push(Action::MoveSelection(-1));
-            }
-            if i.consume_key(Modifiers::NONE, Key::PageDown) {
-                act.push(Action::MoveSelection(24));
-            }
-            if i.consume_key(Modifiers::NONE, Key::PageUp) {
-                act.push(Action::MoveSelection(-24));
-            }
-            if i.consume_key(Modifiers::NONE, Key::Enter) {
-                act.push(Action::FollowSelection);
-            }
-            if let (Nav::Segment(segment), Some(offset)) =
-                (app.nav(), app.tab().and_then(|t| t.sel))
-            {
-                if i.consume_key(Modifiers::NONE, Key::N) {
-                    act.push(Action::ShowRename { segment, offset });
+            match c {
+                Command::Open => {
+                    if let Some(p) = rfd::FileDialog::new().pick_file() {
+                        act.push(Action::Open(p));
+                    }
                 }
-                if i.consume_key(Modifiers::NONE, Key::B) {
-                    act.push(Action::ToggleBookmark { segment, offset });
+                Command::Reload => act.push(Action::Reload),
+                Command::SaveProject => act.push(Action::SaveProject),
+                Command::CloseTab => act.push(Action::CloseTab(app.active)),
+                Command::Goto => act.push(Action::ShowGoto),
+                Command::Palette => act.push(Action::ShowPalette),
+                Command::Back => act.push(Action::Back),
+                Command::Forward => act.push(Action::Forward),
+                Command::Dismiss => act.push(Action::Dismiss),
+                Command::ToggleNavigator => act.push(Action::ToggleNavigator),
+                Command::ToggleInspector => act.push(Action::ToggleInspector),
+                Command::SelectDown => act.push(Action::MoveSelection(1)),
+                Command::SelectUp => act.push(Action::MoveSelection(-1)),
+                Command::PageDown => act.push(Action::MoveSelection(24)),
+                Command::PageUp => act.push(Action::MoveSelection(-24)),
+                Command::Follow => act.push(Action::FollowSelection),
+                Command::Rename => {
+                    if let Some((segment, offset)) = selection {
+                        act.push(Action::ShowRename { segment, offset });
+                    }
+                }
+                Command::Bookmark => {
+                    if let Some((segment, offset)) = selection {
+                        act.push(Action::ToggleBookmark { segment, offset });
+                    }
                 }
             }
         }
     });
 }
 
+
+/// A menu entry that prints its own binding.
+///
+/// The label and the shortcut come from the same place, so rebinding a key
+/// changes the menu too. Hardcoding them is how a menu ends up promising a
+/// shortcut that no longer works.
+fn menu_item(app: &SithApp, ui: &mut Ui, label: &str, c: crate::keys::Command) -> bool {
+    let text = format!("{label:<22}{}", app.keys.shortcut(c));
+    ui.button(text).clicked()
+}
+
 fn menu_bar(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
     ui.horizontal(|ui| {
         ui.menu_button("File", |ui| {
-            if ui.button("Open…                Ctrl+O").clicked() {
+            if menu_item(app, ui, "Open…", crate::keys::Command::Open) {
                 if let Some(p) = rfd::FileDialog::new().pick_file() {
                     act.push(Action::Open(p));
                 }
                 ui.close();
             }
-            if ui.button("Reload               Ctrl+R").clicked() {
+            if menu_item(app, ui, "Reload", crate::keys::Command::Reload) {
                 act.push(Action::Reload);
                 ui.close();
             }
@@ -228,7 +265,7 @@ fn menu_bar(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                 act.push(Action::OpenProject);
                 ui.close();
             }
-            if ui.button("Save project           Ctrl+S").clicked() {
+            if menu_item(app, ui, "Save project", crate::keys::Command::SaveProject) {
                 act.push(Action::SaveProject);
                 ui.close();
             }
@@ -260,6 +297,10 @@ fn menu_bar(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                 act.push(Action::ToggleBytes);
             }
             ui.separator();
+            if ui.button("Key bindings\u{2026}").clicked() {
+                act.push(Action::ShowKeys);
+                ui.close();
+            }
             ui.menu_button("Theme", |ui| {
                 if ui.button("Edit this theme…").clicked() {
                     act.push(Action::OpenThemeEditor);
@@ -313,20 +354,20 @@ fn menu_bar(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
         });
 
         ui.menu_button("Navigate", |ui| {
-            if ui.button("Go to address…      Ctrl+G").clicked() {
+            if menu_item(app, ui, "Go to address…", crate::keys::Command::Goto) {
                 act.push(Action::ShowGoto);
                 ui.close();
             }
-            if ui.button("Find symbol…        Ctrl+P").clicked() {
+            if menu_item(app, ui, "Find symbol…", crate::keys::Command::Palette) {
                 act.push(Action::ShowPalette);
                 ui.close();
             }
             ui.separator();
-            if ui.button("Back                 Alt+←").clicked() {
+            if menu_item(app, ui, "Back", crate::keys::Command::Back) {
                 act.push(Action::Back);
                 ui.close();
             }
-            if ui.button("Forward              Alt+→").clicked() {
+            if menu_item(app, ui, "Forward", crate::keys::Command::Forward) {
                 act.push(Action::Forward);
                 ui.close();
             }
@@ -341,30 +382,30 @@ fn toolbar(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
     let has_back = app.tab().is_some_and(|t| !t.history.is_empty());
     let has_fwd = app.tab().is_some_and(|t| !t.forward.is_empty());
     ui.spacing_mut().item_spacing.x = 2.0;
-    if icons::button(ui, Icon::Open, "Open (Ctrl+O)").clicked() {
+    if icons::button(ui, Icon::Open, &format!("Open ({})", app.keys.shortcut(crate::keys::Command::Open))).clicked() {
         if let Some(p) = rfd::FileDialog::new().pick_file() {
             act.push(Action::Open(p));
         }
     }
-    if icons::button(ui, Icon::Reload, "Reload (Ctrl+R)").clicked() {
+    if icons::button(ui, Icon::Reload, &format!("Reload ({})", app.keys.shortcut(crate::keys::Command::Reload))).clicked() {
         act.push(Action::Reload);
     }
     ui.add_space(6.0);
     ui.add_enabled_ui(has_back, |ui| {
-        if icons::button(ui, Icon::Back, "Back (Alt+←)").clicked() {
+        if icons::button(ui, Icon::Back, &format!("Back ({})", app.keys.shortcut(crate::keys::Command::Back))).clicked() {
             act.push(Action::Back);
         }
     });
     ui.add_enabled_ui(has_fwd, |ui| {
-        if icons::button(ui, Icon::Forward, "Forward (Alt+→)").clicked() {
+        if icons::button(ui, Icon::Forward, &format!("Forward ({})", app.keys.shortcut(crate::keys::Command::Forward))).clicked() {
             act.push(Action::Forward);
         }
     });
     ui.add_space(6.0);
-    if icons::button(ui, Icon::Target, "Go to address (Ctrl+G)").clicked() {
+    if icons::button(ui, Icon::Target, &format!("Go to address ({})", app.keys.shortcut(crate::keys::Command::Goto))).clicked() {
         act.push(Action::ShowGoto);
     }
-    if icons::button(ui, Icon::Search, "Find symbol (Ctrl+P)").clicked() {
+    if icons::button(ui, Icon::Search, &format!("Find symbol ({})", app.keys.shortcut(crate::keys::Command::Palette))).clicked() {
         act.push(Action::ShowPalette);
     }
 

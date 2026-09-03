@@ -16,6 +16,9 @@ pub fn show(app: &SithApp, ctx: &Context, act: &mut Vec<Action>) {
     if let Some((segment, offset)) = app.rename_at {
         rename(app, ctx, act, segment, offset);
     }
+    if app.keys_open {
+        keys(app, ctx, act);
+    }
     if app.palette_open {
         palette(app, ctx, act);
         // The forced scroll applies for one frame; holding it would stop the
@@ -396,4 +399,133 @@ fn highlighted(ui: &mut egui::Ui, text: &str, hits: &[usize], color: egui::Color
         );
     }
     ui.label(job);
+}
+
+/// The key binding editor.
+pub fn keys(app: &SithApp, ctx: &egui::Context, act: &mut Vec<Action>) {
+    use crate::keys::{Command, Scope};
+    if !app.keys_open {
+        return;
+    }
+
+    egui::Modal::new(egui::Id::new("keys")).show(ctx, |ui| {
+        ui.set_width(560.0);
+        ui.horizontal(|ui| {
+            icons::inline_sized(ui, Icon::Overview, col::accent(), 18.0);
+            ui.label(egui::RichText::new("Key bindings").size(16.0).strong());
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.button("  Done  ").clicked() {
+                    act.push(Action::ShowKeys);
+                }
+                if ui.button("Reset all").clicked() {
+                    act.push(Action::ResetAllKeys);
+                }
+            });
+        });
+        crate::ui::sep(ui);
+
+        if let Some(c) = app.capturing {
+            ui.label(
+                egui::RichText::new(format!(
+                    "Press a key for \u{201C}{}\u{201D}, or Escape to leave it alone.",
+                    c.label()
+                ))
+                .size(12.0)
+                .color(col::accent()),
+            );
+            ui.add_space(4.0);
+        } else if let Some((wanted, held_by)) = app.key_clash {
+            // Refusing is deliberate: silently unbinding the other command
+            // would take away a shortcut the user never touched.
+            ui.label(
+                egui::RichText::new(format!(
+                    "That key already runs \u{201C}{}\u{201D}, so \u{201C}{}\u{201D} was left as it was.",
+                    held_by.label(),
+                    wanted.label()
+                ))
+                .size(12.0)
+                .color(col::orange()),
+            );
+            ui.add_space(4.0);
+        }
+
+        egui::ScrollArea::vertical()
+            .id_salt("keylist")
+            .max_height(420.0)
+            .auto_shrink([false, false])
+            .show(ui, |ui| {
+                for scope in [Scope::Global, Scope::Listing, Scope::Selection] {
+                    let group: Vec<&Command> = Command::ALL
+                        .iter()
+                        .filter(|c| c.scope() == scope)
+                        .collect();
+                    if group.is_empty() {
+                        continue;
+                    }
+                    crate::widgets::card(ui, &scope.label().to_uppercase(), |ui| {
+                        ui.spacing_mut().item_spacing.y = 1.0;
+                        for c in group {
+                            key_row(app, ui, act, *c);
+                        }
+                    });
+                }
+            });
+
+        crate::ui::sep(ui);
+        if let Some(dir) = crate::paths::config_dir() {
+            ui.label(
+                egui::RichText::new(format!("saves to {}", dir.join("keys.json").display()))
+                    .size(10.5)
+                    .color(col::faint()),
+            );
+        }
+    });
+}
+
+fn key_row(app: &SithApp, ui: &mut egui::Ui, act: &mut Vec<Action>, c: crate::keys::Command) {
+    let capturing = app.capturing == Some(c);
+    let (_, resp) = crate::widgets::row_sized(
+        ui,
+        ui.id().with(("keyrow", c.id())),
+        24.0,
+        capturing,
+        false,
+        |ui| {
+            ui.spacing_mut().item_spacing.x = 8.0;
+            ui.label(egui::RichText::new(c.label()).size(12.0).color(col::text()));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if !app.keys.is_default(c) {
+                    let (r, rr) =
+                        ui.allocate_exact_size(egui::vec2(14.0, 14.0), egui::Sense::click());
+                    icons::draw(
+                        ui.painter(),
+                        r,
+                        Icon::Reload,
+                        if rr.hovered() { col::accent() } else { col::faint() },
+                    );
+                    if rr.on_hover_text("back to the default").clicked() {
+                        act.push(Action::ResetKey(c));
+                    }
+                }
+                crate::widgets::chip(
+                    ui,
+                    &if capturing {
+                        "press a key\u{2026}".to_owned()
+                    } else {
+                        app.keys.shortcut(c)
+                    },
+                    if capturing {
+                        col::accent()
+                    } else if app.keys.is_default(c) {
+                        col::dim()
+                    } else {
+                        col::cyan()
+                    },
+                );
+            });
+        },
+    );
+    if resp.clicked() && !capturing {
+        act.push(Action::CaptureKey(c));
+    }
 }

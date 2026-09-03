@@ -355,6 +355,18 @@ pub enum Action {
     ToggleGraphImports,
     ToggleNavigator,
     ToggleInspector,
+    /// Open or close the key binding editor.
+    ShowKeys,
+    /// Arm a command to take the next key pressed.
+    CaptureKey(crate::keys::Command),
+    /// Stop waiting for a key without binding one.
+    CaptureKeyCancel,
+    /// Bind a command, or refuse when the key is taken.
+    BindKey(crate::keys::Command, crate::keys::Binding),
+    /// Put a command back to what it shipped with.
+    ResetKey(crate::keys::Command),
+    /// Put every command back.
+    ResetAllKeys,
     ToggleBytes,
     ShowGoto,
     ShowPalette,
@@ -418,6 +430,14 @@ pub struct SithApp {
     pub rename_text: String,
     /// Set while a dialog wants keyboard focus on its text field.
     pub focus_input: bool,
+    /// What every shortcut is bound to.
+    pub keys: crate::keys::Keymap,
+    /// Open when the key bindings are being edited, holding the command
+    /// currently waiting for a key press.
+    pub keys_open: bool,
+    pub capturing: Option<crate::keys::Command>,
+    /// A binding that was refused, and what already holds the key.
+    pub key_clash: Option<(crate::keys::Command, crate::keys::Command)>,
     /// Name of the active theme, persisted between runs.
     pub theme: String,
     /// Set when the egui style must be rebuilt, after a theme change.
@@ -469,6 +489,10 @@ impl SithApp {
             rename_at: None,
             rename_text: String::new(),
             focus_input: false,
+            keys: crate::keys::Keymap::load(),
+            keys_open: false,
+            capturing: None,
+            key_clash: None,
             theme: theme_name,
             restyle: false,
             theme_editor: None,
@@ -1259,6 +1283,42 @@ impl SithApp {
                 if let Some(t) = self.tab_mut() {
                     t.graph.show_imports = !t.graph.show_imports;
                 }
+            }
+            Action::ShowKeys => {
+                self.keys_open = !self.keys_open;
+                self.capturing = None;
+                self.key_clash = None;
+            }
+            Action::CaptureKey(c) => {
+                self.capturing = Some(c);
+                self.key_clash = None;
+            }
+            Action::CaptureKeyCancel => self.capturing = None,
+            Action::BindKey(c, b) => {
+                self.capturing = None;
+                match self.keys.conflict(c, b) {
+                    // Refuse rather than silently unbinding whatever held it.
+                    // Losing a shortcut you did not touch is worse than being
+                    // told the key is taken.
+                    Some(other) => self.key_clash = Some((c, other)),
+                    None => {
+                        self.keys.bind(c, b);
+                        self.key_clash = None;
+                        if let Err(e) = self.keys.save() {
+                            self.error = Some(format!("could not save key bindings: {e}"));
+                        }
+                    }
+                }
+            }
+            Action::ResetKey(c) => {
+                self.keys.reset(c);
+                self.key_clash = None;
+                let _ = self.keys.save();
+            }
+            Action::ResetAllKeys => {
+                self.keys = crate::keys::Keymap::default();
+                self.key_clash = None;
+                let _ = self.keys.save();
             }
             Action::ToggleNavigator => self.show_navigator = !self.show_navigator,
             Action::ToggleInspector => self.show_inspector = !self.show_inspector,

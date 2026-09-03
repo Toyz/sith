@@ -283,6 +283,6 @@ the test, so a failure names the field that moved. The DIB decoder was
 validated pixel-for-pixel against ImageMagick on RLE4, RLE8 and uncompressed
 resources.
 
-## Licence
+## License
 
-MIT OR Apache-2.0.
+MIT. See [LICENSE](LICENSE).
