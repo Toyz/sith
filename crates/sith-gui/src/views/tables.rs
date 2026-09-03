@@ -1,7 +1,7 @@
 //! Import, export and entry-table listings.
 
 use crate::state::{Action, Nav, SithApp};
-use crate::theme::*;
+use crate::theme::{col, *};
 use crate::widgets;
 use eframe::egui::{self, Ui};
 use ne_analysis::Addr;
@@ -56,8 +56,8 @@ pub fn imports(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                     .and_then(|ix| ix.path_of(module))
                     .is_some();
                 ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new(module).strong().color(SYMBOL));
-                    widgets::chip(ui, &format!("{} symbols", syms.len()), DIM);
+                    ui.label(egui::RichText::new(module).strong().color(col::symbol()));
+                    widgets::chip(ui, &format!("{} symbols", syms.len()), col::dim());
                     if known && ui.small_button("open module").clicked() {
                         act.push(Action::OpenModule {
                             module: module.clone(),
@@ -78,10 +78,10 @@ pub fn imports(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                         false,
                         i % 2 == 1,
                         |ui| {
-                            ui.label(mono_c(format!("{count:>5}"), FAINT));
-                            ui.label(mono_c(format!("{sym:<32}"), COMMENT));
+                            ui.label(mono_c(format!("{count:>5}"), col::faint()));
+                            ui.label(mono_c(format!("{sym:<32}"), col::comment()));
                             if let Some(o) = ordinal {
-                                ui.label(mono_c(format!("@{o}"), FAINT));
+                                ui.label(mono_c(format!("@{o}"), col::faint()));
                             }
                         },
                     );
@@ -123,14 +123,14 @@ pub fn exports(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                     false,
                     i % 2 == 1,
                     |ui| {
-                        ui.label(mono_c(format!("@{:<5}", e.ordinal), FAINT));
-                        ui.label(mono_c(format!("{:<30}", e.label()), SYMBOL));
-                        ui.label(mono_c(format!("seg{:02}:{:04X}", e.segment, e.offset), ADDR));
+                        ui.label(mono_c(format!("@{:<5}", e.ordinal), col::faint()));
+                        ui.label(mono_c(format!("{:<30}", e.label()), col::symbol()));
+                        ui.label(mono_c(format!("seg{:02}:{:04X}", e.segment, e.offset), col::addr()));
                         if e.moveable {
-                            widgets::chip(ui, "moveable", DIM);
+                            widgets::chip(ui, "moveable", col::dim());
                         }
                         if e.resident {
-                            widgets::chip(ui, "resident", DIM);
+                            widgets::chip(ui, "resident", col::dim());
                         }
                     },
                 );
@@ -174,21 +174,21 @@ pub fn entries(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                     false,
                     i % 2 == 1,
                     |ui| {
-                        ui.label(mono_c(format!("@{:<5}", e.ordinal), FAINT));
-                        ui.label(mono_c(format!("seg{:02}:{:04X}", e.segment, e.offset), ADDR));
-                        ui.label(mono_c(format!("{:02X}", e.flags), FAINT));
+                        ui.label(mono_c(format!("@{:<5}", e.ordinal), col::faint()));
+                        ui.label(mono_c(format!("seg{:02}:{:04X}", e.segment, e.offset), col::addr()));
+                        ui.label(mono_c(format!("{:02X}", e.flags), col::faint()));
                         ui.label(mono_c(
                             format!("{:<28}", e.name.clone().unwrap_or_default()),
-                            SYMBOL,
+                            col::symbol(),
                         ));
                         if e.is_exported() {
-                            widgets::chip(ui, "export", GREEN);
+                            widgets::chip(ui, "export", col::green());
                         }
                         if e.moveable {
-                            widgets::chip(ui, "moveable", DIM);
+                            widgets::chip(ui, "moveable", col::dim());
                         }
                         if e.stack_words() > 0 {
-                            widgets::chip(ui, &format!("{} words", e.stack_words()), DIM);
+                            widgets::chip(ui, &format!("{} words", e.stack_words()), col::dim());
                         }
                     },
                 );

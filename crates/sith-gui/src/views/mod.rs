@@ -13,46 +13,201 @@ pub mod strings;
 pub mod tables;
 pub mod xrefs;
 
+use crate::icons::{self, Icon};
 use crate::state::{Action, Nav, SithApp};
-use crate::theme::*;
+use crate::theme::{col, *};
 use eframe::egui::{self, Ui};
 
-pub fn welcome(_app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
-    ui.vertical_centered(|ui| {
-        ui.add_space(120.0);
-        ui.label(egui::RichText::new("sith").size(40.0).strong().color(ACCENT));
-        ui.label(
-            egui::RichText::new("browser for 16-bit Windows NE executables")
-                .size(14.0)
-                .color(DIM),
-        );
-        ui.add_space(24.0);
-        if ui.button("Open a binary…").clicked() {
-            if let Some(p) = rfd::FileDialog::new()
-                .add_filter("Executables", &["exe", "dll", "drv", "EXE", "DLL", "DRV"])
-                .add_filter("All files", &["*"])
-                .pick_file()
-            {
-                act.push(Action::Open(p));
-            }
-        }
-        ui.add_space(8.0);
-        ui.label(dim("…or drop a .EXE, .DLL or .DRV onto this window"));
-        ui.add_space(28.0);
-        for (k, what) in [
-            ("Ctrl+O", "open"),
-            ("Ctrl+G", "go to address"),
-            ("Ctrl+P", "find symbol"),
-            ("Alt+←/→", "back and forward"),
-            ("↑ ↓ Enter", "move and follow"),
-        ] {
-            ui.horizontal(|ui| {
-                ui.add_space(ui.available_width() / 2.0 - 120.0);
-                ui.label(mono_c(format!("{k:<12}"), ACCENT));
-                ui.label(dim(what));
+pub fn welcome(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
+    egui::ScrollArea::vertical()
+        .auto_shrink([false, false])
+        .show(ui, |ui| {
+            ui.add_space(48.0);
+            ui.vertical_centered(|ui| {
+                ui.label(egui::RichText::new("sith").size(44.0).strong().color(col::accent()));
+                ui.label(
+                    egui::RichText::new("browser for 16-bit Windows NE executables")
+                        .size(14.0)
+                        .color(col::dim()),
+                );
             });
-        }
+            ui.add_space(28.0);
+
+            // The two starting moves, given equal weight: open a binary to
+            // look at, or reopen the project where the work already lives.
+            let width = 720.0_f32.min(ui.available_width() - 40.0);
+            centered(ui, width, |ui| {
+                ui.columns(2, |cols| {
+                    start_card(
+                        &mut cols[0],
+                        Icon::Open,
+                        "Open a binary",
+                        ".EXE, .DLL or .DRV from Windows 3.x",
+                        col::accent(),
+                        act,
+                        || {
+                            rfd::FileDialog::new()
+                                .add_filter("16-bit executables", &["exe", "dll", "drv", "EXE", "DLL", "DRV"])
+                                .add_filter("All files", &["*"])
+                                .pick_file()
+                                .map(Action::Open)
+                        },
+                    );
+                    start_card(
+                        &mut cols[1],
+                        Icon::Overview,
+                        "Open a project",
+                        "your names, notes and bookmarks",
+                        col::purple(),
+                        act,
+                        || {
+                            rfd::FileDialog::new()
+                                .add_filter("sith project", &["sith", "json"])
+                                .pick_file()
+                                .map(Action::OpenProjectAt)
+                        },
+                    );
+                });
+
+                ui.add_space(18.0);
+                let existing: Vec<_> = app.recent.iter().filter(|r| r.exists()).collect();
+                if existing.is_empty() {
+                    ui.add_space(10.0);
+                    ui.vertical_centered(|ui| {
+                        ui.label(dim("drop a file onto this window to open it"));
+                    });
+                } else {
+                    crate::widgets::section(ui, "RECENT");
+                    for r in existing.iter().take(10) {
+                        let (_, resp) = crate::widgets::row(
+                            ui,
+                            ui.id().with(("recent", &r.path)),
+                            false,
+                            false,
+                            |ui| {
+                                ui.add_space(4.0);
+                                icons::inline(
+                                    ui,
+                                    if r.is_project { Icon::Overview } else { Icon::Module },
+                                    if r.is_project { col::purple() } else { col::accent() },
+                                );
+                                ui.label(mono_c(r.file_name(), col::text()));
+                                if r.is_project {
+                                    crate::widgets::chip(ui, "project", col::purple());
+                                } else if !r.label.is_empty() {
+                                    crate::widgets::chip(ui, &r.label, col::dim());
+                                }
+                                ui.with_layout(
+                                    egui::Layout::right_to_left(egui::Align::Center),
+                                    |ui| {
+                                        ui.label(
+                                            egui::RichText::new(
+                                                r.path
+                                                    .parent()
+                                                    .map(|d| d.display().to_string())
+                                                    .unwrap_or_default(),
+                                            )
+                                            .color(col::faint())
+                                            .size(11.0),
+                                        );
+                                    },
+                                );
+                            },
+                        );
+                        if resp.clicked() {
+                            act.push(if r.is_project {
+                                Action::OpenProjectAt(r.path.clone())
+                            } else {
+                                Action::Open(r.path.clone())
+                            });
+                        }
+                    }
+                }
+
+                ui.add_space(24.0);
+                crate::widgets::section(ui, "KEYS");
+                for (k, what) in [
+                    ("Ctrl+O", "open a binary"),
+                    ("Ctrl+S", "save the project"),
+                    ("Ctrl+P", "find anything"),
+                    ("Ctrl+G", "go to an address"),
+                    ("N", "name the selected address"),
+                    ("B", "bookmark the selected address"),
+                    ("Alt+left / right", "back and forward"),
+                ] {
+                    ui.horizontal(|ui| {
+                        ui.add_space(6.0);
+                        ui.label(mono_c(format!("{k:<18}"), col::accent()));
+                        ui.label(dim(what));
+                    });
+                }
+                ui.add_space(32.0);
+            });
+        });
+}
+
+/// Lay `content` out in a fixed-width column centred in the available space.
+///
+/// The inner ui must be given an explicit top-down layout: allocating inside a
+/// horizontal row otherwise inherits that row's direction and every label ends
+/// up one character wide.
+fn centered(ui: &mut Ui, width: f32, content: impl FnOnce(&mut Ui)) {
+    ui.horizontal_top(|ui| {
+        let pad = ((ui.available_width() - width) / 2.0).max(0.0);
+        ui.add_space(pad);
+        ui.allocate_ui_with_layout(
+            egui::vec2(width, ui.available_height()),
+            egui::Layout::top_down(egui::Align::Min),
+            |ui| {
+                ui.set_width(width);
+                content(ui);
+            },
+        );
     });
+}
+
+fn start_card(
+    ui: &mut Ui,
+    icon: Icon,
+    title: &str,
+    subtitle: &str,
+    color: egui::Color32,
+    act: &mut Vec<Action>,
+    pick: impl FnOnce() -> Option<Action>,
+) {
+    let r = egui::Frame::new()
+        .fill(col::raised())
+        .corner_radius(egui::CornerRadius::same(8))
+        .inner_margin(egui::Margin::symmetric(16, 14))
+        .show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            ui.horizontal(|ui| {
+                icons::inline(ui, icon, color);
+                ui.vertical(|ui| {
+                    ui.label(egui::RichText::new(title).size(14.0).strong().color(col::text()));
+                    ui.label(egui::RichText::new(subtitle).size(11.0).color(col::dim()));
+                });
+            });
+        });
+    let resp = ui.interact(
+        r.response.rect,
+        ui.id().with(("startcard", title)),
+        egui::Sense::click(),
+    );
+    if resp.hovered() {
+        ui.painter().rect_stroke(
+            r.response.rect,
+            egui::CornerRadius::same(8),
+            egui::Stroke::new(1.0, color),
+            egui::StrokeKind::Inside,
+        );
+        ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+    }
+    if resp.clicked() {
+        if let Some(a) = pick() {
+            act.push(a);
+        }
+    }
 }
 
 pub fn central(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {

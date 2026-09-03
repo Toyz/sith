@@ -1,7 +1,7 @@
 //! Resource preview: images, decoded text, and a hex fallback.
 
 use crate::state::{Action, SithApp};
-use crate::theme::*;
+use crate::theme::{col, *};
 use crate::widgets;
 use eframe::egui::{self, Ui};
 use ne_core::render;
@@ -20,7 +20,7 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, index: usize) {
                 .strong(),
         );
         for f in r.flag_names() {
-            widgets::chip(ui, f, DIM);
+            widgets::chip(ui, f, col::dim());
         }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             if ui
@@ -62,7 +62,7 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, index: usize) {
 
         let mut zoom = app.image_zoom.get();
         ui.horizontal(|ui| {
-            ui.label(mono_c(format!("{} x {}", img.width, img.height), DIM));
+            ui.label(mono_c(format!("{} x {}", img.width, img.height), col::dim()));
             if ui
                 .add(egui::Slider::new(&mut zoom, 1.0..=16.0).integer().text("zoom"))
                 .changed()
@@ -96,7 +96,7 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, index: usize) {
             .id_salt("restext")
             .auto_shrink([false, false])
             .show(ui, |ui| {
-                ui.label(mono_c(text, TEXT));
+                ui.label(mono_c(text, col::text()));
             });
         return;
     }

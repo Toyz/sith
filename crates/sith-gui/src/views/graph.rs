@@ -7,7 +7,7 @@
 //! every time the root changes.
 
 use crate::state::{Action, GraphDir, Nav, SithApp};
-use crate::theme::*;
+use crate::theme::{col, *};
 
 use eframe::egui::{self, Color32, CornerRadius, Pos2, Rect, Stroke, Ui, Vec2};
 use ne_analysis::{Addr, Function};
@@ -56,7 +56,7 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
 
     ui.horizontal(|ui| {
         ui.label(egui::RichText::new("Call graph").size(15.0).strong());
-        ui.label(mono_c(root_fn.label(), SYMBOL));
+        ui.label(mono_c(app.label(root_fn), col::symbol()));
         ui.separator();
         for (dir, name) in GraphDir::ALL {
             if ui.selectable_label(g.dir == dir, name).clicked() {
@@ -86,8 +86,8 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
     });
     crate::ui::sep(ui);
 
-    let nodes = layout(doc, root_fn, g.depth, g.dir, g.show_imports);
-    let edges = edges(doc, &nodes, g.dir, g.show_imports);
+    let nodes = layout(app, doc, root_fn, g.depth, g.dir, g.show_imports);
+    let edges = edges(app, doc, &nodes, g.dir, g.show_imports);
 
     ui.label(dim(&format!(
         "{} nodes, {} edges — drag to pan, scroll to zoom, click a node to re-centre",
@@ -131,13 +131,13 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                     egui::Sense::click(),
                 );
                 let (fill, border, text_col) = if n.is_root {
-                    (ACCENT.gamma_multiply(0.22), ACCENT, TEXT)
+                    (col::accent().gamma_multiply(0.22), col::accent(), col::text())
                 } else if n.is_import {
-                    (RAISED, Color32::from_rgb(0x3A, 0x46, 0x54), COMMENT)
+                    (col::raised(), Color32::from_rgb(0x3A, 0x46, 0x54), col::comment())
                 } else if resp.hovered() {
-                    (Color32::from_rgb(0x22, 0x2B, 0x36), ACCENT, TEXT)
+                    (Color32::from_rgb(0x22, 0x2B, 0x36), col::accent(), col::text())
                 } else {
-                    (RAISED, Color32::from_rgb(0x30, 0x3B, 0x49), TEXT)
+                    (col::raised(), Color32::from_rgb(0x30, 0x3B, 0x49), col::text())
                 };
                 let p = ui.painter();
                 p.rect_filled(n.rect, CornerRadius::same(5), fill);
@@ -159,7 +159,7 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                     egui::Align2::LEFT_TOP,
                     &n.sub,
                     egui::FontId::monospace(10.0),
-                    FAINT,
+                    col::faint(),
                 );
 
                 if let Some(addr) = n.addr {
@@ -182,6 +182,7 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
 
 /// Breadth-first levels out from the root, laid out in columns.
 fn layout(
+    app: &SithApp,
     doc: &crate::state::Doc,
     root: &Function,
     depth: usize,
@@ -217,7 +218,7 @@ fn layout(
     push(
         &mut nodes,
         &mut seen,
-        root.label(),
+        app.label(root),
         root.addr.to_string(),
         Some(root.addr),
         0,
@@ -237,7 +238,7 @@ fn layout(
                     push(
                         &mut nodes,
                         &mut seen,
-                        g.label(),
+                        app.label(g),
                         format!("{}  {} B", g.addr, g.size()),
                         Some(g.addr),
                         level,
@@ -277,7 +278,7 @@ fn layout(
                     push(
                         &mut nodes,
                         &mut seen,
-                        f.label(),
+                        app.label(f),
                         format!("{}  {} B", f.addr, f.size()),
                         Some(f.addr),
                         -level,
@@ -312,6 +313,7 @@ fn layout(
 }
 
 fn edges(
+    app: &SithApp,
     doc: &crate::state::Doc,
     nodes: &[Node],
     dir: GraphDir,
@@ -331,7 +333,7 @@ fn edges(
         };
         if matches!(dir, GraphDir::Callees | GraphDir::Both) && n.level >= 0 {
             for g in doc.program.callees_of(f) {
-                if let Some(&j) = index.get(&(n.level + 1, g.label().as_str())) {
+                if let Some(&j) = index.get(&(n.level + 1, app.label(g).as_str())) {
                     out.push((i, j));
                 }
             }
@@ -346,7 +348,7 @@ fn edges(
         // Caller columns sit to the left, so the edge runs from them inwards.
         if matches!(dir, GraphDir::Callers | GraphDir::Both) && n.level <= 0 {
             for g in doc.program.callers_of(addr) {
-                if let Some(&j) = index.get(&(n.level - 1, g.label().as_str())) {
+                if let Some(&j) = index.get(&(n.level - 1, app.label(g).as_str())) {
                     out.push((j, i));
                 }
             }

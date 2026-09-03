@@ -1,7 +1,7 @@
 //! Module summary.
 
 use crate::state::{Action, Nav, SithApp};
-use crate::theme::*;
+use crate::theme::{col, *};
 use crate::icons::{self, Icon};
 use crate::widgets;
 use eframe::egui::{self, Ui};
@@ -19,17 +19,17 @@ pub fn show(app: &SithApp, ui_: &mut Ui, act: &mut Vec<Action>) {
                 widgets::chip(
                     ui,
                     if h.is_library() { "LIBRARY" } else { "APPLICATION" },
-                    if h.is_library() { PURPLE } else { GREEN },
+                    if h.is_library() { col::purple() } else { col::green() },
                 );
                 if h.is_self_loading() {
-                    widgets::chip(ui, "SELF-LOADING", ORANGE);
+                    widgets::chip(ui, "SELF-LOADING", col::orange());
                 }
                 for f in h.flag_names() {
-                    widgets::chip(ui, f, DIM);
+                    widgets::chip(ui, f, col::dim());
                 }
             });
             if !ne.description().is_empty() {
-                ui.label(egui::RichText::new(ne.description()).color(DIM));
+                ui.label(egui::RichText::new(ne.description()).color(col::dim()));
             }
 
             ui.add_space(10.0);
@@ -93,15 +93,15 @@ pub fn show(app: &SithApp, ui_: &mut Ui, act: &mut Vec<Action>) {
                     false,
                     s.index % 2 == 0,
                     |ui| {
-                        ui.label(mono_c(format!("{:>3}", s.index), ADDR));
+                        ui.label(mono_c(format!("{:>3}", s.index), col::addr()));
                         ui.label(mono_c(
                             format!("{:<5}", s.kind().as_str()),
-                            if s.is_code() { CODE_SEG } else { DATA_SEG },
+                            if s.is_code() { col::code_seg() } else { col::data_seg() },
                         ));
-                        ui.label(mono_c(format!("{:08X}", s.file_offset), FAINT));
-                        ui.label(mono_c(format!("{:>7} B", s.length), TEXT));
-                        ui.label(mono_c(format!("{:>4} fixups", s.relocs.len()), DIM));
-                        ui.label(mono_c(s.flag_names()[1..].join(" "), FAINT));
+                        ui.label(mono_c(format!("{:08X}", s.file_offset), col::faint()));
+                        ui.label(mono_c(format!("{:>7} B", s.length), col::text()));
+                        ui.label(mono_c(format!("{:>4} fixups", s.relocs.len()), col::dim()));
+                        ui.label(mono_c(s.flag_names()[1..].join(" "), col::faint()));
                     },
                 );
                 if resp.clicked() {
@@ -117,7 +117,7 @@ pub fn show(app: &SithApp, ui_: &mut Ui, act: &mut Vec<Action>) {
                         .as_ref()
                         .and_then(|ix| ix.path_of(&m))
                         .is_some();
-                    let color = if known { ACCENT } else { COMMENT };
+                    let color = if known { col::accent() } else { col::comment() };
                     let r = widgets::link(ui, format!("[{m}]"), color);
                     let r = if known {
                         r.on_hover_text("open this module")
@@ -152,15 +152,15 @@ pub fn show(app: &SithApp, ui_: &mut Ui, act: &mut Vec<Action>) {
                         m.module.eq_ignore_ascii_case(ne.module_name()),
                         false,
                         |ui| {
-                            icons::inline(ui, Icon::Module, if m.is_library { PURPLE } else { GREEN });
-                            ui.label(mono_c(format!("{:<12}", m.module), SYMBOL));
+                            icons::inline(ui, Icon::Module, if m.is_library { col::purple() } else { col::green() });
+                            ui.label(mono_c(format!("{:<12}", m.module), col::symbol()));
                             widgets::chip(
                                 ui,
                                 if m.is_library { "DLL" } else { "EXE" },
-                                if m.is_library { PURPLE } else { GREEN },
+                                if m.is_library { col::purple() } else { col::green() },
                             );
-                            ui.label(mono_c(format!("{:>4} exports", m.exports.len()), DIM));
-                            ui.label(mono_c(&m.description, FAINT));
+                            ui.label(mono_c(format!("{:>4} exports", m.exports.len()), col::dim()));
+                            ui.label(mono_c(&m.description, col::faint()));
                         },
                     );
                     if resp.clicked() {
@@ -178,18 +178,18 @@ pub fn show(app: &SithApp, ui_: &mut Ui, act: &mut Vec<Action>) {
 
 fn stat(ui: &mut Ui, label: &str, value: &str) {
     egui::Frame::new()
-        .fill(RAISED)
+        .fill(col::raised())
         .corner_radius(egui::CornerRadius::same(5))
         .inner_margin(egui::Margin::symmetric(12, 6))
         .show(ui, |ui| {
             ui.vertical(|ui| {
-                ui.label(egui::RichText::new(value).size(16.0).strong().color(TEXT));
-                ui.label(egui::RichText::new(label).size(10.0).color(DIM));
+                ui.label(egui::RichText::new(value).size(16.0).strong().color(col::text()));
+                ui.label(egui::RichText::new(label).size(10.0).color(col::dim()));
             });
         });
 }
 
 fn kv(ui: &mut Ui, key: &str, value: &str) {
-    ui.label(mono_c(format!("{key:<10}"), FAINT));
-    ui.label(mono_c(value, TEXT));
+    ui.label(mono_c(format!("{key:<10}"), col::faint()));
+    ui.label(mono_c(value, col::text()));
 }

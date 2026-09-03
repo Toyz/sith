@@ -8,7 +8,7 @@
 //! count rather than claiming certainty.
 
 use crate::state::{Action, SithApp};
-use crate::theme::*;
+use crate::theme::{col, *};
 use crate::widgets;
 use eframe::egui::{self, Ui};
 use ne_analysis::Addr;
@@ -73,6 +73,11 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
 
     header(ui);
     let row_h = ui.text_style_height(&egui::TextStyle::Monospace) + 4.0;
+    // `show_rows` adds the ui's vertical item spacing to every row when it
+    // computes the visible range and the total height; zeroing it here makes
+    // the drawn rows exactly `row_h` apart, so the listing fills the view
+    // instead of stopping short.
+    ui.spacing_mut().item_spacing.y = 0.0;
     egui::ScrollArea::vertical().auto_shrink([false, false]).show_rows(
         ui,
         row_h,
@@ -80,24 +85,25 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
         |ui, range| {
             for i in range {
                 let r = &rows[i];
-                let (_, resp) = widgets::row(
+                let (_, resp) = widgets::row_sized(
                     ui,
                     ui.id().with(("str", r.segment, r.s.offset)),
+                    row_h,
                     false,
                     i % 2 == 1,
                     |ui| {
-                        ui.label(mono_c(format!("seg{:02}:{:04X}", r.segment, r.s.offset), ADDR));
-                        ui.label(mono_c(format!("{:>4}", r.s.text.len()), FAINT));
+                        ui.label(mono_c(format!("seg{:02}:{:04X}", r.segment, r.s.offset), col::addr()));
+                        ui.label(mono_c(format!("{:>4}", r.s.text.len()), col::faint()));
                         if r.refs.is_empty() {
-                            ui.label(mono_c("   -", FAINT));
+                            ui.label(mono_c("   -", col::faint()));
                         } else {
-                            ui.label(mono_c(format!("{:>4}", r.refs.len()), ACCENT));
+                            ui.label(mono_c(format!("{:>4}", r.refs.len()), col::accent()));
                         }
                         ui.label(mono_c(
                             if r.s.nul_terminated { "·" } else { " " },
-                            GREEN,
+                            col::green(),
                         ));
-                        ui.label(mono_c(&r.s.text, TEXT));
+                        ui.label(mono_c(&r.s.text, col::text()));
                     },
                 );
                 if resp.clicked() {
@@ -112,14 +118,14 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                     }
                 }
                 resp.on_hover_ui(|ui| {
-                    ui.label(mono_c(&r.s.text, TEXT));
+                    ui.label(mono_c(&r.s.text, col::text()));
                     if r.refs.is_empty() {
                         ui.label(dim("no code references found"));
                         return;
                     }
                     ui.label(dim(&format!("{} references", r.refs.len())));
                     for a in r.refs.iter().take(12) {
-                        ui.label(mono_c(a.to_string(), ACCENT));
+                        ui.label(mono_c(a.to_string(), col::accent()));
                     }
                 });
             }
@@ -130,11 +136,11 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
 fn header(ui: &mut Ui) {
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 10.0;
-        ui.label(mono_c("address   ", FAINT));
-        ui.label(mono_c(" len", FAINT));
-        ui.label(mono_c("refs", FAINT));
-        ui.label(mono_c(" ", FAINT));
-        ui.label(mono_c("text", FAINT));
+        ui.label(mono_c("address   ", col::faint()));
+        ui.label(mono_c(" len", col::faint()));
+        ui.label(mono_c("refs", col::faint()));
+        ui.label(mono_c(" ", col::faint()));
+        ui.label(mono_c("text", col::faint()));
     });
     crate::ui::sep(ui);
 }
@@ -152,6 +158,11 @@ pub fn segment_strings(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno:
     ui.add_space(4.0);
 
     let row_h = ui.text_style_height(&egui::TextStyle::Monospace) + 4.0;
+    // `show_rows` adds the ui's vertical item spacing to every row when it
+    // computes the visible range and the total height; zeroing it here makes
+    // the drawn rows exactly `row_h` apart, so the listing fills the view
+    // instead of stopping short.
+    ui.spacing_mut().item_spacing.y = 0.0;
     egui::ScrollArea::vertical().auto_shrink([false, false]).show_rows(
         ui,
         row_h,
@@ -160,19 +171,20 @@ pub fn segment_strings(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno:
             for i in range {
                 let s = &found[i];
                 let refs = doc.program.data_refs(s.offset).len();
-                let (_, resp) = widgets::row(
+                let (_, resp) = widgets::row_sized(
                     ui,
                     ui.id().with(("segstr", segno, s.offset)),
+                    row_h,
                     app.tab().and_then(|t| t.sel) == Some(s.offset),
                     i % 2 == 1,
                     |ui| {
-                        ui.label(mono_c(format!("{:04X}", s.offset), ADDR));
+                        ui.label(mono_c(format!("{:04X}", s.offset), col::addr()));
                         if refs > 0 {
-                            ui.label(mono_c(format!("{refs:>3}↗"), ACCENT));
+                            ui.label(mono_c(format!("{refs:>3}↗"), col::accent()));
                         } else {
-                            ui.label(mono_c("   ", FAINT));
+                            ui.label(mono_c("   ", col::faint()));
                         }
-                        ui.label(mono_c(&s.text, TEXT));
+                        ui.label(mono_c(&s.text, col::text()));
                     },
                 );
                 if resp.clicked() {

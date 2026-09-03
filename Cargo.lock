@@ -2311,6 +2311,8 @@ dependencies = [
  "ne-core",
  "ne-disasm",
  "rfd",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

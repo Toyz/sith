@@ -1,7 +1,7 @@
 //! Cross-references: what calls what, across the whole module.
 
 use crate::state::{Action, SithApp};
-use crate::theme::*;
+use crate::theme::{col, *};
 use crate::widgets;
 use eframe::egui::{self, Ui};
 
@@ -11,7 +11,7 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, preset: &str) {
     ui.horizontal(|ui| {
         ui.label(egui::RichText::new("Cross-references").size(15.0).strong());
         if !preset.is_empty() {
-            widgets::chip(ui, preset, ACCENT);
+            widgets::chip(ui, preset, col::accent());
         }
     });
     let typed = crate::views::filter_box(app, ui, act, "filter targets…");
@@ -37,7 +37,7 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, preset: &str) {
                 egui::CollapsingHeader::new(
                     egui::RichText::new(format!("{target}   ({} sites)", sites.len()))
                         .monospace()
-                        .color(COMMENT),
+                        .color(col::comment()),
                 )
                 .id_salt(target)
                 .default_open(sites.len() <= 40)
@@ -46,7 +46,7 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, preset: &str) {
                         let owner = doc
                             .program
                             .function_containing(*a)
-                            .map(|f| f.label())
+                            .map(|f| app.label(f))
                             .unwrap_or_default();
                         let (_, resp) = widgets::row(
                             ui,
@@ -54,8 +54,8 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, preset: &str) {
                             false,
                             i % 2 == 1,
                             |ui| {
-                                ui.label(mono_c(a.to_string(), ADDR));
-                                ui.label(mono_c(owner, SYMBOL));
+                                ui.label(mono_c(a.to_string(), col::addr()));
+                                ui.label(mono_c(owner, col::symbol()));
                             },
                         );
                         if resp.clicked() {

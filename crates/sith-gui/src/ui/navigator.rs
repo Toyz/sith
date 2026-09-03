@@ -7,7 +7,7 @@
 
 use crate::icons::{self, Icon};
 use crate::state::{Action, Nav, SithApp};
-use crate::theme::*;
+use crate::theme::{col, *};
 use crate::widgets;
 use eframe::egui::{self, Color32, Ui};
 use ne_analysis::FuncKind;
@@ -44,7 +44,7 @@ fn search_box(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
     let mut filter = app.nav_filter.clone();
     ui.horizontal(|ui| {
         ui.add_space(2.0);
-        icons::inline(ui, Icon::Search, FAINT);
+        icons::inline(ui, Icon::Search, col::faint());
         ui.add(
             egui::TextEdit::singleline(&mut filter)
                 .hint_text("filter everything…")
@@ -71,12 +71,12 @@ fn header<R>(
         egui::RichText::new(format!("{title}   {count}"))
             .size(11.0)
             .strong()
-            .color(DIM),
+            .color(col::dim()),
     )
     .id_salt(title)
     .icon(move |ui, openness, resp| {
         // The stock triangle is replaced by one that matches the icon set.
-        let c = if resp.hovered() { TEXT } else { FAINT };
+        let c = if resp.hovered() { col::text() } else { col::faint() };
         let r = resp.rect.shrink(3.0);
         let p = ui.painter();
         let a = r.center() + egui::vec2(-2.0, -4.0);
@@ -126,11 +126,11 @@ fn views_section(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, keep: &dyn F
             false,
             |ui| {
                 ui.add_space(2.0);
-                icons::inline(ui, nav.icon(), if selected { ACCENT } else { DIM });
+                icons::inline(ui, nav.icon(), if selected { col::accent() } else { col::dim() });
                 ui.label(
                     egui::RichText::new(label)
                         .size(12.5)
-                        .color(if selected { TEXT } else { Color32::from_gray(0xA8) }),
+                        .color(if selected { col::text() } else { Color32::from_gray(0xA8) }),
                 );
             },
         );
@@ -171,7 +171,7 @@ fn segments_section(
     header(ui, Icon::Segment, "SEGMENTS", rows.len(), true, |ui| {
         for s in rows {
             let selected = app.nav() == Nav::Segment(s.index);
-            let color = if s.is_code() { CODE_SEG } else { DATA_SEG };
+            let color = if s.is_code() { col::code_seg() } else { col::data_seg() };
             let (_, resp) = widgets::row(
                 ui,
                 ui.id().with(("navseg", s.index)),
@@ -182,13 +182,13 @@ fn segments_section(
                     ui.add_space(2.0);
                     icons::inline(ui, if s.is_code() { Icon::Code } else { Icon::Data }, color);
                     ui.label(mono_c(format!("{:>2}", s.index), color));
-                    ui.label(mono_c(format!("{:<4}", s.kind().as_str()), DIM));
+                    ui.label(mono_c(format!("{:<4}", s.kind().as_str()), col::dim()));
                     // A size bar makes the shape of the binary obvious at a
                     // glance: which segment holds the bulk of the code.
                     bar(ui, s.length as f32 / biggest as f32, color);
-                    ui.label(mono_c(format!("{:>6}", human(s.length as usize)), FAINT));
+                    ui.label(mono_c(format!("{:>6}", human(s.length as usize)), col::faint()));
                     if !s.relocs.is_empty() {
-                        widgets::chip(ui, &format!("{}", s.relocs.len()), ORANGE);
+                        widgets::chip(ui, &format!("{}", s.relocs.len()), col::orange());
                     }
                 },
             );
@@ -240,7 +240,7 @@ fn functions_section(
                 ui.label(
                     egui::RichText::new(format!("  {named} named"))
                         .size(10.0)
-                        .color(FAINT),
+                        .color(col::faint()),
                 );
             }
             // Grouped by segment, mirroring how the listing is organised.
@@ -253,7 +253,7 @@ fn functions_section(
                 egui::CollapsingHeader::new(
                     egui::RichText::new(format!("segment {segno}   {}", fns.len()))
                         .size(11.0)
-                        .color(FAINT),
+                        .color(col::faint()),
                 )
                 .id_salt(("fnseg", segno))
                 .default_open(true)
@@ -277,12 +277,12 @@ fn function_row(
     let selected = app.tab().and_then(|t| t.sel) == Some(f.addr.offset)
         && app.nav() == Nav::Segment(f.addr.segment);
     let (kind_label, kind_color) = match f.kind {
-        FuncKind::Export => ("exp", GREEN),
-        FuncKind::Entry => ("ent", CYAN),
-        FuncKind::EntryPoint => ("main", ORANGE),
-        FuncKind::Relocated => ("ref", DIM),
-        FuncKind::Called => ("sub", DIM),
-        FuncKind::Prologue => ("?", FAINT),
+        FuncKind::Export => ("exp", col::green()),
+        FuncKind::Entry => ("ent", col::cyan()),
+        FuncKind::EntryPoint => ("main", col::orange()),
+        FuncKind::Relocated => ("ref", col::dim()),
+        FuncKind::Called => ("sub", col::dim()),
+        FuncKind::Prologue => ("?", col::faint()),
     };
     let (_, resp) = widgets::row(
         ui,
@@ -292,21 +292,29 @@ fn function_row(
         |ui| {
             ui.spacing_mut().item_spacing.x = 6.0;
             ui.add_space(4.0);
-            ui.label(mono_c(format!("{:04X}", f.addr.offset), ADDR));
+            ui.label(mono_c(format!("{:04X}", f.addr.offset), col::addr()));
             widgets::chip(ui, kind_label, kind_color);
+            let user_named = app.user_name(f.addr.segment, f.addr.offset).is_some();
+            if app.is_bookmarked(f.addr.segment, f.addr.offset) {
+                ui.label(mono_c("\u{25C6}", col::orange()));
+            }
             ui.label(mono_c(
-                f.label(),
-                match f.kind {
-                    FuncKind::Export | FuncKind::EntryPoint => SYMBOL,
-                    FuncKind::Prologue => DIM,
-                    _ => TEXT,
+                app.label(f),
+                if user_named {
+                    col::cyan()
+                } else {
+                    match f.kind {
+                        FuncKind::Export | FuncKind::EntryPoint => col::symbol(),
+                        FuncKind::Prologue => col::dim(),
+                        _ => col::text(),
+                    }
                 },
             ));
         },
     );
     let resp = resp.on_hover_text(format!(
         "{}\n{}  {} bytes, {} instructions\nfound by: {}\ncalls {} targets",
-        f.label(),
+        app.label(f),
         f.addr,
         f.size(),
         f.insn_count,
@@ -320,8 +328,24 @@ fn function_row(
         act.push(Action::GotoNewTab(f.addr));
     }
     if resp.double_clicked() {
-        act.push(Action::SetGraphRoot(f.addr));
+        act.push(Action::ShowRename {
+            segment: f.addr.segment,
+            offset: f.addr.offset,
+        });
     }
+    resp.context_menu(|ui| {
+        if ui.button("Name this function…").clicked() {
+            act.push(Action::ShowRename {
+                segment: f.addr.segment,
+                offset: f.addr.offset,
+            });
+            ui.close();
+        }
+        if ui.button("Show in call graph").clicked() {
+            act.push(Action::SetGraphRoot(f.addr));
+            ui.close();
+        }
+    });
 }
 
 fn resources_section(
@@ -350,7 +374,7 @@ fn resources_section(
             egui::CollapsingHeader::new(
                 egui::RichText::new(format!("{t}   {}", idxs.len()))
                     .size(11.0)
-                    .color(FAINT),
+                    .color(col::faint()),
             )
             .id_salt(("restype", &t))
             .default_open(idxs.len() <= 16)
@@ -379,9 +403,9 @@ fn resource_row(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, index: usize)
             ui.spacing_mut().item_spacing.x = 6.0;
             ui.add_space(4.0);
             thumbnail(app, ui, index);
-            ui.label(mono_c(r.res_id.to_string(), TEXT));
+            ui.label(mono_c(r.res_id.to_string(), col::text()));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.label(mono_c(human(r.length as usize), FAINT));
+                ui.label(mono_c(human(r.length as usize), col::faint()));
             });
         },
     );
@@ -433,7 +457,7 @@ fn thumbnail(app: &SithApp, ui: &mut Ui, index: usize) {
                 _ => Icon::Resource,
             };
             let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
-            icons::draw(ui.painter(), rect.shrink(2.0), icon, DIM);
+            icons::draw(ui.painter(), rect.shrink(2.0), icon, col::dim());
         }
     }
 }
@@ -469,14 +493,14 @@ fn workspace_section(
                     icons::inline(
                         ui,
                         Icon::Module,
-                        if m.is_library { PURPLE } else { GREEN },
+                        if m.is_library { col::purple() } else { col::green() },
                     );
-                    ui.label(mono_c(&m.module, if is_current { SYMBOL } else { TEXT }));
+                    ui.label(mono_c(&m.module, if is_current { col::symbol() } else { col::text() }));
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if open_here {
-                            widgets::chip(ui, "open", ACCENT);
+                            widgets::chip(ui, "open", col::accent());
                         }
-                        ui.label(mono_c(format!("{}", m.exports.len()), FAINT));
+                        ui.label(mono_c(format!("{}", m.exports.len()), col::faint()));
                     });
                 },
             );

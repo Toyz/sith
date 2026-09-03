@@ -8,6 +8,7 @@
 
 use eframe::egui;
 use ne_analysis::{Addr, Program};
+use ne_core::project::Project;
 use ne_core::{ExportIndex, NeFile};
 use std::cell::{Cell, RefCell};
 use std::collections::{BTreeSet, HashMap};
@@ -221,10 +222,23 @@ pub enum Action {
         ordinal: Option<u16>,
         name: Option<String>,
     },
+    NewProject,
+    OpenProject,
+    OpenProjectAt(PathBuf),
+    SaveProject,
+    SaveProjectAs,
+    /// Open the rename box for an address.
+    ShowRename { segment: u16, offset: u32 },
+    SetName { segment: u16, offset: u32, name: String },
+    SetComment { segment: u16, offset: u32, text: String },
+    ToggleBookmark { segment: u16, offset: u32 },
+    SetRenameText(String),
+    SetTheme(&'static str),
     SetNavFilter(String),
     SetGotoText(String),
     SetPaletteText(String),
     PaletteMove(i32),
+    PaletteScrolled,
     PaletteChoose(usize),
     SetViewFilter(String),
     SetGraphRoot(Addr),
@@ -242,6 +256,9 @@ pub enum Action {
 }
 
 pub struct SithApp {
+    /// Annotations the user has added: names, comments and bookmarks. Always
+    /// present, so renaming works before a project has been saved anywhere.
+    pub project: Project,
     /// Every file opened this session. Tabs index into this.
     pub docs: Vec<Doc>,
     /// Every NE file found beside the ones opened, so an import can be
@@ -266,22 +283,39 @@ pub struct SithApp {
     pub image_zoom: Cell<f32>,
     pub zoom_index: Cell<Option<usize>>,
 
-    pub recent: Vec<PathBuf>,
+    /// Recently opened binaries and projects, newest first, persisted between
+    /// runs so the start screen is useful on a cold launch.
+    pub recent: Vec<RecentEntry>,
     pub goto_open: bool,
     pub goto_text: String,
     pub palette_open: bool,
     pub palette_text: String,
     pub palette_sel: usize,
+    /// Set when the highlighted palette row must be scrolled back into view.
+    pub palette_scroll: bool,
+    /// Address the rename box is editing, if it is open.
+    pub rename_at: Option<(u16, u32)>,
+    pub rename_text: String,
     /// Set while a dialog wants keyboard focus on its text field.
     pub focus_input: bool,
+    /// Name of the active theme, persisted between runs.
+    pub theme: String,
+    /// Set when the egui style must be rebuilt, after a theme change.
+    pub restyle: bool,
 }
 
 impl SithApp {
     pub fn new(cc: &eframe::CreationContext<'_>, initial: Option<PathBuf>) -> SithApp {
+        let settings = load_settings();
+        if !crate::theme::set_theme(&settings.theme) {
+            crate::theme::set_theme(crate::theme::DEFAULT_THEME);
+        }
+        let theme_name = crate::theme::current().name.to_string();
         crate::theme::install(&cc.egui_ctx);
         egui_extras::install_image_loaders(&cc.egui_ctx);
 
         let mut app = SithApp {
+            project: Project::new("untitled"),
             docs: Vec::new(),
             index: ExportIndex::new(),
             scanned_dirs: Vec::new(),
@@ -297,13 +331,18 @@ impl SithApp {
             textures: Default::default(),
             image_zoom: Cell::new(1.0),
             zoom_index: Cell::new(None),
-            recent: Vec::new(),
+            recent: load_recent(),
             goto_open: false,
             goto_text: String::new(),
             palette_open: false,
             palette_text: String::new(),
             palette_sel: 0,
+            palette_scroll: false,
+            rename_at: None,
+            rename_text: String::new(),
             focus_input: false,
+            theme: theme_name,
+            restyle: false,
         };
         if let Some(p) = initial {
             app.open(&p);
@@ -348,7 +387,16 @@ impl SithApp {
         if let Some(dir) = path.parent() {
             self.index_dir(dir);
         }
-        let bits32 = self.doc().map(|d| d.bits32.clone()).unwrap_or_default();
+        // A 32-bit segment marking is a judgement the user made, so it is
+        // restored from the project rather than inherited from whatever file
+        // happened to be open.
+        let bits32 = self
+            .project
+            .binaries
+            .iter()
+            .find(|b| self.project.resolve(&b.path) == path)
+            .map(|b| b.bits32.iter().copied().collect())
+            .unwrap_or_default();
         let doc = Doc::open(&path, &self.index, bits32)?;
         self.docs.push(doc);
         Ok(self.docs.len() - 1)
@@ -419,9 +467,7 @@ impl SithApp {
                 self.textures.borrow_mut().clear();
                 self.zoom_index.set(None);
                 let p = self.docs[i].path.clone();
-                self.recent.retain(|x| *x != p);
-                self.recent.insert(0, p);
-                self.recent.truncate(8);
+                self.remember_recent(&p, false);
             }
             Err(e) => self.error = Some(e),
         }
@@ -431,6 +477,45 @@ impl SithApp {
         let Some(i) = self.tab().map(|t| t.doc) else { return };
         let Some(d) = self.docs.get_mut(i) else { return };
         d.program = Program::analyze(&d.ne, &d.bits32);
+    }
+
+    /// The name to show for a function: the user's, if they gave one.
+    pub fn label(&self, f: &ne_analysis::Function) -> String {
+        self.user_name(f.addr.segment, f.addr.offset)
+            .map(str::to_string)
+            .unwrap_or_else(|| f.label())
+    }
+
+    /// A user-assigned name at an address, if there is one.
+    pub fn user_name(&self, segment: u16, offset: u32) -> Option<&str> {
+        let doc = self.doc()?;
+        self.project
+            .notes_for(&doc.path, doc.ne.module_name())?
+            .name_at(segment, offset)
+    }
+
+    /// A user-written note at an address, if there is one.
+    pub fn user_comment(&self, segment: u16, offset: u32) -> Option<&str> {
+        let doc = self.doc()?;
+        self.project
+            .notes_for(&doc.path, doc.ne.module_name())?
+            .comment_at(segment, offset)
+    }
+
+    pub fn is_bookmarked(&self, segment: u16, offset: u32) -> bool {
+        let Some(doc) = self.doc() else { return false };
+        self.project
+            .notes_for(&doc.path, doc.ne.module_name())
+            .is_some_and(|n| n.is_bookmarked(segment, offset))
+    }
+
+    /// Mutable notes for the active document, creating the entry on demand.
+    fn notes_mut(&mut self) -> Option<&mut ne_core::BinaryNotes> {
+        let (path, module) = {
+            let doc = self.doc()?;
+            (doc.path.clone(), doc.ne.module_name().to_string())
+        };
+        Some(self.project.notes_mut(&path, &module))
     }
 
     /// Resolve `seg:offset`, a bare offset, or a symbol name.
@@ -461,7 +546,7 @@ impl SithApp {
         doc.program
             .functions
             .iter()
-            .find(|f| f.label().eq_ignore_ascii_case(t))
+            .find(|f| self.label(f).eq_ignore_ascii_case(t) || f.label().eq_ignore_ascii_case(t))
             .map(|f| f.addr)
     }
 
@@ -536,6 +621,14 @@ impl SithApp {
                     }
                 }
                 self.reanalyze();
+                let bits: Vec<u16> = self
+                    .doc()
+                    .map(|d| d.bits32.iter().copied().collect())
+                    .unwrap_or_default();
+                if let Some(n) = self.notes_mut() {
+                    n.bits32 = bits;
+                }
+                self.autosave();
             }
             Action::CloseTab(i) => {
                 if i < self.tabs.len() {
@@ -574,15 +667,89 @@ impl SithApp {
             Action::Status(s) => self.status = s,
             Action::SaveResource { index, raw } => self.save_resource(index, raw),
             Action::SaveListing => self.save_listing(),
+            Action::NewProject => {
+                self.project = Project::new("untitled");
+                self.status = "new project".into();
+            }
+            Action::OpenProject => self.open_project_dialog(),
+            Action::OpenProjectAt(p) => self.open_project(&p),
+            Action::SaveProject => self.save_project(false),
+            Action::SaveProjectAs => self.save_project(true),
+            Action::ShowRename { segment, offset } => {
+                self.rename_at = Some((segment, offset));
+                self.rename_text = self
+                    .user_name(segment, offset)
+                    .map(str::to_string)
+                    .or_else(|| {
+                        self.doc()
+                            .and_then(|d| {
+                                d.program.function_at(ne_analysis::Addr { segment, offset })
+                            })
+                            .map(|f| f.label())
+                    })
+                    .unwrap_or_default();
+                self.focus_input = true;
+            }
+            Action::SetName {
+                segment,
+                offset,
+                name,
+            } => {
+                if let Some(n) = self.notes_mut() {
+                    n.set_name(segment, offset, &name);
+                }
+                self.rename_at = None;
+                self.autosave();
+                self.status = if name.trim().is_empty() {
+                    format!("cleared the name at seg{segment:02}:{offset:04X}")
+                } else {
+                    format!("named seg{segment:02}:{offset:04X} {name}")
+                };
+            }
+            Action::SetComment {
+                segment,
+                offset,
+                text,
+            } => {
+                if let Some(n) = self.notes_mut() {
+                    n.set_comment(segment, offset, &text);
+                }
+                self.autosave();
+            }
+            Action::ToggleBookmark { segment, offset } => {
+                let on = self
+                    .notes_mut()
+                    .map(|n| n.toggle_bookmark(segment, offset))
+                    .unwrap_or(false);
+                self.autosave();
+                self.status = format!(
+                    "{} seg{segment:02}:{offset:04X}",
+                    if on { "bookmarked" } else { "un-bookmarked" }
+                );
+            }
+            Action::SetRenameText(t) => self.rename_text = t,
+            Action::SetTheme(name) => {
+                if crate::theme::set_theme(name) {
+                    self.theme = name.to_string();
+                    self.restyle = true;
+                    save_settings(&Settings {
+                        theme: self.theme.clone(),
+                    });
+                    self.status = format!("theme: {name}");
+                }
+            }
             Action::SetNavFilter(f) => self.nav_filter = f,
             Action::SetGotoText(t) => self.goto_text = t,
             Action::SetPaletteText(t) => {
                 self.palette_text = t;
                 self.palette_sel = 0;
+                self.palette_scroll = true;
             }
             Action::PaletteMove(d) => {
                 self.palette_sel = (self.palette_sel as i32 + d).max(0) as usize;
+                self.palette_scroll = true;
             }
+            Action::PaletteScrolled => self.palette_scroll = false,
             Action::PaletteChoose(i) => self.palette_choose(i),
             Action::SetViewFilter(f) => {
                 if let Some(t) = self.tab_mut() {
@@ -635,11 +802,13 @@ impl SithApp {
                 self.palette_open = true;
                 self.goto_open = false;
                 self.palette_sel = 0;
+                self.palette_scroll = true;
                 self.focus_input = true;
             }
             Action::Dismiss => {
                 self.goto_open = false;
                 self.palette_open = false;
+                self.rename_at = None;
                 self.error = None;
             }
         }
@@ -656,42 +825,11 @@ impl SithApp {
     }
 
     fn palette_hit(&self, index: usize) -> Option<Action> {
-        let doc = self.doc()?;
-        let needle = self.palette_text.to_ascii_lowercase();
-        let matches = |s: &str| needle.is_empty() || s.to_ascii_lowercase().contains(&needle);
-        let mut hits: Vec<(String, Action)> = Vec::new();
-        for f in &doc.program.functions {
-            let label = f.label();
-            if matches(&label) {
-                hits.push((label, Action::Goto(f.addr)));
-            }
-            if hits.len() > 400 {
-                break;
-            }
-        }
-        for s in &doc.ne.segments {
-            let label = format!("Segment {}", s.index);
-            if matches(&label) {
-                hits.push((label, Action::Go(Nav::Segment(s.index))));
-            }
-        }
-        for (i, r) in doc.ne.resources.iter().enumerate() {
-            let label = format!("{} {}", r.type_name(), r.res_id);
-            if matches(&label) {
-                hits.push((label, Action::Go(Nav::Resource(i))));
-            }
-        }
-        for target in doc.program.xrefs.keys() {
-            if target.contains('.') && matches(target) {
-                hits.push((target.clone(), Action::Go(Nav::Xrefs(target.clone()))));
-            }
-        }
-        hits.sort_by_key(|(l, _)| (l.len(), l.to_ascii_lowercase()));
-        hits.truncate(200);
+        let mut hits = crate::palette::candidates(self, &self.palette_text);
         if hits.is_empty() {
             return None;
         }
-        Some(hits.swap_remove(index.min(hits.len() - 1)).1)
+        Some(hits.swap_remove(index.min(hits.len() - 1)).action)
     }
 
     pub fn go(&mut self, nav: Nav) {
@@ -767,6 +905,133 @@ impl SithApp {
         self.apply_one(action);
     }
 
+    /// Record a path in the recent list and write it back to disk.
+    fn remember_recent(&mut self, path: &Path, is_project: bool) {
+        let path = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
+        self.recent.retain(|r| r.path != path);
+        self.recent.insert(
+            0,
+            RecentEntry {
+                path,
+                is_project,
+                label: if is_project {
+                    self.project.name.clone()
+                } else {
+                    self.docs
+                        .iter()
+                        .find(|d| d.path == *self.recent.first().map(|r| &r.path).unwrap_or(&PathBuf::new()))
+                        .map(|d| d.ne.module_name().to_string())
+                        .unwrap_or_default()
+                },
+            },
+        );
+        self.recent.truncate(12);
+        save_recent(&self.recent);
+    }
+
+    /// Write the project back to its file once it has one. Annotations are
+    /// cheap to write and losing them to a crash is not acceptable, so this
+    /// happens on every change rather than on demand.
+    fn autosave(&mut self) {
+        let Some(path) = self.project.path.clone() else {
+            return;
+        };
+        if let Err(e) = self.project.save(&path) {
+            self.error = Some(format!("{}: {e}", path.display()));
+        }
+    }
+
+    fn open_project_dialog(&mut self) {
+        let Some(path) = rfd::FileDialog::new()
+            .add_filter("sith project", &["sith", "json"])
+            .pick_file()
+        else {
+            return;
+        };
+        self.open_project(&path);
+    }
+
+    /// Load a project and open every binary it refers to.
+    pub fn open_project(&mut self, path: &Path) {
+        match Project::load(path) {
+            Ok(p) => {
+                let binaries: Vec<PathBuf> =
+                    p.binaries.iter().map(|b| p.resolve(&b.path)).collect();
+                self.project = p;
+                self.docs.clear();
+                self.tabs.clear();
+                self.textures.borrow_mut().clear();
+                let mut opened = 0;
+                for b in &binaries {
+                    if b.exists() {
+                        self.open(b);
+                        opened += 1;
+                    }
+                }
+                self.remember_recent(path, true);
+                self.status = format!(
+                    "{} — {} annotations across {} binaries{}",
+                    self.project.name,
+                    self.project.annotation_count(),
+                    self.project.binaries.len(),
+                    if opened < binaries.len() {
+                        format!(", {} missing", binaries.len() - opened)
+                    } else {
+                        String::new()
+                    }
+                );
+            }
+            Err(e) => self.error = Some(format!("{}: {e}", path.display())),
+        }
+    }
+
+    fn save_project(&mut self, force_dialog: bool) {
+        let path = if force_dialog || self.project.path.is_none() {
+            let suggested = if self.project.name.is_empty() {
+                "project.sith".to_string()
+            } else {
+                format!("{}.sith", self.project.name)
+            };
+            match rfd::FileDialog::new()
+                .add_filter("sith project", &["sith"])
+                .set_file_name(&suggested)
+                .save_file()
+            {
+                Some(p) => p,
+                None => return,
+            }
+        } else {
+            self.project.path.clone().unwrap()
+        };
+
+        // Record every open binary so reopening the project restores them.
+        let open: Vec<(PathBuf, String)> = self
+            .docs
+            .iter()
+            .map(|d| (d.path.clone(), d.ne.module_name().to_string()))
+            .collect();
+        // The path must be set before relativising, or every entry is stored
+        // absolute and the project stops being portable.
+        self.project.path = Some(path.clone());
+        for (p, m) in open {
+            let _ = self.project.notes_mut(&p, &m);
+        }
+        self.project.prune();
+        if self.project.name.is_empty() {
+            self.project.name = path
+                .file_stem()
+                .map(|s| s.to_string_lossy().to_string())
+                .unwrap_or_else(|| "untitled".into());
+        }
+        match self.project.save(&path) {
+            Ok(()) => {
+                self.remember_recent(&path, true);
+                self.status = format!("saved {}", path.display());
+            }
+            Err(e) => self.error = Some(format!("{}: {e}", path.display())),
+        }
+    }
+
     fn save_resource(&mut self, index: usize, raw: bool) {
         let Some(doc) = self.doc() else { return };
         let Some(r) = doc.ne.resources.get(index) else {
@@ -805,7 +1070,7 @@ impl SithApp {
             .functions
             .iter()
             .filter(|f| f.addr.segment == segno)
-            .map(|f| (f.addr.offset, f.label()))
+            .map(|f| (f.addr.offset, self.label(f)))
             .collect();
         let width = ne_disasm::byte_column_width(&code.insns);
         let mut out = format!(
@@ -829,5 +1094,103 @@ impl SithApp {
             Ok(()) => self.status = format!("wrote listing to {}", path.display()),
             Err(e) => self.error = Some(format!("{}: {e}", path.display())),
         }
+    }
+}
+
+
+/// One entry in the persisted recent list.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct RecentEntry {
+    pub path: PathBuf,
+    #[serde(default)]
+    pub is_project: bool,
+    /// Module or project name, so the start screen does not have to open every
+    /// file just to label the list.
+    #[serde(default)]
+    pub label: String,
+}
+
+impl RecentEntry {
+    pub fn file_name(&self) -> String {
+        self.path
+            .file_name()
+            .map(|s| s.to_string_lossy().to_string())
+            .unwrap_or_else(|| self.path.display().to_string())
+    }
+
+    pub fn exists(&self) -> bool {
+        self.path.exists()
+    }
+}
+
+/// Where the recent list is kept. Follows the XDG layout on Linux and falls
+/// back to the home directory elsewhere; a missing or unreadable file simply
+/// means an empty list.
+fn recent_path() -> Option<PathBuf> {
+    let dir = std::env::var_os("XDG_CONFIG_HOME")
+        .map(PathBuf::from)
+        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".config")))
+        .or_else(|| std::env::var_os("APPDATA").map(PathBuf::from))?;
+    Some(dir.join("sith").join("recent.json"))
+}
+
+fn load_recent() -> Vec<RecentEntry> {
+    let Some(path) = recent_path() else {
+        return Vec::new();
+    };
+    let Ok(text) = std::fs::read_to_string(path) else {
+        return Vec::new();
+    };
+    serde_json::from_str(&text).unwrap_or_default()
+}
+
+fn save_recent(entries: &[RecentEntry]) {
+    let Some(path) = recent_path() else { return };
+    if let Some(dir) = path.parent() {
+        let _ = std::fs::create_dir_all(dir);
+    }
+    if let Ok(text) = serde_json::to_string_pretty(entries) {
+        let _ = std::fs::write(path, text);
+    }
+}
+
+
+/// Persisted preferences. Kept beside the recent list, and deliberately small:
+/// anything that can be recomputed does not belong here.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct Settings {
+    #[serde(default)]
+    pub theme: String,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Settings {
+            theme: crate::theme::DEFAULT_THEME.to_string(),
+        }
+    }
+}
+
+fn settings_path() -> Option<PathBuf> {
+    recent_path().map(|p| p.with_file_name("settings.json"))
+}
+
+fn load_settings() -> Settings {
+    let Some(path) = settings_path() else {
+        return Settings::default();
+    };
+    std::fs::read_to_string(path)
+        .ok()
+        .and_then(|t| serde_json::from_str(&t).ok())
+        .unwrap_or_default()
+}
+
+fn save_settings(s: &Settings) {
+    let Some(path) = settings_path() else { return };
+    if let Some(dir) = path.parent() {
+        let _ = std::fs::create_dir_all(dir);
+    }
+    if let Ok(text) = serde_json::to_string_pretty(s) {
+        let _ = std::fs::write(path, text);
     }
 }

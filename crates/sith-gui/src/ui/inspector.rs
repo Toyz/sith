@@ -5,7 +5,7 @@
 //! losing your place to go and find out.
 
 use crate::state::{Action, Nav, SegTab, SithApp};
-use crate::theme::*;
+use crate::theme::{col, *};
 use crate::widgets;
 use eframe::egui::{self, Ui};
 use ne_analysis::Addr;
@@ -58,7 +58,7 @@ fn segment_context(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16
     kv(ui, "fixups", &seg.relocs.len().to_string());
     ui.horizontal_wrapped(|ui| {
         for f in seg.flag_names().iter().skip(1) {
-            widgets::chip(ui, f, DIM);
+            widgets::chip(ui, f, col::dim());
         }
     });
 
@@ -72,11 +72,52 @@ fn segment_context(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16
         &format!("{:08X}", seg.file_offset + sel as u64),
     );
 
+    // Naming and annotating live where the address details are, so the whole
+    // loop -- see an address, understand it, write that down -- happens in one
+    // place.
+    ui.horizontal(|ui| {
+        if ui.small_button("Name…").clicked() {
+            act.push(Action::ShowRename {
+                segment: segno,
+                offset: sel,
+            });
+        }
+        let marked = app.is_bookmarked(segno, sel);
+        if ui
+            .small_button(if marked { "Un-bookmark" } else { "Bookmark" })
+            .clicked()
+        {
+            act.push(Action::ToggleBookmark {
+                segment: segno,
+                offset: sel,
+            });
+        }
+    });
+    if let Some(name) = app.user_name(segno, sel) {
+        kv(ui, "your name", name);
+    }
+
+    let mut note = app.user_comment(segno, sel).unwrap_or_default().to_string();
+    let before = note.clone();
+    ui.add(
+        egui::TextEdit::multiline(&mut note)
+            .hint_text("note…")
+            .desired_rows(2)
+            .desired_width(f32::INFINITY),
+    );
+    if note != before {
+        act.push(Action::SetComment {
+            segment: segno,
+            offset: sel,
+            text: note,
+        });
+    }
+
     if let Some(f) = doc.program.function_containing(Addr {
         segment: segno,
         offset: sel,
     }) {
-        kv(ui, "function", &f.label());
+        kv(ui, "function", &app.label(f));
         kv(ui, "func kind", f.kind.as_str());
         kv(ui, "func size", &format!("{} bytes", f.size()));
         if ui.small_button("Show in call graph").clicked() {
@@ -87,10 +128,10 @@ fn segment_context(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16
     // Bytes at the selection, read as the common widths. A 16-bit binary is
     // full of packed structures and this saves a trip to a calculator.
     if let Some(bytes) = seg.data.get(sel as usize..(sel as usize + 8).min(seg.data.len())) {
-        widgets::section(ui, "BYTES");
+        widgets::section(ui, "col::bytes()");
         ui.label(mono_c(
             bytes.iter().map(|b| format!("{b:02X} ")).collect::<String>(),
-            BYTES,
+            col::bytes(),
         ));
         if bytes.len() >= 2 {
             let w = u16::from_le_bytes([bytes[0], bytes[1]]);
@@ -125,19 +166,19 @@ fn segment_context(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16
                     widgets::section(ui, "API CALL");
                     ui.label(mono_c(
                         format!("{}.{}", call.module, call.signature.render()),
-                        SYMBOL,
+                        col::symbol(),
                     ));
                     ui.add_space(2.0);
                     for (i, a) in call.args.iter().enumerate() {
                         ui.horizontal(|ui| {
                             ui.label(mono_c(
                                 format!("{:<10}", call.signature.param_name(i).unwrap_or("")),
-                                CYAN,
+                                col::cyan(),
                             ));
-                            ui.label(mono_c(format!("{:<7}", a.kind.as_str()), FAINT));
+                            ui.label(mono_c(format!("{:<7}", a.kind.as_str()), col::faint()));
                             ui.label(mono_c(
                                 a.render(),
-                                if a.name.is_some() { GREEN } else { TEXT },
+                                if a.name.is_some() { col::green() } else { col::text() },
                             ));
                         });
                     }
@@ -151,7 +192,7 @@ fn segment_context(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16
                     if f.additive {
                         kv(ui, "additive", "yes");
                     }
-                    if widgets::link(ui, f.target.to_string(), COMMENT).clicked() {
+                    if widgets::link(ui, f.target.to_string(), col::comment()).clicked() {
                         act.push(crate::views::disasm::target_action(&f.target));
                     }
                 }
@@ -176,10 +217,10 @@ fn segment_context(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16
                 .map(|f| f.label())
                 .unwrap_or_default();
             ui.horizontal(|ui| {
-                if widgets::link(ui, a.to_string(), ACCENT).clicked() {
+                if widgets::link(ui, a.to_string(), col::accent()).clicked() {
                     act.push(Action::Goto(*a));
                 }
-                ui.label(mono_c(owner, DIM));
+                ui.label(mono_c(owner, col::dim()));
             });
         }
     }
@@ -197,7 +238,7 @@ fn resource_context(app: &SithApp, ui: &mut Ui, index: usize) {
     kv(ui, "size", &format!("{} bytes", r.length));
     ui.horizontal_wrapped(|ui| {
         for f in r.flag_names() {
-            widgets::chip(ui, f, DIM);
+            widgets::chip(ui, f, col::dim());
         }
     });
     if let Some(info) = ne_core::dib::DibInfo::parse(doc.ne.resource_data(r)) {
@@ -216,8 +257,8 @@ fn resource_context(app: &SithApp, ui: &mut Ui, index: usize) {
 /// A label/value line, aligned so the panel reads as a table.
 fn kv(ui: &mut Ui, key: &str, value: &str) {
     ui.horizontal(|ui| {
-        ui.label(mono_c(format!("{key:<12}"), FAINT));
-        ui.label(mono_c(value, TEXT));
+        ui.label(mono_c(format!("{key:<12}"), col::faint()));
+        ui.label(mono_c(value, col::text()));
     });
 }
 

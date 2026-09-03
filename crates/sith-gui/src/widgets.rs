@@ -1,15 +1,9 @@
 //! Small building blocks shared by every listing.
 
-use crate::theme::*;
+use crate::theme::{col, *};
 use eframe::egui::{self, Color32, CornerRadius, Response, Sense, Ui};
 
-/// One row of a listing: full-width background, hover and selection states,
-/// and a click response.
-///
-/// `show_rows` gives fixed-height virtualised rows, but nothing that fills the
-/// row behind the content, which is what makes a dense listing readable. The
-/// background shape is reserved before the content is laid out and filled once
-/// the row's rect is known.
+/// One row of a listing, laid out at its natural height.
 pub fn row<R>(
     ui: &mut Ui,
     id: egui::Id,
@@ -17,24 +11,49 @@ pub fn row<R>(
     striped: bool,
     content: impl FnOnce(&mut Ui) -> R,
 ) -> (R, Response) {
+    let h = ui.text_style_height(&egui::TextStyle::Body) + 4.0;
+    row_sized(ui, id, h, selected, striped, content)
+}
+
+/// One row of a listing at an exact height, with a full-width background,
+/// hover and selection states, and a click response.
+///
+/// The height must be exact for a virtualised listing: `ScrollArea::show_rows`
+/// reserves a fixed height per row and only draws the rows it believes are
+/// visible, so content that lays out even a few pixels shorter leaves a
+/// growing gap at the bottom of the view.
+pub fn row_sized<R>(
+    ui: &mut Ui,
+    id: egui::Id,
+    height: f32,
+    selected: bool,
+    striped: bool,
+    content: impl FnOnce(&mut Ui) -> R,
+) -> (R, Response) {
     let bg = ui.painter().add(egui::Shape::Noop);
-    let inner = ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 10.0;
-        content(ui)
-    });
+    let width = ui.available_width();
+    let inner = ui.allocate_ui_with_layout(
+        egui::vec2(width, height),
+        egui::Layout::left_to_right(egui::Align::Center),
+        |ui| {
+            ui.set_min_height(height);
+            ui.spacing_mut().item_spacing.x = 10.0;
+            content(ui)
+        },
+    );
 
     let mut rect = inner.response.rect;
     rect.min.x = ui.max_rect().min.x;
     rect.max.x = ui.max_rect().max.x;
-    rect = rect.expand2(egui::vec2(0.0, 1.0));
+    rect.max.y = rect.min.y + height;
 
     let resp = ui.interact(rect, id, Sense::click());
     let fill = if selected {
-        SELECTED
+        col::selected()
     } else if resp.hovered() {
-        HOVER
+        col::hover()
     } else if striped {
-        STRIPE
+        col::stripe()
     } else {
         Color32::TRANSPARENT
     };
@@ -80,6 +99,6 @@ pub fn chip(ui: &mut Ui, text: &str, color: Color32) {
 /// Section heading inside a scrolling view.
 pub fn section(ui: &mut Ui, text: &str) {
     ui.add_space(10.0);
-    ui.label(egui::RichText::new(text).color(DIM).size(11.0).strong());
+    ui.label(egui::RichText::new(text).color(col::dim()).size(11.0).strong());
     ui.add_space(2.0);
 }

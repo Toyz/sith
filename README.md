@@ -67,24 +67,86 @@ single function, `--bits32` for segments that promote themselves through DPMI,
 ## GUI
 
 ```sh
-sith-gui [FILE]
+sith-gui [FILE|PROJECT]
 ```
 
-- Tabbed views over a workspace of files, with back/forward history.
+- Tabbed views over a workspace of files, with back/forward history. Clicking
+  an imported symbol opens the DLL that exports it, at the export.
 - A navigator with segments, functions grouped by segment, resources with live
   thumbnails, and every sibling module found beside the file.
-- A disassembly listing with a branch-arrow gutter, function banners, resolved
-  fixups and reconstructed API calls.
+- A disassembly listing with an interactive branch-arrow gutter — hover an arc
+  to light up the whole path and both ends, click to follow it — plus function
+  banners, resolved fixups and reconstructed API calls.
 - An inspector showing the selected instruction's bytes, its fixup, the API
-  signature and argument values, and everything that references it.
+  signature with named arguments, everything that references it, and the box
+  where you name it and write your note.
 - A call-graph explorer: pan and zoom, callers and callees, click to re-centre.
 - A strings browser that cross-references each string to the code that loads it.
 - Resource preview for bitmaps, icons and cursors, with export to real `.bmp`,
   `.ico` and `.cur` files; menus, dialogs, string tables, accelerators and
   version info decode to text.
+- A command palette over everything in the binary, with scoped search and match
+  highlighting.
+- Seven themes — Catppuccin Mocha, Macchiato and Latte, Nord, Tokyo Night,
+  Gruvbox Dark and Midnight — under View ▸ Theme, remembered between runs.
 
-Keys: `Ctrl+O` open, `Ctrl+G` go to address or symbol, `Ctrl+P` find symbol,
-`Ctrl+W` close tab, `Alt+←`/`Alt+→` history, `↑`/`↓` move, `Enter` follow.
+Keys: `Ctrl+O` open, `Ctrl+S` save project, `Ctrl+P` find anything, `Ctrl+G` go
+to an address or symbol, `Ctrl+W` close tab, `Alt+←`/`Alt+→` history, `↑`/`↓`
+move, `Enter` follow, `N` name the selected address, `B` bookmark it.
+
+### The command palette
+
+`Ctrl+P` searches functions, segments, resources, imports, strings, sibling
+modules and the tool's own commands at once. A leading sigil narrows it:
+
+| prefix | searches |
+| --- | --- |
+| `>` | commands |
+| `@` | functions |
+| `#` | strings |
+| `$` | resources |
+| `seg02:1A40` | an address, offered directly |
+
+Matching is subsequence-based and ranked, so `mwp` finds `MAINWNDPROC`, and the
+matched letters are marked in the result so it is clear why an entry is there.
+
+## Projects
+
+Everything the tool derives from a binary can be recomputed at any time. What
+cannot is the part that came out of your head. A project file holds exactly
+that, keyed by address:
+
+- the names you gave to addresses,
+- the notes you attached to them,
+- your bookmarks,
+- which segments you decided hold 32-bit code.
+
+`File ▸ Save project` writes a `.sith` file; `Ctrl+S` saves again, and every
+later change is written back automatically so nothing is lost to a crash.
+Opening a project reopens every binary it refers to.
+
+The format is JSON, so it diffs, merges and reads as plain text:
+
+```json
+{
+  "format_version": 1,
+  "name": "chips",
+  "binaries": [
+    {
+      "path": "CHIPS.EXE",
+      "module": "CHIPS",
+      "bits32": [],
+      "names": { "02:225C": "MainWndProc" },
+      "comments": { "02:225C": "handles WM_PAINT" },
+      "bookmarks": ["02:225C"]
+    }
+  ]
+}
+```
+
+Binary paths are stored relative to the project file where possible, so a
+project folder can be moved, shared or checked in as a unit; a binary that has
+moved is still matched by its module name.
 
 ## Crates
 
@@ -117,10 +179,19 @@ Hand-written tables in circulation get this wrong — one common table has GDI.2
 as `BitBlt` when it is `Rectangle`, and GDI.34, the real `BitBlt`, as
 `CreateBrushIndirect`.
 
-`crates/ne-core/data/win16_constants.json` is curated by hand: it binds named
-flag and enumeration sets (`GMEM_*`, `MB_*`, `WS_*`, ROP codes, `IDC_*`, …) to
-specific parameters of specific functions, which is knowledge no machine
--readable source carries.
+Two files are curated by hand, because no machine-readable source carries what
+is in them:
+
+- `win16_constants.json` binds named flag and enumeration sets (`GMEM_*`,
+  `MB_*`, `WS_*`, ROP codes, `IDC_*`, `DISPLAYDIB_*`, `MMIO_*`, WinG dither
+  modes, …) to specific parameters of specific functions.
+- `win16_params.json` gives return types and parameter names for the entry
+  points that turn up most in application code, including the modules a game
+  actually leans on: WinG, DISPDIB, MMSYSTEM's `mmio`/`wave`/`time`/`mci`
+  families, SHELL, TOOLHELP, VER, LZEXPAND and COMMDLG.
+
+A names list whose length no longer matches the argument list is dropped rather
+than applied: a wrong parameter name is worse than none.
 
 ## Accuracy notes
 

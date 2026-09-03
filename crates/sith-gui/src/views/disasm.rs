@@ -8,9 +8,9 @@
 
 use crate::icons::{self, Icon};
 use crate::state::{Action, Nav, SithApp};
-use crate::theme::*;
+use crate::theme::{col, *};
 use crate::widgets;
-use eframe::egui::{self, Color32, Pos2, Rect, Stroke, Ui, Vec2};
+use eframe::egui::{self, Color32, Pos2, Rect, Stroke, Ui};
 use ne_analysis::{callargs, Addr, Function};
 use ne_core::{ApiDb, Target};
 use ne_disasm::{Flow, Insn};
@@ -86,7 +86,10 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16) {
         .enumerate()
         .map(|(i, f)| (f.addr.offset, i))
         .collect();
-    let labels: BTreeMap<u32, String> = funcs.iter().map(|f| (f.addr.offset, f.label())).collect();
+    let labels: BTreeMap<u32, String> = funcs
+        .iter()
+        .map(|f| (f.addr.offset, app.label(f)))
+        .collect();
 
     // Row list: a banner before each function, then its instructions.
     let mut rows: Vec<Row> = Vec::with_capacity(code.insns.len() + funcs.len());
@@ -118,6 +121,11 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16) {
 
     sticky_header(app, ui, act, &rows, &funcs, row_h);
 
+    // `show_rows` adds the ui's vertical item spacing to every row when it
+    // computes the visible range and the total height; zeroing it here makes
+    // the drawn rows exactly `row_h` apart, so the listing fills the view
+    // instead of stopping short.
+    ui.spacing_mut().item_spacing.y = 0.0;
     let mut area = egui::ScrollArea::vertical().auto_shrink([false, false]);
     if let Some(target) = tab.scroll_to {
         let idx = row_of_offset
@@ -130,16 +138,54 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16) {
     }
 
     let out = area.show_rows(ui, row_h, rows.len(), |ui, range| {
-        ui.spacing_mut().item_spacing.y = 0.0;
         let first = range.start;
         let top = ui.cursor().top();
         let left = ui.max_rect().left();
+        let gutter = Rect::from_min_max(
+            Pos2::new(left, ui.clip_rect().top()),
+            Pos2::new(left + gutter_w, ui.clip_rect().bottom()),
+        );
+        let pointer = ui
+            .ctx()
+            .pointer_latest_pos()
+            .filter(|p| gutter.contains(*p));
 
-        draw_branches(ui, &branches, first, range.end, top, left, row_h, selected, &rows, code);
+        let hovered = draw_branches(
+            ui, &branches, first, range.end, top, left, row_h, selected, &rows, code, pointer,
+        );
+
+        // Only claim the pointer when an arc is actually under it, so the
+        // gutter does not swallow clicks meant for the rows behind it.
+        if let Some(h) = hovered {
+            let b = &branches[h];
+            if let (Some(from), Some(to)) = (
+                row_offset(&rows, code, b.from),
+                row_offset(&rows, code, b.to),
+            ) {
+                let resp = ui
+                    .interact(gutter, ui.id().with("branch-gutter"), egui::Sense::click())
+                    .on_hover_text(format!(
+                        "{} {from:04X} \u{2192} {to:04X}\nclick to follow",
+                        if b.conditional {
+                            "conditional jump"
+                        } else {
+                            "jump"
+                        }
+                    ));
+                if resp.clicked() {
+                    act.push(Action::Goto(Addr {
+                        segment: segno,
+                        offset: to,
+                    }));
+                }
+            }
+        }
 
         for r in range {
             match &rows[r] {
-                Row::Header(fi) => function_banner(ui, act, funcs[*fi], gutter_w),
+                Row::Header(fi) => {
+                    function_banner(app, ui, act, funcs[*fi], gutter_w, row_h)
+                }
                 Row::Insn(i) => {
                     // Reconstructing the call is cheap and only done for rows
                     // actually on screen.
@@ -155,6 +201,7 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16) {
                         &labels,
                         highlight.as_deref(),
                         call.as_ref(),
+                        row_h,
                     );
                 }
             }
@@ -167,6 +214,14 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16) {
         m.data
             .insert_temp(ui.id().with("disasm_scroll"), out.state.offset.y)
     });
+}
+
+/// The segment offset a listing row sits at, if it is an instruction.
+fn row_offset(rows: &[Row], code: &ne_disasm::SegmentCode, row: usize) -> Option<u32> {
+    match rows.get(row)? {
+        Row::Insn(i) => Some(code.insns[*i].offset),
+        Row::Header(_) => None,
+    }
 }
 
 /// Near jumps inside the segment, packed into non-overlapping lanes.
@@ -218,6 +273,12 @@ fn branches(code: &ne_disasm::SegmentCode, row_of: &BTreeMap<u32, usize>) -> Vec
     edges
 }
 
+/// Draw the branch gutter, and report the arc under the pointer.
+///
+/// Hovering an arc is how you read a jump without leaving your place: the
+/// whole path lights up, both of its endpoints highlight, and a click follows
+/// it. Hit testing is done against the drawn polyline rather than a bounding
+/// box, so arcs stacked in adjacent lanes stay individually selectable.
 #[allow(clippy::too_many_arguments)]
 fn draw_branches(
     ui: &Ui,
@@ -230,63 +291,159 @@ fn draw_branches(
     selected: Option<u32>,
     rows: &[Row],
     code: &ne_disasm::SegmentCode,
-) {
+    pointer: Option<Pos2>,
+) -> Option<usize> {
     let sel_row = selected.and_then(|s| {
         rows.iter().position(|r| match r {
             Row::Insn(i) => code.insns[*i].offset == s,
             _ => false,
         })
     });
-    let p = ui.painter();
     let y = |row: usize| top + (row as f32 - first as f32 + 0.5) * row_h;
+    let lane_x = |lane: usize| left + 2.0 + lane as f32 * LANE_W;
+    let edge_x = |lane: usize| left + 2.0 + (lane as f32 + 0.85) * LANE_W;
 
-    for b in branches {
+    // Which arc the pointer is on, chosen by distance so overlapping lanes
+    // resolve to the nearest one rather than to whichever drew last.
+    let mut hovered: Option<(usize, f32)> = None;
+    if let Some(p) = pointer {
+        for (i, b) in branches.iter().enumerate() {
+            let (lo, hi) = (b.from.min(b.to), b.from.max(b.to));
+            if hi < first || lo > last {
+                continue;
+            }
+            let (x, edge) = (lane_x(b.lane), edge_x(b.lane));
+            let (y0, y1) = (y(b.from), y(b.to));
+            let d = dist_to_segment(p, Pos2::new(x, y0), Pos2::new(x, y1))
+                .min(dist_to_segment(p, Pos2::new(x, y0), Pos2::new(edge, y0)))
+                .min(dist_to_segment(p, Pos2::new(x, y1), Pos2::new(edge, y1)));
+            if d <= 4.0 && hovered.is_none_or(|(_, best)| d < best) {
+                hovered = Some((i, d));
+            }
+        }
+    }
+    let hovered = hovered.map(|(i, _)| i);
+
+    let painter = ui.painter();
+    // The hovered arc is drawn last so it sits above its neighbours.
+    let order = branches
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| Some(*i) != hovered)
+        .chain(hovered.map(|i| (i, &branches[i])));
+
+    for (i, b) in order {
         let (lo, hi) = (b.from.min(b.to), b.from.max(b.to));
         if hi < first || lo > last {
             continue;
         }
-        let active = sel_row.is_some_and(|s| s == b.from || s == b.to);
-        let color = if active {
-            ACCENT
+        let is_hovered = Some(i) == hovered;
+        let touches_selection = sel_row.is_some_and(|s| s == b.from || s == b.to);
+        let color = if is_hovered {
+            col::orange()
+        } else if touches_selection {
+            col::accent()
         } else if b.conditional {
             Color32::from_rgb(0x3E, 0x54, 0x6B)
         } else {
             Color32::from_rgb(0x4B, 0x5F, 0x45)
         };
-        let stroke = Stroke::new(if active { 1.6 } else { 1.0 }, color);
-        let x = left + 2.0 + b.lane as f32 * LANE_W;
+        let width = if is_hovered {
+            2.0
+        } else if touches_selection {
+            1.6
+        } else {
+            1.0
+        };
+        let stroke = Stroke::new(width, color);
+        let (x, edge) = (lane_x(b.lane), edge_x(b.lane));
         let (y0, y1) = (y(b.from), y(b.to));
-        let edge = left + 2.0 + (b.lane as f32 + 0.85) * LANE_W;
 
-        p.line_segment([Pos2::new(x, y0), Pos2::new(edge, y0)], stroke);
-        p.line_segment([Pos2::new(x, y0), Pos2::new(x, y1)], stroke);
-        p.line_segment([Pos2::new(x, y1), Pos2::new(edge, y1)], stroke);
-        // Arrow head at the destination.
-        p.line_segment(
+        painter.line_segment([Pos2::new(x, y0), Pos2::new(edge, y0)], stroke);
+        painter.line_segment([Pos2::new(x, y0), Pos2::new(x, y1)], stroke);
+        painter.line_segment([Pos2::new(x, y1), Pos2::new(edge, y1)], stroke);
+        painter.line_segment(
             [Pos2::new(edge, y1), Pos2::new(edge - 3.5, y1 - 3.0)],
             stroke,
         );
-        p.line_segment(
+        painter.line_segment(
             [Pos2::new(edge, y1), Pos2::new(edge - 3.5, y1 + 3.0)],
             stroke,
         );
+
+        if is_hovered {
+            // Mark both ends, so a jump off the top or bottom of the view is
+            // still readable as "from here to somewhere above".
+            for (row, filled) in [(b.from, false), (b.to, true)] {
+                if row < first || row > last {
+                    continue;
+                }
+                let c = Pos2::new(edge + 3.0, y(row));
+                if filled {
+                    painter.circle_filled(c, 2.5, col::orange());
+                } else {
+                    painter.circle_stroke(c, 2.5, stroke);
+                }
+            }
+        }
     }
+    hovered
+}
+
+/// Distance from a point to a line segment, for hit-testing the arcs.
+fn dist_to_segment(p: Pos2, a: Pos2, b: Pos2) -> f32 {
+    let ab = b - a;
+    let len2 = ab.length_sq();
+    if len2 <= f32::EPSILON {
+        return (p - a).length();
+    }
+    let t = (((p - a).dot(ab)) / len2).clamp(0.0, 1.0);
+    (p - (a + ab * t)).length()
 }
 
 /// A banner introducing a function, with its size and reference count.
-fn function_banner(ui: &mut Ui, act: &mut Vec<Action>, f: &Function, gutter_w: f32) {
-    let (_, resp) = widgets::row(ui, ui.id().with(("fnhdr", f.addr.offset)), false, false, |ui| {
-        ui.add_space(gutter_w);
-        icons::inline(ui, Icon::Code, SYMBOL);
-        ui.label(mono_c(f.label(), SYMBOL).strong());
-        widgets::chip(ui, f.kind.as_str(), DIM);
-        ui.label(mono_c(
-            format!("{} bytes  {} insns  {} calls", f.size(), f.insn_count, f.calls.len()),
-            FAINT,
-        ));
-    });
+fn function_banner(
+    app: &SithApp,
+    ui: &mut Ui,
+    act: &mut Vec<Action>,
+    f: &Function,
+    gutter_w: f32,
+    row_h: f32,
+) {
+    let (_, resp) = widgets::row_sized(
+        ui,
+        ui.id().with(("fnhdr", f.addr.offset)),
+        row_h,
+        false,
+        false,
+        |ui| {
+            ui.add_space(gutter_w);
+            icons::inline(ui, Icon::Code, col::symbol());
+            let named = app.user_name(f.addr.segment, f.addr.offset).is_some();
+            ui.label(mono_c(app.label(f), if named { col::cyan() } else { col::symbol() }).strong());
+            if named {
+                widgets::chip(ui, "named", col::cyan());
+            }
+            widgets::chip(ui, f.kind.as_str(), col::dim());
+            ui.label(mono_c(
+                format!(
+                    "{} bytes  {} insns  {} calls",
+                    f.size(),
+                    f.insn_count,
+                    f.calls.len()
+                ),
+                col::faint(),
+            ));
+        },
+    );
     if resp.clicked() {
         act.push(Action::SetGraphRoot(f.addr));
+    }
+    if resp.double_clicked() {
+        act.push(Action::ShowRename {
+            segment: f.addr.segment,
+            offset: f.addr.offset,
+        });
     }
 }
 
@@ -319,13 +476,13 @@ fn sticky_header(
     let f = funcs[fi];
 
     egui::Frame::new()
-        .fill(RAISED)
+        .fill(col::raised())
         .inner_margin(egui::Margin::symmetric(8, 3))
         .show(ui, |ui| {
             ui.horizontal(|ui| {
-                icons::inline(ui, Icon::Code, SYMBOL);
-                ui.label(mono_c(f.label(), SYMBOL).strong());
-                ui.label(mono_c(f.addr.to_string(), FAINT));
+                icons::inline(ui, Icon::Code, col::symbol());
+                ui.label(mono_c(f.label(), col::symbol()).strong());
+                ui.label(mono_c(f.addr.to_string(), col::faint()));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if ui.small_button("call graph").clicked() {
                         act.push(Action::SetGraphRoot(f.addr));
@@ -348,6 +505,7 @@ fn insn_row(
     labels: &BTreeMap<u32, String>,
     highlight: Option<&str>,
     call: Option<&callargs::CallArgs>,
+    row_h: f32,
 ) {
     let selected = app.tab().and_then(|t| t.sel) == Some(insn.offset);
     let matches_highlight = highlight.is_some_and(|h| {
@@ -356,24 +514,34 @@ fn insn_row(
             .is_some_and(|f| f.target.to_string() == h)
     }) && !selected;
 
-    let (_, resp) = widgets::row(
+    // A link inside the row handles its own click. The row's click area is
+    // created after the content and sits on top of it, so without this the
+    // row would also select itself and undo the jump the link just made.
+    let (link_clicked, resp) = widgets::row_sized(
         ui,
         ui.id().with(("insn", segno, insn.offset)),
+        row_h,
         selected,
         matches_highlight,
         |ui| {
+            let mut consumed = false;
             ui.spacing_mut().item_spacing.x = 10.0;
             ui.add_space(gutter_w);
-            ui.label(mono_c(format!("{:04X}", insn.offset), ADDR));
+            if app.is_bookmarked(segno, insn.offset) {
+                ui.label(mono_c("\u{25C6}", col::orange()));
+            } else {
+                ui.label(mono_c(" ", col::addr()));
+            }
+            ui.label(mono_c(format!("{:04X}", insn.offset), col::addr()));
             if app.show_bytes {
-                ui.label(mono_c(format!("{:<byte_w$}", insn.hex()), BYTES));
+                ui.label(mono_c(format!("{:<byte_w$}", insn.hex()), col::bytes()));
             }
             // Splitting the mnemonic from its operands keeps a column of verbs
             // down the left, which is what makes a listing skimmable.
             let (mnem, ops) = insn.text.split_once(' ').unwrap_or((insn.text.as_str(), ""));
             ui.label(mono_c(format!("{mnem:<7}"), flow_color(insn.flow)));
             if !ops.is_empty() {
-                ui.label(mono_c(ops, MNEMONIC));
+                ui.label(mono_c(ops, col::mnemonic()));
             }
             if let Some(f) = &insn.fixup {
                 // A reconstructed call reads better than the bare symbol, so
@@ -382,9 +550,9 @@ fn insn_row(
                     Some(c) => format!("; {}.{}", c.module, c.render()),
                     None => format!("; {}", f.target),
                 };
-                let r = widgets::link(ui, text, COMMENT);
+                let mut r = widgets::link(ui, text, col::comment());
                 if let Some(c) = call {
-                    let r = r.on_hover_text(format!(
+                    r = r.on_hover_text(format!(
                         "{}.{}\n\n{}{}",
                         c.module,
                         c.signature.render(),
@@ -395,35 +563,64 @@ fn insn_row(
                             "\n\nsome arguments were not literal pushes"
                         }
                     ));
-                    if r.clicked() {
-                        act.push(target_action(&f.target));
-                    }
-                } else if r.clicked() {
+                }
+                if r.clicked() {
                     act.push(target_action(&f.target));
+                    consumed = true;
                 }
                 if f.additive {
-                    widgets::chip(ui, "additive", ORANGE);
+                    widgets::chip(ui, "additive", col::orange());
                 }
             } else if let Some(t) = insn.near_target {
                 if let Some(name) = labels.get(&t) {
-                    if widgets::link(ui, format!("; {name}"), COMMENT.gamma_multiply(0.75)).clicked()
+                    if widgets::link(ui, format!("; {name}"), col::comment().gamma_multiply(0.75)).clicked()
                     {
                         act.push(Action::Goto(Addr {
                             segment: segno,
                             offset: t,
                         }));
+                        consumed = true;
                     }
                 }
             }
+            // A note the user wrote outranks anything generated, so it sits
+            // at the end of the line where the eye finishes.
+            if let Some(note) = app.user_comment(segno, insn.offset) {
+                ui.label(mono_c(format!("; {note}"), col::yellow()));
+            }
+            consumed
         },
     );
-    if resp.clicked() {
+    if resp.clicked() && !link_clicked {
         act.push(Action::Select(insn.offset));
     }
     if resp.double_clicked() {
         act.push(Action::Select(insn.offset));
         act.push(Action::FollowSelection);
     }
-    let _ = Rect::NOTHING;
-    let _ = Vec2::ZERO;
+    resp.context_menu(|ui| {
+        if ui.button("Name this address…").clicked() {
+            act.push(Action::ShowRename {
+                segment: segno,
+                offset: insn.offset,
+            });
+            ui.close();
+        }
+        let marked = app.is_bookmarked(segno, insn.offset);
+        if ui
+            .button(if marked { "Remove bookmark" } else { "Bookmark" })
+            .clicked()
+        {
+            act.push(Action::ToggleBookmark {
+                segment: segno,
+                offset: insn.offset,
+            });
+            ui.close();
+        }
+        if ui.button("Copy address").clicked() {
+            ui.ctx()
+                .copy_text(format!("seg{segno:02}:{:04X}", insn.offset));
+            ui.close();
+        }
+    });
 }

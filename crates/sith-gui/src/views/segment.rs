@@ -1,7 +1,7 @@
 //! Segment view: a tab bar over the disassembly, hex, fixup and string modes.
 
 use crate::state::{Action, SegTab, SithApp};
-use crate::theme::*;
+use crate::theme::{col, *};
 use crate::views::{disasm, hex, strings};
 use crate::icons::{self, Icon};
 use crate::widgets;
@@ -21,7 +21,7 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16) {
         widgets::chip(
             ui,
             seg.kind().as_str(),
-            if seg.is_code() { CODE_SEG } else { DATA_SEG },
+            if seg.is_code() { col::code_seg() } else { col::data_seg() },
         );
         ui.separator();
         for (mode, name) in SegTab::ALL {
@@ -86,22 +86,28 @@ fn fixups(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16) {
     ui.add_space(4.0);
 
     let row_h = ui.text_style_height(&egui::TextStyle::Monospace) + 4.0;
+    // `show_rows` adds the ui's vertical item spacing to every row when it
+    // computes the visible range and the total height; zeroing it here makes
+    // the drawn rows exactly `row_h` apart, so the listing fills the view
+    // instead of stopping short.
+    ui.spacing_mut().item_spacing.y = 0.0;
     egui::ScrollArea::vertical()
         .auto_shrink([false, false])
         .show_rows(ui, row_h, rows.len(), |ui, range| {
             for i in range {
                 let f = rows[i];
-                let (_, resp) = widgets::row(
+                let (_, resp) = widgets::row_sized(
                     ui,
                     ui.id().with(("fx", f.site)),
+                    row_h,
                     sel == Some(f.site as u32),
                     i % 2 == 1,
                     |ui| {
-                        ui.label(mono_c(format!("{:04X}", f.site), ADDR));
-                        ui.label(mono_c(format!("{:<8}", f.addr_type.as_str()), DIM));
+                        ui.label(mono_c(format!("{:04X}", f.site), col::addr()));
+                        ui.label(mono_c(format!("{:<8}", f.addr_type.as_str()), col::dim()));
                         ui.label(mono_c(f.target.to_string(), target_color(&f.target)));
                         if f.additive {
-                            widgets::chip(ui, "additive", ORANGE);
+                            widgets::chip(ui, "additive", col::orange());
                         }
                     },
                 );
@@ -117,8 +123,8 @@ fn fixups(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16) {
 
 fn target_color(t: &Target) -> egui::Color32 {
     match t {
-        Target::Internal { .. } | Target::Entry { .. } => ACCENT,
-        Target::ImportOrdinal { .. } | Target::ImportName { .. } => COMMENT,
-        Target::OsFixup { .. } => ORANGE,
+        Target::Internal { .. } | Target::Entry { .. } => col::accent(),
+        Target::ImportOrdinal { .. } | Target::ImportName { .. } => col::comment(),
+        Target::OsFixup { .. } => col::orange(),
     }
 }

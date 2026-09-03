@@ -200,9 +200,9 @@ pub fn button(ui: &mut Ui, icon: Icon, tooltip: &str) -> Response {
             .rect_filled(rect, egui::CornerRadius::same(4), visuals.weak_bg_fill);
     }
     let color = if ui.is_enabled() {
-        crate::theme::TEXT
+        crate::theme::col::text()
     } else {
-        crate::theme::FAINT
+        crate::theme::col::faint()
     };
     draw(ui.painter(), rect.shrink(4.0), icon, color);
     resp.on_hover_text(tooltip)

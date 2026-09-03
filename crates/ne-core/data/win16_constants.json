@@ -205,7 +205,10 @@
     },
     "BKMODE": {
       "kind": "enum",
-      "values": { "1": "TRANSPARENT", "2": "OPAQUE" }
+      "values": {
+        "1": "TRANSPARENT",
+        "2": "OPAQUE"
+      }
     },
     "OF": {
       "kind": "flags",
@@ -338,6 +341,65 @@
         "0x0001": "PM_REMOVE",
         "0x0002": "PM_NOYIELD"
       }
+    },
+    "DISPLAYDIB": {
+      "kind": "flags",
+      "values": {
+        "0x0000": "DISPLAYDIB_MODE_DEFAULT",
+        "0x0001": "DISPLAYDIB_MODE_320x200x8",
+        "0x0002": "DISPLAYDIB_MODE_320x240x8",
+        "0x0004": "DISPLAYDIB_TEST",
+        "0x0010": "DISPLAYDIB_NOPALETTE",
+        "0x0020": "DISPLAYDIB_NOCENTER",
+        "0x0040": "DISPLAYDIB_NOWAIT",
+        "0x0080": "DISPLAYDIB_NOIMAGE",
+        "0x0100": "DISPLAYDIB_END",
+        "0x0200": "DISPLAYDIB_BEGIN"
+      }
+    },
+    "WING_DITHER": {
+      "kind": "enum",
+      "values": {
+        "0": "WING_DISPERSED_4x4",
+        "1": "WING_DISPERSED_8x8",
+        "2": "WING_CLUSTERED_4x4"
+      }
+    },
+    "SND": {
+      "kind": "flags",
+      "values": {
+        "0x0000": "SND_SYNC",
+        "0x0001": "SND_ASYNC",
+        "0x0002": "SND_NODEFAULT",
+        "0x0004": "SND_MEMORY",
+        "0x0008": "SND_LOOP",
+        "0x0010": "SND_NOSTOP"
+      }
+    },
+    "MMIO": {
+      "kind": "flags",
+      "values": {
+        "0x00000000": "MMIO_READ",
+        "0x00000001": "MMIO_WRITE",
+        "0x00000002": "MMIO_READWRITE",
+        "0x00000010": "MMIO_EXCLUSIVE",
+        "0x00000020": "MMIO_DENYWRITE",
+        "0x00000030": "MMIO_DENYREAD",
+        "0x00000040": "MMIO_DENYNONE",
+        "0x00000100": "MMIO_PARSE",
+        "0x00000200": "MMIO_DELETE",
+        "0x00001000": "MMIO_CREATE",
+        "0x00004000": "MMIO_EXIST",
+        "0x00008000": "MMIO_ALLOCBUF"
+      }
+    },
+    "SEEK": {
+      "kind": "enum",
+      "values": {
+        "0": "SEEK_SET",
+        "1": "SEEK_CUR",
+        "2": "SEEK_END"
+      }
     }
   },
   "params": {
@@ -371,6 +433,14 @@
     "GDI.StretchBlt": [null, null, null, null, null, null, null, null, null, null, "ROP"],
     "GDI.GetStockObject": ["STOCK"],
     "GDI.SetBkMode": [null, "BKMODE"],
-    "GDI.SetROP2": [null, "ROP"]
+    "GDI.SetROP2": [null, "ROP"],
+    "DISPDIB.DisplayDib": [null, null, "DISPLAYDIB"],
+    "WING.WinGCreateHalfToneBrush": [null, null, "WING_DITHER"],
+    "MMSYSTEM.sndPlaySound": [null, "SND"],
+    "MMSYSTEM.mmioOpen": [null, null, "MMIO"],
+    "MMSYSTEM.mmioSeek": [null, null, "SEEK"],
+    "KERNEL._llseek": [null, null, "SEEK"],
+    "LZEXPAND.LZSeek": [null, null, "SEEK"],
+    "LZEXPAND.LZOpenFile": [null, null, "OF"]
   }
 }
