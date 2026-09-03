@@ -198,6 +198,8 @@ pub struct GraphState {
     pub selected: Option<Addr>,
     /// Columns the user has asked to see in full, overriding the cap.
     pub expanded: std::collections::HashSet<i32>,
+    /// Roots visited before this one, so re-centring can be undone.
+    pub root_history: Vec<Option<Addr>>,
 }
 
 impl Default for GraphState {
@@ -218,6 +220,7 @@ impl Default for GraphState {
             menu_for: None,
             selected: None,
             expanded: Default::default(),
+            root_history: Vec::new(),
         }
     }
 }
@@ -316,6 +319,7 @@ pub enum Action {
     GraphMenuFor(Option<String>),
     GraphSelect(Option<Addr>),
     GraphExpandLevel(i32),
+    GraphBack,
     ConsumeScroll,
     SetGraphDir(GraphDir),
     ToggleGraphImports,
@@ -1001,8 +1005,27 @@ impl SithApp {
                     t.filter = f;
                 }
             }
+            Action::GraphBack => {
+                if let Some(t) = self.tab_mut() {
+                    if let Some(previous) = t.graph.root_history.pop() {
+                        t.graph.root = previous;
+                        t.graph.moved.clear();
+                        t.graph.expanded.clear();
+                        t.graph.dragging = None;
+                        t.graph.framed = false;
+                        t.graph.selected = previous;
+                    }
+                }
+            }
             Action::SetGraphRoot(a) => {
                 if let Some(t) = self.tab_mut() {
+                    // Re-centring is easy to do by accident, so where you came
+                    // from is kept and the header offers the way back.
+                    if t.graph.root != Some(a) {
+                        let from = t.graph.root;
+                        t.graph.root_history.push(from);
+                        t.graph.root_history.truncate(64);
+                    }
                     t.nav = Nav::Graph;
                     t.graph.root = Some(a);
                     // Positions belong to the graph that was drawn, not to the

@@ -102,9 +102,11 @@ pub fn strip_item<R>(ui: &mut Ui, content: impl FnOnce(&mut Ui) -> R) -> R {
 
 /// A segmented control: several exclusive choices in one strip.
 ///
-/// egui's selectable labels look like text that happens to highlight; a
-/// segmented control reads as one control with a state, which is what these
-/// choices are.
+/// Drawn by hand rather than out of `egui::Button`. A Button re-measures
+/// itself per interaction state, so hovering one segment made the strip two
+/// pixels narrower and shunted everything after it sideways; laying the text
+/// out once and allocating from that keeps the size fixed whatever the
+/// pointer is doing, and leaves hover free to be a colour change.
 pub fn segmented<T: PartialEq + Copy>(ui: &mut Ui, current: T, options: &[(T, &str)]) -> Option<T> {
     let mut picked = None;
     egui::Frame::new()
@@ -117,19 +119,35 @@ pub fn segmented<T: PartialEq + Copy>(ui: &mut Ui, current: T, options: &[(T, &s
                 ui.spacing_mut().item_spacing.x = 2.0;
                 for (value, label) in options {
                     let active = *value == current;
-                    let text = egui::RichText::new(*label)
-                        .size(11.5)
-                        .color(if active { col::text() } else { col::dim() });
-                    let resp = ui.add(
-                        egui::Button::new(text)
-                            .fill(if active {
-                                col::accent().gamma_multiply(0.28)
-                            } else {
-                                Color32::TRANSPARENT
-                            })
-                            .stroke(egui::Stroke::NONE)
-                            .corner_radius(CornerRadius::same(4)),
+                    // Laid out in one fixed colour: a galley's size must not
+                    // depend on the state it is drawn in.
+                    let galley = ui.painter().layout_no_wrap(
+                        (*label).to_owned(),
+                        egui::FontId::proportional(11.5),
+                        col::text(),
                     );
+                    let size = egui::vec2(galley.size().x + 16.0, CONTROL_H);
+                    let (rect, resp) = ui.allocate_exact_size(size, Sense::click());
+                    let fill = if active {
+                        col::accent().gamma_multiply(0.28)
+                    } else if resp.hovered() {
+                        col::raised()
+                    } else {
+                        Color32::TRANSPARENT
+                    };
+                    if fill != Color32::TRANSPARENT {
+                        ui.painter().rect_filled(rect, CornerRadius::same(4), fill);
+                    }
+                    let color = if active {
+                        col::text()
+                    } else if resp.hovered() {
+                        col::text()
+                    } else {
+                        col::dim()
+                    };
+                    let at = rect.min
+                        + egui::vec2(8.0, (rect.height() - galley.size().y) / 2.0);
+                    ui.painter().galley(at, galley, color);
                     if resp.clicked() {
                         picked = Some(*value);
                     }
@@ -158,37 +176,50 @@ pub fn stepper(ui: &mut Ui, value: usize, min: usize, max: usize) -> Option<usiz
                 // taller than the nominal height pushes the frame down.
                 ui.set_height(CONTROL_H);
                 ui.spacing_mut().item_spacing.x = 2.0;
-                ui.add_enabled_ui(value > min, |ui| {
-                    if ui.add(small_glyph("\u{2212}")).clicked() {
-                        picked = Some(value - 1);
-                    }
-                });
+                if small_glyph(ui, "\u{2212}", value > min) {
+                    picked = Some(value - 1);
+                }
                 ui.label(
                     egui::RichText::new(value.to_string())
                         .monospace()
                         .size(11.5)
                         .color(col::text()),
                 );
-                ui.add_enabled_ui(value < max, |ui| {
-                    if ui.add(small_glyph("+")).clicked() {
-                        picked = Some(value + 1);
-                    }
-                });
+                if small_glyph(ui, "+", value < max) {
+                    picked = Some(value + 1);
+                }
             });
         });
     picked
 }
 
-fn small_glyph(text: &str) -> egui::Button<'static> {
-    egui::Button::new(
-        egui::RichText::new(text.to_owned())
-            .monospace()
-            .size(12.0)
-            .color(col::dim()),
-    )
-    .fill(Color32::TRANSPARENT)
-    .stroke(egui::Stroke::NONE)
-    .corner_radius(CornerRadius::same(4))
+/// A small glyph button, drawn rather than built from `egui::Button`, for the
+/// same reason the segments are: a fixed size whatever the pointer is doing.
+fn small_glyph(ui: &mut Ui, text: &str, enabled: bool) -> bool {
+    let galley = ui.painter().layout_no_wrap(
+        text.to_owned(),
+        egui::FontId::monospace(12.0),
+        col::dim(),
+    );
+    let size = egui::vec2(galley.size().x + 12.0, CONTROL_H);
+    let (rect, resp) = ui.allocate_exact_size(
+        size,
+        if enabled { Sense::click() } else { Sense::hover() },
+    );
+    if enabled && resp.hovered() {
+        ui.painter()
+            .rect_filled(rect, CornerRadius::same(4), col::raised());
+    }
+    let color = if !enabled {
+        col::faint().gamma_multiply(0.5)
+    } else if resp.hovered() {
+        col::text()
+    } else {
+        col::dim()
+    };
+    let at = rect.min + egui::vec2(6.0, (rect.height() - galley.size().y) / 2.0);
+    ui.painter().galley(at, galley, color);
+    enabled && resp.clicked()
 }
 
 /// A chip that is also a switch.

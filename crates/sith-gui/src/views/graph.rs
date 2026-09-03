@@ -79,7 +79,7 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
     );
     let edges = edges(app, doc, &nodes);
 
-    header(app, ui, act, root_fn, &nodes, &edges);
+    header(app, ui, act, root_fn, &nodes, &edges, !g.root_history.is_empty());
     controls(app, ui, act, g);
     canvas(app, ui, act, g, &nodes, &edges);
 }
@@ -92,9 +92,17 @@ fn header(
     root: &Function,
     nodes: &[Node],
     edges: &[(usize, usize)],
+    can_go_back: bool,
 ) {
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 8.0;
+        // Re-centring replaces the whole picture, so the way back to the one
+        // before it belongs next to the name of where you are.
+        ui.add_enabled_ui(can_go_back, |ui| {
+            if icons::button(ui, Icon::Back, "Back to the previous root").clicked() {
+                act.push(Action::GraphBack);
+            }
+        });
         icons::inline(ui, Icon::Graph, col::accent());
         ui.label(egui::RichText::new("Call graph").size(15.0).strong());
         ui.label(
