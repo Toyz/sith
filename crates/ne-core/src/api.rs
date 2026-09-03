@@ -77,6 +77,21 @@ impl ArgKind {
         }
     }
 
+    /// The type a Windows SDK header would have written.
+    pub fn c_type(self) -> &'static str {
+        match self {
+            ArgKind::Word => "WORD",
+            ArgKind::SWord => "int",
+            ArgKind::Long => "LONG",
+            ArgKind::Str => "LPCSTR",
+            ArgKind::Ptr => "LPVOID",
+            ArgKind::SegPtr => "DWORD",
+            // Nothing is known about it beyond its width, and saying WORD
+            // would be a guess dressed as a fact.
+            ArgKind::Other => "DWORD",
+        }
+    }
+
     pub fn as_str(self) -> &'static str {
         match self {
             ArgKind::Word => "word",
@@ -111,6 +126,35 @@ impl Signature {
     /// Name of parameter `index`, where one is known.
     pub fn param_name(&self, index: usize) -> Option<&str> {
         self.params.get(index).map(String::as_str)
+    }
+
+    /// The declaration a Windows SDK header would carry for this function.
+    ///
+    /// Reconstructed from the signature database, which knows argument widths
+    /// and, for the curated entries, parameter names. Widths are not types:
+    /// a `WORD` here may have been an `HWND` or a `BOOL`, and the real header
+    /// this stands in for would have said which.
+    pub fn prototype(&self) -> String {
+        let conv = match self.conv {
+            CallConv::Pascal => "FAR PASCAL",
+            CallConv::Cdecl => "FAR CDECL",
+            CallConv::Other => "FAR",
+        };
+        let args = if self.args.is_empty() {
+            "void".to_owned()
+        } else {
+            self.args
+                .iter()
+                .enumerate()
+                .map(|(i, a)| match self.param_name(i) {
+                    Some(n) => format!("{} {n}", a.c_type()),
+                    None => a.c_type().to_owned(),
+                })
+                .collect::<Vec<_>>()
+                .join(", ")
+        };
+        let ret = self.ret.as_deref().unwrap_or("WORD");
+        format!("{ret} {conv} {}({args});", self.name)
     }
 
     /// A C-ish rendering, for tooltips and headers.
@@ -179,6 +223,33 @@ impl ConstSet {
         }
         Some(parts.join("|"))
     }
+}
+
+/// The Windows SDK header that declared a module's exports.
+///
+/// Only the modules that had one. A DLL belonging to the program being read
+/// has no standard header, and claiming otherwise would send someone looking
+/// for a file that was never shipped.
+pub fn header_for(module: &str) -> Option<&'static str> {
+    Some(match module.to_ascii_uppercase().as_str() {
+        "KERNEL" | "USER" | "GDI" | "KEYBOARD" | "SOUND" | "SYSTEM" | "DISPLAY" | "MOUSE"
+        | "COMM" => "windows.h",
+        "MMSYSTEM" | "MCIAVI" | "MCIANIM" | "MCICDA" | "MCISEQ" | "MCIWAVE" => "mmsystem.h",
+        "COMMDLG" => "commdlg.h",
+        "TOOLHELP" => "toolhelp.h",
+        "SHELL" => "shellapi.h",
+        "VER" => "ver.h",
+        "LZEXPAND" => "lzexpand.h",
+        "DDEML" => "ddeml.h",
+        "STRESS" => "stress.h",
+        "WING" => "wing.h",
+        "DISPDIB" => "dispdib.h",
+        "MSVIDEO" | "AVIFILE" => "vfw.h",
+        "OLE2" | "OLECLI" | "OLESVR" | "COMPOBJ" | "STORAGE" => "ole.h",
+        "WINSPOOL" => "winspool.h",
+        "WIN87EM" | "WPROCS" => return None,
+        _ => return None,
+    })
 }
 
 /// Signatures and constants, keyed by `MODULE.ordinal` and `MODULE.Name`.
@@ -332,5 +403,54 @@ fn parse_u32(s: &str) -> Option<u32> {
         u32::from_str_radix(h, 16).ok()
     } else {
         t.parse().ok()
+    }
+}
+
+#[cfg(test)]
+mod header_tests {
+    use super::*;
+
+    #[test]
+    fn the_core_modules_share_one_header() {
+        for m in ["KERNEL", "USER", "GDI", "kernel", "Gdi"] {
+            assert_eq!(header_for(m), Some("windows.h"), "{m}");
+        }
+    }
+
+    #[test]
+    fn a_module_from_the_program_has_no_header() {
+        // A DLL shipped with the game was never in the SDK, so there is no
+        // file to include and saying otherwise sends someone looking for one.
+        assert_eq!(header_for("WEP4UTIL"), None);
+        assert_eq!(header_for("MYGAME"), None);
+    }
+
+    #[test]
+    fn a_prototype_reads_as_a_declaration() {
+        let sig = Signature {
+            name: "SetErrorMode".into(),
+            conv: CallConv::Pascal,
+            args: vec![ArgKind::Word],
+            ret: Some("WORD".into()),
+            params: vec!["mode".into()],
+        };
+        assert_eq!(
+            sig.prototype(),
+            "WORD FAR PASCAL SetErrorMode(WORD mode);"
+        );
+    }
+
+    #[test]
+    fn a_function_taking_nothing_says_void() {
+        let sig = Signature {
+            name: "GetCurrentTask".into(),
+            conv: CallConv::Pascal,
+            args: vec![],
+            ret: None,
+            params: vec![],
+        };
+        // No return type on record falls back to the Win16 convention
+        // rather than inventing one.
+        assert_eq!(sig.prototype(), "WORD FAR PASCAL GetCurrentTask(void);");
     }
 }

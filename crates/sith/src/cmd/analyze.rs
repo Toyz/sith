@@ -27,7 +27,11 @@ pub fn pseudo(
     }
 
     for f in chosen {
-        for line in ne_analysis::pseudo::function(&program, db, f, &f.label()) {
+        let label = |g: &ne_analysis::Function| g.label();
+        let lines = ne_analysis::pseudo::preamble(&program, db, f, &label)
+            .into_iter()
+            .chain(ne_analysis::pseudo::function(&program, db, f, &f.label()));
+        for line in lines {
             let pad = "    ".repeat(line.indent as usize);
             match line.addr {
                 Some(a) => println!("{}  {pad}{}", dim(&format!("{a:04X}")), line.text),

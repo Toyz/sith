@@ -359,6 +359,7 @@ pub enum Action {
     ToggleGraphImports,
     ToggleNavigator,
     ToggleInspector,
+    ToggleIncludes,
     /// Open or close the key binding editor.
     ShowKeys,
     /// Arm a command to take the next key pressed.
@@ -396,6 +397,8 @@ pub struct SithApp {
 
     pub nav_filter: String,
     pub show_inspector: bool,
+    /// Show the includes and declarations above a function in the C view.
+    pub show_includes: bool,
     pub show_navigator: bool,
     pub show_bytes: bool,
     pub min_string_len: usize,
@@ -473,6 +476,7 @@ impl SithApp {
             status: "no file loaded".into(),
             nav_filter: String::new(),
             show_inspector: true,
+            show_includes: true,
             show_navigator: true,
             show_bytes: true,
             min_string_len: 4,
@@ -1324,6 +1328,7 @@ impl SithApp {
                 self.key_clash = None;
                 let _ = self.keys.save();
             }
+            Action::ToggleIncludes => self.show_includes = !self.show_includes,
             Action::ToggleNavigator => self.show_navigator = !self.show_navigator,
             Action::ToggleInspector => self.show_inspector = !self.show_inspector,
             Action::ToggleBytes => self.show_bytes = !self.show_bytes,

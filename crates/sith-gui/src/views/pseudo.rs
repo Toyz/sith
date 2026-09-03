@@ -42,7 +42,12 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16) {
     picker(app, ui, act, &funcs, f.addr.offset);
     crate::ui::sep(ui);
 
-    let lines = ne_analysis::pseudo::function(&doc.program, ne_core::ApiDb::embedded(), f, &app.label(f));
+    let db = ne_core::ApiDb::embedded();
+    let mut lines = Vec::new();
+    if app.show_includes {
+        lines.extend(ne_analysis::pseudo::preamble(&doc.program, db, f, &|g| app.label(g)));
+    }
+    lines.extend(ne_analysis::pseudo::function(&doc.program, db, f, &app.label(f)));
     body(app, ui, act, segno, &lines);
 }
 
@@ -61,19 +66,29 @@ fn picker(
             ui.label(mono_c(app.label(funcs[at]), col::symbol()).strong());
             ui.label(mono_c(funcs[at].addr.to_string(), col::faint()));
         });
-        ui.add_space(8.0);
-        // Counted from one, because the label beside it says which function
-        // this is and the number should say where it sits in the segment.
-        if let Some(next) = widgets::stepper(ui, at + 1, 1, funcs.len()) {
-            act.push(Action::Goto(funcs[next - 1].addr));
-        }
-        ui.label(
-            egui::RichText::new(format!("of {}", funcs.len()))
-                .size(11.0)
-                .color(col::faint()),
-        );
+        ui.add_space(10.0);
+        widgets::strip_item(ui, |ui| {
+            // `Goto` would drop back to the disassembly, which is not what
+            // stepping through functions inside this view should do.
+            if icons::button(ui, Icon::Back, "previous function").clicked() && at > 0 {
+                act.push(Action::SegTabAt(SegTab::Pseudo, funcs[at - 1].addr));
+            }
+            ui.label(
+                egui::RichText::new(format!("function {} of {}", at + 1, funcs.len()))
+                    .size(11.0)
+                    .color(col::faint()),
+            );
+            if icons::button(ui, Icon::Forward, "next function").clicked()
+                && at + 1 < funcs.len()
+            {
+                act.push(Action::SegTabAt(SegTab::Pseudo, funcs[at + 1].addr));
+            }
+        });
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             widgets::strip_item(ui, |ui| {
+                if widgets::toggle_chip(ui, app.show_includes, "includes", col::cyan()) {
+                    act.push(Action::ToggleIncludes);
+                }
                 if widgets::toggle_chip(ui, false, "Disassembly", col::accent()) {
                     act.push(Action::SegTabAt(SegTab::Disasm, funcs[at].addr));
                 }
@@ -167,5 +182,6 @@ fn color_of(kind: Kind) -> Color32 {
         // An instruction with no C shape is left as it was, and marked, so
         // nothing here is mistaken for a complete translation.
         Kind::Asm => col::orange(),
+        Kind::Include => col::purple(),
     }
 }

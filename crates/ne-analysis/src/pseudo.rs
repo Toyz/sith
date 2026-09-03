@@ -21,7 +21,7 @@ use ne_core::Target;
 use iced_x86::Mnemonic;
 use ne_core::api::ApiDb;
 use ne_disasm::{Flow, Insn, SegmentCode};
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 /// What a line is, so the view can color it without re-parsing the text.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -46,6 +46,8 @@ pub enum Kind {
     Return,
     /// An instruction with no C shape, left as it was.
     Asm,
+    /// A preprocessor line.
+    Include,
 }
 
 #[derive(Debug, Clone)]
@@ -77,6 +79,163 @@ impl Line {
     }
 }
 
+/// The includes and declarations this function would need to compile.
+///
+/// The tool already knows which modules the code imports from and what each
+/// import's signature is, so it can write the part of a header file that
+/// this function actually uses: the SDK include for each module, a prototype
+/// for every import called, forward declarations for the functions in this
+/// module it calls, and the module data it touches.
+///
+/// The widths are real, taken from the import table and the call sites. The
+/// types are not: a `WORD` here may have been an `HWND` or a `BOOL`, and only
+/// the header this stands in for could say which.
+pub fn preamble(program: &Program, db: &ApiDb, f: &Function, label: &dyn Fn(&Function) -> String) -> Vec<Line> {
+    let Some(code) = program.code.get(&f.addr.segment) else {
+        return Vec::new();
+    };
+    let body: Vec<(usize, &Insn)> = code
+        .insns
+        .iter()
+        .enumerate()
+        .filter(|(_, i)| i.offset >= f.addr.offset && i.offset < f.end)
+        .collect();
+
+    let mut imports: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    let mut internal: BTreeSet<String> = BTreeSet::new();
+    let mut unknown: BTreeSet<String> = BTreeSet::new();
+
+    for (idx, insn) in &body {
+        if !matches!(insn.flow, Flow::Call | Flow::CallFar) {
+            continue;
+        }
+        if let Some(call) = callargs::reconstruct(code, *idx, db) {
+            imports
+                .entry(call.module.clone())
+                .or_default()
+                .insert(call.signature.prototype());
+            continue;
+        }
+        match insn.fixup.as_ref().map(|x| &x.target) {
+            Some(Target::Internal {
+                segment,
+                offset: Some(off),
+            }) => {
+                if let Some(callee) = program.function_at(Addr {
+                    segment: *segment,
+                    offset: *off as u32,
+                }) {
+                    internal.insert(callee.frame.signature(&label(callee)));
+                }
+            }
+            // An import with no signature in the database still has a name,
+            // and a name with no prototype is worth saying out loud.
+            Some(t) => {
+                unknown.insert(t.to_string());
+            }
+            None => {
+                if let Some(callee) = insn.near_target.and_then(|t| {
+                    program.function_at(Addr {
+                        segment: f.addr.segment,
+                        offset: t,
+                    })
+                }) {
+                    internal.insert(callee.frame.signature(&label(callee)));
+                }
+            }
+        }
+    }
+
+    let globals = global_reads(&body);
+
+    let mut out = Vec::new();
+    let mut headers: BTreeSet<&'static str> = BTreeSet::new();
+    let mut headerless: BTreeSet<String> = BTreeSet::new();
+    for module in imports.keys() {
+        match ne_core::api::header_for(module) {
+            Some(h) => {
+                headers.insert(h);
+            }
+            None => {
+                headerless.insert(module.clone());
+            }
+        }
+    }
+    for h in &headers {
+        out.push(Line::new(Kind::Include, 0, format!("#include <{h}>")));
+    }
+    for m in &headerless {
+        // A DLL belonging to the program has no standard header, so the
+        // prototypes below are all there is.
+        out.push(Line::new(
+            Kind::Comment,
+            0,
+            format!("// {m}: no standard header; declared below"),
+        ));
+    }
+    if !out.is_empty() {
+        out.push(Line::new(Kind::Punct, 0, ""));
+    }
+
+    for (module, protos) in &imports {
+        out.push(Line::new(Kind::Comment, 0, format!("// from {module}")));
+        for p in protos {
+            out.push(Line::new(Kind::Decl, 0, format!("extern {p}")));
+        }
+        out.push(Line::new(Kind::Punct, 0, ""));
+    }
+
+    if !unknown.is_empty() {
+        out.push(Line::new(
+            Kind::Comment,
+            0,
+            "// imported, with no signature on record",
+        ));
+        for name in &unknown {
+            out.push(Line::new(Kind::Comment, 0, format!("//   {name}")));
+        }
+        out.push(Line::new(Kind::Punct, 0, ""));
+    }
+
+    if !internal.is_empty() {
+        out.push(Line::new(Kind::Comment, 0, "// in this module"));
+        for sig in &internal {
+            out.push(Line::new(Kind::Decl, 0, format!("static WORD {sig};")));
+        }
+        out.push(Line::new(Kind::Punct, 0, ""));
+    }
+
+    if !globals.is_empty() {
+        out.push(Line::new(
+            Kind::Comment,
+            0,
+            "// module data, named by where it sits",
+        ));
+        for g in &globals {
+            out.push(Line::new(Kind::Decl, 0, format!("static WORD {g};")));
+        }
+        out.push(Line::new(Kind::Punct, 0, ""));
+    }
+    out
+}
+
+/// The data-segment globals a body reads or writes.
+fn global_reads(body: &[(usize, &Insn)]) -> BTreeSet<String> {
+    let mut out = BTreeSet::new();
+    for (_, insn) in body {
+        let Some((_, ops)) = insn.text.split_once(' ') else {
+            continue;
+        };
+        for op in split_operands(ops) {
+            let named = operand(&op, &HashMap::new(), &[]);
+            if named.starts_with("g_") {
+                out.insert(named);
+            }
+        }
+    }
+    out
+}
+
 /// Render one function.
 pub fn function(program: &Program, db: &ApiDb, f: &Function, name: &str) -> Vec<Line> {
     let Some(code) = program.code.get(&f.addr.segment) else {
@@ -102,7 +261,13 @@ pub fn function(program: &Program, db: &ApiDb, f: &Function, name: &str) -> Vec<
     let mut out = Vec::new();
 
     header(&mut out, program, f, name, &saved);
-    out.push(Line::new(Kind::Signature, 0, f.frame.signature(name)));
+    // The return type is the convention, not a fact, which is what the
+    // header comment above just said.
+    out.push(Line::new(
+        Kind::Signature,
+        0,
+        format!("WORD {}", f.frame.signature(name)),
+    ));
     out.push(Line::new(Kind::Punct, 0, "{"));
 
     for (offset, size) in &locals {
