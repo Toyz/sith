@@ -175,23 +175,27 @@ fn menu_bar(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
             ui.add_enabled_ui(!app.recent.is_empty(), |ui| {
                 ui.menu_button("Recent", |ui| {
                     for r in &app.recent {
-                        let label = if r.is_project {
-                            format!("{}  (project)", r.file_name())
-                        } else {
-                            r.file_name()
-                        };
-                        if ui
-                            .button(label)
-                            .on_hover_text(r.path.display().to_string())
-                            .clicked()
-                        {
-                            act.push(if r.is_project {
-                                Action::OpenProjectAt(r.path.clone())
-                            } else {
-                                Action::Open(r.path.clone())
-                            });
-                            ui.close();
-                        }
+                        let gone = !r.exists();
+                        let label = format!(
+                            "{}{}{}",
+                            r.file_name(),
+                            if r.is_project { "  (project)" } else { "" },
+                            if gone { "  — missing" } else { "" }
+                        );
+                        ui.horizontal(|ui| {
+                            let btn = ui.add_enabled(!gone, egui::Button::new(label));
+                            if btn.on_hover_text(r.path.display().to_string()).clicked() {
+                                act.push(if r.is_project {
+                                    Action::OpenProjectAt(r.path.clone())
+                                } else {
+                                    Action::Open(r.path.clone())
+                                });
+                                ui.close();
+                            }
+                            if gone && ui.small_button("forget").clicked() {
+                                act.push(Action::ForgetRecent(r.path.clone()));
+                            }
+                        });
                     }
                 });
             });
@@ -451,6 +455,17 @@ fn status_bar(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
         if let Some(err) = &app.error {
             ui.label(egui::RichText::new("!").color(col::red()).monospace().strong());
             ui.label(egui::RichText::new(err).color(col::red()).size(12.0));
+            // A path that has gone is usually worth dropping from the list, so
+            // the offer sits beside the message that revealed it.
+            if let Some(p) = &app.forget_candidate {
+                if ui
+                    .small_button("remove from recent")
+                    .on_hover_text(p.display().to_string())
+                    .clicked()
+                {
+                    act.push(Action::ForgetRecent(p.clone()));
+                }
+            }
             if ui.small_button("dismiss").clicked() {
                 act.push(Action::Dismiss);
             }

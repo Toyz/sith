@@ -80,7 +80,10 @@ pub fn welcome(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                 });
 
                 ui.add_space(18.0);
-                let existing: Vec<_> = app.recent.iter().filter(|r| r.exists()).collect();
+                // Missing entries are shown rather than hidden: a project that
+                // has moved is worth knowing about, and there has to be a way
+                // to stop it being listed.
+                let existing: Vec<_> = app.recent.iter().collect();
                 if existing.is_empty() {
                     ui.add_space(10.0);
                     ui.vertical_centered(|ui| {
@@ -89,6 +92,8 @@ pub fn welcome(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                 } else {
                     crate::widgets::section(ui, "RECENT");
                     for r in existing.iter().take(10) {
+                        let gone = !r.exists();
+                        let mut forget = false;
                         let (_, resp) = crate::widgets::row(
                             ui,
                             ui.id().with(("recent", &r.path)),
@@ -99,10 +104,21 @@ pub fn welcome(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                                 icons::inline(
                                     ui,
                                     if r.is_project { Icon::Overview } else { Icon::Module },
-                                    if r.is_project { col::purple() } else { col::accent() },
+                                    if gone {
+                                        col::faint()
+                                    } else if r.is_project {
+                                        col::purple()
+                                    } else {
+                                        col::accent()
+                                    },
                                 );
-                                ui.label(mono_c(r.file_name(), col::text()));
-                                if r.is_project {
+                                ui.label(mono_c(
+                                    r.file_name(),
+                                    if gone { col::faint() } else { col::text() },
+                                ));
+                                if gone {
+                                    crate::widgets::chip(ui, "missing", col::orange());
+                                } else if r.is_project {
                                     crate::widgets::chip(ui, "project", col::purple());
                                 } else if !r.label.is_empty() {
                                     crate::widgets::chip(ui, &r.label, col::dim());
@@ -110,6 +126,26 @@ pub fn welcome(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                                 ui.with_layout(
                                     egui::Layout::right_to_left(egui::Align::Center),
                                     |ui| {
+                                        if gone {
+                                            let (rect, cross) = ui.allocate_exact_size(
+                                                egui::vec2(14.0, 14.0),
+                                                egui::Sense::click(),
+                                            );
+                                            icons::draw(
+                                                ui.painter(),
+                                                rect,
+                                                Icon::Close,
+                                                if cross.hovered() {
+                                                    col::red()
+                                                } else {
+                                                    col::faint()
+                                                },
+                                            );
+                                            if cross.on_hover_text("Remove from this list").clicked()
+                                            {
+                                                forget = true;
+                                            }
+                                        }
                                         ui.label(
                                             egui::RichText::new(
                                                 r.path
@@ -124,12 +160,21 @@ pub fn welcome(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                                 );
                             },
                         );
-                        if resp.clicked() {
-                            act.push(if r.is_project {
-                                Action::OpenProjectAt(r.path.clone())
+                        if forget {
+                            act.push(Action::ForgetRecent(r.path.clone()));
+                        } else if resp.clicked() {
+                            if gone {
+                                act.push(Action::Status(format!(
+                                    "{} is no longer there",
+                                    r.path.display()
+                                )));
                             } else {
-                                Action::Open(r.path.clone())
-                            });
+                                act.push(if r.is_project {
+                                    Action::OpenProjectAt(r.path.clone())
+                                } else {
+                                    Action::Open(r.path.clone())
+                                });
+                            }
                         }
                     }
                 }

@@ -83,6 +83,119 @@ pub fn link(ui: &mut Ui, text: impl Into<String>, color: Color32) -> Response {
     r
 }
 
+/// A segmented control: several exclusive choices in one strip.
+///
+/// egui's selectable labels look like text that happens to highlight; a
+/// segmented control reads as one control with a state, which is what these
+/// choices are.
+pub fn segmented<T: PartialEq + Copy>(ui: &mut Ui, current: T, options: &[(T, &str)]) -> Option<T> {
+    let mut picked = None;
+    egui::Frame::new()
+        .fill(col::bg())
+        .corner_radius(CornerRadius::same(5))
+        .inner_margin(egui::Margin::same(2))
+        .show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 2.0;
+                for (value, label) in options {
+                    let active = *value == current;
+                    let text = egui::RichText::new(*label)
+                        .size(11.5)
+                        .color(if active { col::text() } else { col::dim() });
+                    let resp = ui.add(
+                        egui::Button::new(text)
+                            .fill(if active {
+                                col::accent().gamma_multiply(0.28)
+                            } else {
+                                Color32::TRANSPARENT
+                            })
+                            .stroke(egui::Stroke::NONE)
+                            .corner_radius(CornerRadius::same(4)),
+                    );
+                    if resp.clicked() {
+                        picked = Some(*value);
+                    }
+                }
+            });
+        });
+    picked
+}
+
+/// A minus / value / plus control for a small bounded number.
+pub fn stepper(ui: &mut Ui, label: &str, value: usize, min: usize, max: usize) -> Option<usize> {
+    let mut picked = None;
+    ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = 4.0;
+        ui.label(egui::RichText::new(label).size(11.0).color(col::faint()));
+        egui::Frame::new()
+            .fill(col::bg())
+            .corner_radius(CornerRadius::same(5))
+            .inner_margin(egui::Margin::same(2))
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 2.0;
+                    ui.add_enabled_ui(value > min, |ui| {
+                        if ui.add(small_glyph("\u{2212}")).clicked() {
+                            picked = Some(value - 1);
+                        }
+                    });
+                    ui.label(
+                        egui::RichText::new(value.to_string())
+                            .monospace()
+                            .size(11.5)
+                            .color(col::text()),
+                    );
+                    ui.add_enabled_ui(value < max, |ui| {
+                        if ui.add(small_glyph("+")).clicked() {
+                            picked = Some(value + 1);
+                        }
+                    });
+                });
+            });
+    });
+    picked
+}
+
+fn small_glyph(text: &str) -> egui::Button<'static> {
+    egui::Button::new(
+        egui::RichText::new(text.to_owned())
+            .monospace()
+            .size(12.0)
+            .color(col::dim()),
+    )
+    .fill(Color32::TRANSPARENT)
+    .stroke(egui::Stroke::NONE)
+    .corner_radius(CornerRadius::same(4))
+}
+
+/// A chip that is also a switch.
+pub fn toggle_chip(ui: &mut Ui, on: bool, label: &str, color: Color32) -> bool {
+    let galley = ui.painter().layout_no_wrap(
+        label.to_owned(),
+        egui::FontId::proportional(11.0),
+        if on { color } else { col::faint() },
+    );
+    let pad = egui::vec2(7.0, 3.0);
+    let (rect, resp) = ui.allocate_exact_size(galley.size() + pad * 2.0, Sense::click());
+    let fill = if on {
+        color.gamma_multiply(0.22)
+    } else if resp.hovered() {
+        col::raised()
+    } else {
+        Color32::TRANSPARENT
+    };
+    ui.painter().rect_filled(rect, CornerRadius::same(4), fill);
+    ui.painter().rect_stroke(
+        rect,
+        CornerRadius::same(4),
+        egui::Stroke::new(1.0, if on { color } else { col::border() }),
+        egui::StrokeKind::Inside,
+    );
+    let color = if on { color } else { col::faint() };
+    ui.painter().galley(rect.min + pad, galley, color);
+    resp.clicked()
+}
+
 /// A small pill used for counts, flags and kinds.
 pub fn chip(ui: &mut Ui, text: &str, color: Color32) {
     let galley = ui.painter().layout_no_wrap(

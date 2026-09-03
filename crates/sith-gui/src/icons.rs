@@ -23,6 +23,7 @@ pub enum Icon {
     Copy,
     Close,
     Plus,
+    Minus,
     Overview,
     Segment,
     Code,
@@ -131,6 +132,9 @@ pub fn draw(painter: &egui::Painter, rect: Rect, icon: Icon, color: Color32) {
         }
         Icon::Plus => {
             line(p(8.0, 3.5), p(8.0, 12.5));
+            line(p(3.5, 8.0), p(12.5, 8.0));
+        }
+        Icon::Minus => {
             line(p(3.5, 8.0), p(12.5, 8.0));
         }
         Icon::Overview => {

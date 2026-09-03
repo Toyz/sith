@@ -6,8 +6,10 @@
 //! graph you can predict is easier to read than a prettier one that moves
 //! every time the root changes.
 
-use crate::state::{Action, GraphDir, Nav, SithApp};
-use crate::theme::{col, *};
+use crate::icons::{self, Icon};
+use crate::state::{Action, GraphDir, GraphState, Nav, SithApp};
+use crate::widgets;
+use crate::theme::col;
 
 use eframe::egui::{self, Pos2, Rect, Stroke, Ui, Vec2};
 use ne_analysis::{Addr, Function};
@@ -45,8 +47,8 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
     let Some(tab) = app.tab() else { return };
     let g = &tab.graph;
 
-    // With no explicit root, start from the most connected function: it is
-    // the most informative place to land.
+    // With no explicit root, start from the most connected function: it is the
+    // most informative place to land.
     let root = g.root.or_else(|| {
         doc.program
             .functions
@@ -63,202 +65,314 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
         return;
     };
 
-    ui.horizontal(|ui| {
-        ui.label(egui::RichText::new("Call graph").size(15.0).strong());
-        ui.label(mono_c(app.label(root_fn), col::symbol()));
-        ui.separator();
-        for (dir, name) in GraphDir::ALL {
-            if ui.selectable_label(g.dir == dir, name).clicked() {
-                act.push(Action::SetGraphDir(dir));
-            }
-        }
-        ui.separator();
-        ui.label(dim("depth"));
-        for d in 1..=4usize {
-            if ui.selectable_label(g.depth == d, d.to_string()).clicked() {
-                act.push(Action::SetGraphDepth(d));
-            }
-        }
-        ui.separator();
-        let mut imports = g.show_imports;
-        if ui.checkbox(&mut imports, "imports").changed() {
-            act.push(Action::ToggleGraphImports);
-        }
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.button("Open in listing").clicked() {
-                act.push(Action::Goto(root));
-            }
-            if ui.button("Reset view").clicked() {
-                act.push(Action::SetGraphRoot(root));
-            }
-        });
-    });
-    crate::ui::sep(ui);
-
     let nodes = layout(app, doc, root_fn, g.depth, g.dir, g.show_imports);
     let edges = edges(app, doc, &nodes, g.dir, g.show_imports);
 
-    ui.label(dim(format!(
-        "{} nodes, {} edges — drag to pan, scroll to zoom, click a node to re-centre, \
-         double-click to open it",
-        nodes.len(),
-        edges.len()
-    )));
-    ui.add_space(4.0);
+    header(app, ui, act, root_fn, &nodes, &edges);
+    controls(app, ui, act, g);
+    canvas(app, ui, act, g, &nodes, &edges);
+}
 
-    // The transform is applied by hand rather than by egui::Scene. Scene puts
-    // a scale on the whole layer, which scales the glyph *meshes* that were
-    // rasterised at their original size, so text turns to mush as you zoom in.
-    // Computing screen positions here means every label is rasterised at the
-    // size it is actually drawn at, and it makes level-of-detail possible.
-    let (rect, resp) = ui.allocate_exact_size(ui.available_size(), egui::Sense::click_and_drag());
-
-    let content = bounds(&nodes);
-    let mut zoom = g.zoom;
-    let mut pan = g.pan;
-    if !g.framed {
-        // Frame the whole graph, with a little air around it.
-        let sx = rect.width() / (content.width() + 80.0).max(1.0);
-        let sy = rect.height() / (content.height() + 80.0).max(1.0);
-        zoom = sx.min(sy).clamp(0.15, 1.0);
-        pan = content.center().to_vec2();
-    }
-
-    if resp.dragged() {
-        pan -= resp.drag_delta() / zoom;
-    }
-    // Zoom about the pointer, so the thing under the cursor stays put.
-    if let Some(hover) = resp.hover_pos() {
-        let scroll = ui.input(|i| i.smooth_scroll_delta.y + i.zoom_delta().ln() * 60.0);
-        if scroll.abs() > 0.01 {
-            let before = (hover - rect.center()) / zoom + pan;
-            zoom = (zoom * (1.0 + scroll * 0.0015)).clamp(0.12, 4.0);
-            let after = (hover - rect.center()) / zoom + pan;
-            pan += before - after;
-        }
-    }
-
-    let to_screen = |w: Pos2| rect.center() + (w.to_vec2() - pan) * zoom;
-    let painter = ui.painter_at(rect);
-
-    for (from, to) in &edges {
-        let a = nodes[*from].rect;
-        let b = nodes[*to].rect;
-        let p0 = to_screen(Pos2::new(a.max.x, a.center().y));
-        let p1 = to_screen(Pos2::new(b.min.x, b.center().y));
-        let mid = (p0.x + p1.x) / 2.0;
-        let stroke = Stroke::new((1.2 * zoom).clamp(0.6, 2.0), col::border());
-        painter.line_segment([p0, Pos2::new(mid, p0.y)], stroke);
-        painter.line_segment([Pos2::new(mid, p0.y), Pos2::new(mid, p1.y)], stroke);
-        painter.line_segment([Pos2::new(mid, p1.y), p1], stroke);
-        let head = (6.0 * zoom).clamp(3.0, 10.0);
-        painter.line_segment([p1, p1 + Vec2::new(-head, -head * 0.55)], stroke);
-        painter.line_segment([p1, p1 + Vec2::new(-head, head * 0.55)], stroke);
-    }
-
-    let pointer = resp.hover_pos();
-    let mut hovered: Option<usize> = None;
-    for (i, n) in nodes.iter().enumerate() {
-        let r = Rect::from_min_max(to_screen(n.rect.min), to_screen(n.rect.max));
-        if !rect.intersects(r) {
-            continue;
-        }
-        let over = pointer.is_some_and(|p| r.contains(p));
-        if over {
-            hovered = Some(i);
-        }
-        let (fill, border, text_col) = if n.is_overflow {
-            (col::bg(), col::border(), col::faint())
-        } else if n.is_root {
-            (col::accent().gamma_multiply(0.22), col::accent(), col::text())
-        } else if n.is_import {
-            (col::raised(), col::border(), col::comment())
-        } else if over {
-            (col::raised().gamma_multiply(1.3), col::accent(), col::text())
-        } else {
-            (col::raised(), col::border(), col::text())
-        };
-        let radius = egui::CornerRadius::same((5.0 * zoom).clamp(1.0, 8.0) as u8);
-        painter.rect_filled(r, radius, fill);
-        painter.rect_stroke(
-            r,
-            radius,
-            Stroke::new((1.0 * zoom).clamp(0.6, 2.0), border),
-            egui::StrokeKind::Inside,
+/// Title, root, and the actions that apply to the whole view.
+fn header(
+    app: &SithApp,
+    ui: &mut Ui,
+    act: &mut Vec<Action>,
+    root: &Function,
+    nodes: &[Node],
+    edges: &[(usize, usize)],
+) {
+    ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = 8.0;
+        icons::inline(ui, Icon::Graph, col::accent());
+        ui.label(egui::RichText::new("Call graph").size(15.0).strong());
+        ui.label(
+            egui::RichText::new("rooted at")
+                .size(11.0)
+                .color(col::faint()),
         );
+        // The root is the one thing this view is about, so it is a control:
+        // click it to open the code it names.
+        if widgets::link(ui, app.label(root), col::symbol())
+            .on_hover_text("open this function in the listing")
+            .clicked()
+        {
+            act.push(Action::Goto(root.addr));
+        }
+        widgets::chip(ui, &root.addr.to_string(), col::dim());
 
-        // Level of detail: below a few pixels a label is a smear, so it is
-        // left out rather than drawn illegibly.
-        let title_px = 12.0 * zoom;
-        if title_px >= 5.0 {
-            painter.text(
-                r.min + Vec2::new(9.0 * zoom, 6.0 * zoom),
-                egui::Align2::LEFT_TOP,
-                elide(&n.label, ((n.rect.width() - 16.0) / 7.2) as usize),
-                egui::FontId::monospace(title_px),
-                text_col,
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            if icons::button(ui, Icon::Search, "Pick a different root (Ctrl+P)").clicked() {
+                act.push(Action::ShowPalette);
+            }
+            ui.add_space(4.0);
+            if icons::button(ui, Icon::Target, "Fit the graph to the view").clicked() {
+                act.push(Action::GraphFit);
+            }
+            if icons::button(ui, Icon::Plus, "Zoom in").clicked() {
+                act.push(Action::GraphZoom(1.25));
+            }
+            if icons::button(ui, Icon::Minus, "Zoom out").clicked() {
+                act.push(Action::GraphZoom(0.8));
+            }
+            ui.add_space(6.0);
+            ui.label(
+                egui::RichText::new(format!("{} nodes · {} edges", nodes.len(), edges.len()))
+                    .size(11.0)
+                    .color(col::faint()),
             );
-        }
-        let sub_px = 10.0 * zoom;
-        if sub_px >= 6.5 {
-            painter.text(
-                r.min + Vec2::new(9.0 * zoom, 19.0 * zoom),
-                egui::Align2::LEFT_TOP,
-                &n.sub,
-                egui::FontId::monospace(sub_px),
-                col::faint(),
-            );
-        }
-    }
+        });
+    });
+    ui.add_space(6.0);
+}
 
-    if let Some(i) = hovered {
-        let n = &nodes[i];
-        if !n.is_overflow {
-            ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
-        }
-        if resp.clicked() && !n.is_overflow {
-            match n.addr {
-                Some(addr) => act.push(Action::SetGraphRoot(addr)),
-                None => act.push(Action::Go(Nav::Xrefs(n.label.clone()))),
-            }
-        }
-        if resp.double_clicked() {
-            if let Some(addr) = n.addr {
-                act.push(Action::Goto(addr));
-            }
-        }
-        resp.show_tooltip_ui(|ui| {
-                ui.set_max_width(320.0);
+/// What the graph is showing: direction, how far, and whether imports count.
+fn controls(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, g: &GraphState) {
+    egui::Frame::new()
+        .fill(col::raised())
+        .corner_radius(egui::CornerRadius::same(6))
+        .inner_margin(egui::Margin::symmetric(10, 6))
+        .show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 10.0;
                 ui.label(
-                    egui::RichText::new(&n.label)
-                        .monospace()
-                        .strong()
-                        .color(if n.is_import { col::comment() } else { col::symbol() }),
-                );
-                ui.label(
-                    egui::RichText::new(&n.sub)
-                        .monospace()
+                    egui::RichText::new("show")
                         .size(11.0)
                         .color(col::faint()),
                 );
-                ui.add_space(4.0);
-                ui.label(
-                    egui::RichText::new(if n.is_overflow {
-                        "too many to draw: pick one of these as the root, or filter first"
-                    } else if n.is_import {
-                        "click for its call sites"
-                    } else {
-                        "click to re-centre, double-click to open in the listing"
-                    })
-                    .size(11.0)
-                    .color(col::dim()),
-                );
-        });
-    }
+                let options: Vec<(GraphDir, &str)> = GraphDir::ALL
+                    .iter()
+                    .map(|(d, name)| (*d, *name))
+                    .collect();
+                if let Some(d) = widgets::segmented(ui, g.dir, &options) {
+                    act.push(Action::SetGraphDir(d));
+                }
 
-    if zoom != g.zoom || pan != g.pan || !g.framed {
-        act.push(Action::SetGraphView { pan, zoom });
-    }
+                if let Some(depth) = widgets::stepper(ui, "levels", g.depth, 1, 4) {
+                    act.push(Action::SetGraphDepth(depth));
+                }
+
+                if widgets::toggle_chip(ui, g.show_imports, "imports", col::comment()) {
+                    act.push(Action::ToggleGraphImports);
+                }
+
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.label(
+                        egui::RichText::new(format!("{:.0}%", g.zoom * 100.0))
+                            .monospace()
+                            .size(11.0)
+                            .color(col::faint()),
+                    );
+                    ui.add_space(8.0);
+                    // A key to the colours, since the shapes are all alike.
+                    // Reversed, because the layout runs right to left and the
+                    // key should still read root, function, import.
+                    for (color, label) in [
+                        (col::comment(), "import"),
+                        (col::text(), "function"),
+                        (col::accent(), "root"),
+                    ] {
+                        // In a right-to-left row the label is added first so
+                        // that the dot ends up on its left.
+                        ui.label(
+                            egui::RichText::new(label)
+                                .size(10.5)
+                                .color(col::faint()),
+                        );
+                        let (dot, _) =
+                            ui.allocate_exact_size(egui::vec2(8.0, 8.0), egui::Sense::hover());
+                        ui.painter().circle_filled(dot.center(), 4.0, color);
+                    }
+                });
+            });
+        });
+    let _ = app;
+    ui.add_space(8.0);
+}
+
+/// The viewport.
+fn canvas(
+    app: &SithApp,
+    ui: &mut Ui,
+    act: &mut Vec<Action>,
+    g: &GraphState,
+    nodes: &[Node],
+    edges: &[(usize, usize)],
+) {
+    let _ = app;
+    egui::Frame::new()
+        .fill(col::bg())
+        .corner_radius(egui::CornerRadius::same(6))
+        .stroke(Stroke::new(1.0, col::border()))
+        .inner_margin(egui::Margin::same(1))
+        .show(ui, |ui| {
+            // The transform is applied by hand rather than by egui::Scene.
+            // Scene puts a scale on the whole layer, which scales the glyph
+            // meshes that were rasterised at their original size, so text turns
+            // to mush as you zoom in. Computing screen positions here means
+            // every label is rasterised at the size it is actually drawn at,
+            // and it makes level of detail possible.
+            let (rect, resp) =
+                ui.allocate_exact_size(ui.available_size(), egui::Sense::click_and_drag());
+
+            let content = bounds(nodes);
+            let mut zoom = g.zoom;
+            let mut pan = g.pan;
+            if !g.framed {
+                let sx = rect.width() / (content.width() + 80.0).max(1.0);
+                let sy = rect.height() / (content.height() + 80.0).max(1.0);
+                zoom = sx.min(sy).clamp(0.15, 1.0);
+                pan = content.center().to_vec2();
+            }
+            if g.zoom_nudge != 1.0 {
+                zoom = (zoom * g.zoom_nudge).clamp(0.12, 4.0);
+            }
+
+            if resp.dragged() {
+                pan -= resp.drag_delta() / zoom;
+            }
+            // Zoom about the pointer, so the thing under the cursor stays put.
+            if let Some(hover) = resp.hover_pos() {
+                let scroll = ui.input(|i| i.smooth_scroll_delta.y);
+                if scroll.abs() > 0.01 {
+                    let before = (hover - rect.center()) / zoom + pan;
+                    zoom = (zoom * (1.0 + scroll * 0.0015)).clamp(0.12, 4.0);
+                    let after = (hover - rect.center()) / zoom + pan;
+                    pan += before - after;
+                }
+            }
+
+            let to_screen = |w: Pos2| rect.center() + (w.to_vec2() - pan) * zoom;
+            let painter = ui.painter_at(rect);
+
+            for (from, to) in edges {
+                let a = nodes[*from].rect;
+                let b = nodes[*to].rect;
+                let p0 = to_screen(Pos2::new(a.max.x, a.center().y));
+                let p1 = to_screen(Pos2::new(b.min.x, b.center().y));
+                let mid = (p0.x + p1.x) / 2.0;
+                let stroke = Stroke::new((1.2 * zoom).clamp(0.6, 2.0), col::border());
+                painter.line_segment([p0, Pos2::new(mid, p0.y)], stroke);
+                painter.line_segment([Pos2::new(mid, p0.y), Pos2::new(mid, p1.y)], stroke);
+                painter.line_segment([Pos2::new(mid, p1.y), p1], stroke);
+                let head = (6.0 * zoom).clamp(3.0, 10.0);
+                painter.line_segment([p1, p1 + Vec2::new(-head, -head * 0.55)], stroke);
+                painter.line_segment([p1, p1 + Vec2::new(-head, head * 0.55)], stroke);
+            }
+
+            let pointer = resp.hover_pos().filter(|p| rect.contains(*p));
+            let mut hovered: Option<usize> = None;
+            for (i, n) in nodes.iter().enumerate() {
+                let r = Rect::from_min_max(to_screen(n.rect.min), to_screen(n.rect.max));
+                if !rect.intersects(r) {
+                    continue;
+                }
+                let over = pointer.is_some_and(|p| r.contains(p));
+                if over {
+                    hovered = Some(i);
+                }
+                let (fill, border, text_col) = if n.is_overflow {
+                    (col::bg(), col::border(), col::faint())
+                } else if n.is_root {
+                    (
+                        col::accent().gamma_multiply(0.22),
+                        col::accent(),
+                        col::text(),
+                    )
+                } else if n.is_import {
+                    (col::raised(), col::border(), col::comment())
+                } else if over {
+                    (col::raised().gamma_multiply(1.3), col::accent(), col::text())
+                } else {
+                    (col::raised(), col::border(), col::text())
+                };
+                let radius = egui::CornerRadius::same((5.0 * zoom).clamp(1.0, 8.0) as u8);
+                painter.rect_filled(r, radius, fill);
+                painter.rect_stroke(
+                    r,
+                    radius,
+                    Stroke::new((1.0 * zoom).clamp(0.6, 2.0), border),
+                    egui::StrokeKind::Inside,
+                );
+
+                // Level of detail: below a few pixels a label is a smear, so it
+                // is left out rather than drawn illegibly.
+                let title_px = 12.0 * zoom;
+                if title_px >= 5.0 {
+                    painter.text(
+                        r.min + Vec2::new(9.0 * zoom, 6.0 * zoom),
+                        egui::Align2::LEFT_TOP,
+                        elide(&n.label, ((n.rect.width() - 16.0) / 7.2) as usize),
+                        egui::FontId::monospace(title_px),
+                        text_col,
+                    );
+                }
+                let sub_px = 10.0 * zoom;
+                if sub_px >= 6.5 {
+                    painter.text(
+                        r.min + Vec2::new(9.0 * zoom, 19.0 * zoom),
+                        egui::Align2::LEFT_TOP,
+                        &n.sub,
+                        egui::FontId::monospace(sub_px),
+                        col::faint(),
+                    );
+                }
+            }
+
+            if let Some(i) = hovered {
+                let n = &nodes[i];
+                if !n.is_overflow {
+                    ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+                }
+                if resp.clicked() && !n.is_overflow {
+                    match n.addr {
+                        Some(addr) => act.push(Action::SetGraphRoot(addr)),
+                        None => act.push(Action::Go(Nav::Xrefs(n.label.clone()))),
+                    }
+                }
+                if resp.double_clicked() {
+                    if let Some(addr) = n.addr {
+                        act.push(Action::Goto(addr));
+                    }
+                }
+                resp.show_tooltip_ui(|ui| {
+                    ui.set_max_width(320.0);
+                    ui.label(
+                        egui::RichText::new(&n.label)
+                            .monospace()
+                            .strong()
+                            .color(if n.is_import {
+                                col::comment()
+                            } else {
+                                col::symbol()
+                            }),
+                    );
+                    ui.label(
+                        egui::RichText::new(&n.sub)
+                            .monospace()
+                            .size(11.0)
+                            .color(col::faint()),
+                    );
+                    ui.add_space(4.0);
+                    ui.label(
+                        egui::RichText::new(if n.is_overflow {
+                            "too many to draw: pick one of these as the root, or raise the level"
+                        } else if n.is_import {
+                            "click for its call sites"
+                        } else {
+                            "click to re-centre, double-click to open in the listing"
+                        })
+                        .size(11.0)
+                        .color(col::dim()),
+                    );
+                });
+            }
+
+            if zoom != g.zoom || pan != g.pan || !g.framed || g.zoom_nudge != 1.0 {
+                act.push(Action::SetGraphView { pan, zoom });
+            }
+        });
 }
 
 /// Breadth-first levels out from the root, laid out in columns.

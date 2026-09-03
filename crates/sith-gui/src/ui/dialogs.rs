@@ -9,6 +9,9 @@ pub fn show(app: &SithApp, ctx: &Context, act: &mut Vec<Action>) {
     if app.goto_open {
         goto(app, ctx, act);
     }
+    if !app.missing.is_empty() {
+        missing(app, ctx, act);
+    }
     if let Some((segment, offset)) = app.rename_at {
         rename(app, ctx, act, segment, offset);
     }
@@ -58,6 +61,114 @@ fn goto(app: &SithApp, ctx: &Context, act: &mut Vec<Action>) {
     if text != app.goto_text {
         act.push(Action::SetGotoText(text));
     }
+}
+
+/// The end of a path, which is the part that identifies it.
+fn tail(path: &str, max: usize) -> String {
+    if path.chars().count() <= max {
+        return path.to_string();
+    }
+    let kept: String = path
+        .chars()
+        .rev()
+        .take(max - 1)
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .collect();
+    format!("\u{2026}{kept}")
+}
+
+/// Binaries a project points at that are not on disk.
+///
+/// This is not an error -- a project is often opened on a machine that has
+/// only some of the binaries -- but it does need saying, and the choice of
+/// what to do about it belongs to the user, because the annotations for a
+/// removed binary go with it.
+fn missing(app: &SithApp, ctx: &Context, act: &mut Vec<Action>) {
+    egui::Modal::new(egui::Id::new("missing")).show(ctx, |ui| {
+        ui.set_width(560.0);
+        ui.horizontal(|ui| {
+            icons::inline(ui, Icon::Module, col::orange());
+            ui.label(
+                egui::RichText::new(format!(
+                    "{} binar{} in this project {} not there",
+                    app.missing.len(),
+                    if app.missing.len() == 1 { "y" } else { "ies" },
+                    if app.missing.len() == 1 { "is" } else { "are" }
+                ))
+                .strong(),
+            );
+        });
+        ui.add_space(6.0);
+        egui::Frame::new()
+            .fill(col::bg())
+            .corner_radius(egui::CornerRadius::same(5))
+            .inner_margin(egui::Margin::symmetric(10, 8))
+            .show(ui, |ui| {
+                ui.set_width(ui.available_width());
+                for p in &app.missing {
+                    let annotations = app
+                        .project
+                        .binaries
+                        .iter()
+                        .find(|b| app.project.resolve(&b.path) == *p)
+                        .map(|b| b.names.len() + b.comments.len() + b.bookmarks.len())
+                        .unwrap_or(0);
+                    ui.horizontal(|ui| {
+                        ui.spacing_mut().item_spacing.x = 8.0;
+                        ui.label(mono_c(
+                            p.file_name()
+                                .map(|s| s.to_string_lossy().to_string())
+                                .unwrap_or_default(),
+                            col::text(),
+                        ));
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            if annotations > 0 {
+                                crate::widgets::chip(
+                                    ui,
+                                    &format!("{annotations} annotations"),
+                                    col::orange(),
+                                );
+                            }
+                            // The directory is context, not identity, so it
+                            // gives way rather than running over the name.
+                            ui.label(
+                                egui::RichText::new(tail(
+                                    &p.parent()
+                                        .map(|d| d.display().to_string())
+                                        .unwrap_or_default(),
+                                    38,
+                                ))
+                                .size(10.5)
+                                .color(col::faint()),
+                            );
+                        });
+                    });
+                }
+            });
+        ui.add_space(8.0);
+        ui.label(dim(
+            "The rest of the project opened normally. Removing these drops the \
+             names and notes recorded against them, so it is worth being sure \
+             the files are gone rather than moved.",
+        ));
+        ui.add_space(10.0);
+        ui.horizontal(|ui| {
+            if ui.button("Keep them").clicked() {
+                act.push(Action::DismissMissing);
+            }
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui
+                    .button("Remove from project")
+                    .on_hover_text("Deletes their annotations too")
+                    .clicked()
+                {
+                    act.push(Action::DropMissingBinaries);
+                }
+            });
+        });
+    });
 }
 
 /// Name an address.

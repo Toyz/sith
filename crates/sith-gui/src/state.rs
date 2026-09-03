@@ -184,6 +184,8 @@ pub struct GraphState {
     pub zoom: f32,
     /// Cleared when the graph should re-frame itself, after a new root.
     pub framed: bool,
+    /// A pending zoom step from the toolbar, applied where the clamping lives.
+    pub zoom_nudge: f32,
 }
 
 impl Default for GraphState {
@@ -198,6 +200,7 @@ impl Default for GraphState {
             pan: egui::Vec2::ZERO,
             zoom: 1.0,
             framed: false,
+            zoom_nudge: 1.0,
         }
     }
 }
@@ -247,6 +250,11 @@ pub enum Action {
         name: Option<String>,
     },
     ShowWizard,
+    /// Drop a path from the recent list.
+    ForgetRecent(PathBuf),
+    /// Remove binaries the project refers to that are no longer on disk.
+    DropMissingBinaries,
+    DismissMissing,
     WizardScan(PathBuf),
     WizardNext,
     WizardBack,
@@ -279,6 +287,8 @@ pub enum Action {
     SetGraphRoot(Addr),
     SetGraphDepth(usize),
     SetGraphView { pan: egui::Vec2, zoom: f32 },
+    GraphFit,
+    GraphZoom(f32),
     ConsumeScroll,
     SetGraphDir(GraphDir),
     ToggleGraphImports,
@@ -328,6 +338,11 @@ pub struct SithApp {
     pub palette_sel: usize,
     /// Set when the highlighted palette row must be scrolled back into view.
     pub palette_scroll: bool,
+    /// A path the user could reasonably want dropped from the recent list,
+    /// offered beside the error that revealed it.
+    pub forget_candidate: Option<PathBuf>,
+    /// Binaries the open project refers to that are not on disk.
+    pub missing: Vec<PathBuf>,
     /// The new-project wizard, while it is open.
     pub wizard: Option<crate::wizard::Wizard>,
     /// Address the rename box is editing, if it is open.
@@ -375,6 +390,8 @@ impl SithApp {
             palette_text: String::new(),
             palette_sel: 0,
             palette_scroll: false,
+            forget_candidate: None,
+            missing: Vec::new(),
             wizard: None,
             rename_at: None,
             rename_text: String::new(),
@@ -722,6 +739,36 @@ impl SithApp {
             Action::SaveResource { index, raw } => self.save_resource(index, raw),
             Action::SaveListing => self.save_listing(),
             Action::ShowWizard => self.wizard = Some(crate::wizard::Wizard::default()),
+            Action::ForgetRecent(p) => {
+                if self.forget_candidate.as_deref() == Some(p.as_path()) {
+                    self.forget_candidate = None;
+                    self.error = None;
+                }
+                self.recent.retain(|r| r.path != p);
+                save_recent(&self.recent);
+                self.status = format!("forgot {}", p.display());
+            }
+            Action::DropMissingBinaries => {
+                // Annotations go with the entry, so this is only ever done on
+                // an explicit choice, never as a side effect of opening.
+                let missing: Vec<PathBuf> = self.missing.drain(..).collect();
+                let removed = missing.len();
+                let keep: Vec<bool> = self
+                    .project
+                    .binaries
+                    .iter()
+                    .map(|b| !missing.contains(&self.project.resolve(&b.path)))
+                    .collect();
+                let mut it = keep.into_iter();
+                self.project.binaries.retain(|_| it.next().unwrap_or(true));
+                self.project.dirty = true;
+                self.autosave();
+                self.status = format!(
+                    "removed {removed} missing binar{} from the project",
+                    if removed == 1 { "y" } else { "ies" }
+                );
+            }
+            Action::DismissMissing => self.missing.clear(),
             Action::WizardScan(root) => {
                 if let Some(w) = &mut self.wizard {
                     w.scan(root);
@@ -887,6 +934,19 @@ impl SithApp {
                     t.graph.pan = pan;
                     t.graph.zoom = zoom;
                     t.graph.framed = true;
+                    t.graph.zoom_nudge = 1.0;
+                }
+            }
+            Action::GraphFit => {
+                if let Some(t) = self.tab_mut() {
+                    t.graph.framed = false;
+                }
+            }
+            // Applied by the canvas on the next frame, where the viewport size
+            // is known and the clamping lives.
+            Action::GraphZoom(factor) => {
+                if let Some(t) = self.tab_mut() {
+                    t.graph.zoom_nudge = factor;
                 }
             }
             Action::ConsumeScroll => {
@@ -925,6 +985,7 @@ impl SithApp {
                 self.focus_input = true;
             }
             Action::Dismiss => {
+                self.forget_candidate = None;
                 self.goto_open = false;
                 self.palette_open = false;
                 self.rename_at = None;
@@ -1158,10 +1219,16 @@ impl SithApp {
                 self.tabs.clear();
                 self.textures.borrow_mut().clear();
                 let mut opened = 0;
+                self.missing.clear();
                 for b in &binaries {
                     if b.exists() {
                         self.open(b);
                         opened += 1;
+                    } else {
+                        // Not an error: a project is often opened on a machine
+                        // that has only some of the binaries. It does need
+                        // saying, though, and the annotations must not vanish.
+                        self.missing.push(b.clone());
                     }
                 }
                 // Land on the first binary listed, not on whichever happened
@@ -1180,7 +1247,19 @@ impl SithApp {
                     }
                 );
             }
-            Err(e) => self.error = Some(format!("{}: {e}", path.display())),
+            Err(e) => {
+                let missing = !path.exists();
+                self.error = Some(if missing {
+                    format!("{} is no longer there", path.display())
+                } else {
+                    format!("{}: {e}", path.display())
+                });
+                // A project that has been moved or deleted is the common case
+                // here, so offer to stop listing it rather than just failing.
+                if missing {
+                    self.forget_candidate = Some(path.to_path_buf());
+                }
+            }
         }
     }
 
