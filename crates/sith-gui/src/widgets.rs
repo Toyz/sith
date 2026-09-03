@@ -103,6 +103,67 @@ pub fn section(ui: &mut Ui, text: &str) {
     ui.add_space(2.0);
 }
 
+/// Width to keep clear on the right of a scrolling panel.
+///
+/// Values in this tool are right-aligned, and `available_width` inside a
+/// scroll area includes the strip the scrollbar sits in, so without this the
+/// last few characters of every value end up underneath it.
+pub const SCROLLBAR_GUTTER: f32 = 14.0;
+
+/// A collapsible group styled like [`card`], for context that is worth having
+/// but not worth the space by default.
+pub fn collapsing_card<R>(
+    ui: &mut Ui,
+    id: &str,
+    title: &str,
+    open: bool,
+    content: impl FnOnce(&mut Ui) -> R,
+) {
+    egui::CollapsingHeader::new(
+        egui::RichText::new(title)
+            .size(10.0)
+            .strong()
+            .color(col::faint()),
+    )
+    .id_salt(id)
+    .icon(|ui, openness, resp| {
+        // The same wedge the navigator uses, rather than egui's triangle.
+        let c = if resp.hovered() { col::text() } else { col::faint() };
+        let r = resp.rect.shrink(3.0);
+        let rot = openness * std::f32::consts::FRAC_PI_2;
+        let piv = r.center();
+        let rt = |q: egui::Pos2| {
+            let v = q - piv;
+            piv + egui::vec2(
+                v.x * rot.cos() - v.y * rot.sin(),
+                v.x * rot.sin() + v.y * rot.cos(),
+            )
+        };
+        ui.painter().add(egui::Shape::convex_polygon(
+            vec![
+                rt(piv + egui::vec2(-2.0, -4.0)),
+                rt(piv + egui::vec2(-2.0, 4.0)),
+                rt(piv + egui::vec2(3.5, 0.0)),
+            ],
+            c,
+            egui::Stroke::NONE,
+        ));
+    })
+    .default_open(open)
+    .show_unindented(ui, |ui| {
+        ui.add_space(3.0);
+        egui::Frame::new()
+            .fill(col::raised())
+            .corner_radius(CornerRadius::same(5))
+            .inner_margin(egui::Margin::symmetric(10, 8))
+            .show(ui, |ui| {
+                ui.set_width(ui.available_width());
+                content(ui)
+            });
+        ui.add_space(10.0);
+    });
+}
+
 /// A framed group with a small-caps heading.
 ///
 /// Panels made of bare label rows read as one undifferentiated wall; a frame

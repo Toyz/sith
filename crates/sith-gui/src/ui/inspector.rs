@@ -21,7 +21,9 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
     egui::ScrollArea::vertical()
         .auto_shrink([false, false])
         .show(ui, |ui| {
-            ui.set_width(ui.available_width());
+            // Values are right-aligned, so the scrollbar's strip has to be
+            // kept clear or it sits on top of them.
+            ui.set_width((ui.available_width() - widgets::SCROLLBAR_GUTTER).max(80.0));
             match app.nav() {
                 Nav::Segment(segno) => match app.tab().and_then(|t| t.sel) {
                     Some(sel) => address(app, ui, act, segno, sel),
@@ -400,36 +402,34 @@ fn function_card(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segment: u16
 fn segment_card(app: &SithApp, ui: &mut Ui, segno: u16, collapsed: bool) {
     let Some(doc) = app.doc() else { return };
     let Some(seg) = doc.ne.segment(segno) else { return };
-    egui::CollapsingHeader::new(
-        egui::RichText::new(format!("SEGMENT {segno}"))
-            .size(10.0)
-            .strong()
-            .color(col::faint()),
-    )
-    .id_salt("inspector-segment")
-    .default_open(!collapsed)
-    .show(ui, |ui| {
-        kv_colored(
-            ui,
-            "kind",
-            seg.kind().as_str(),
-            if seg.is_code() {
-                col::code_seg()
-            } else {
-                col::data_seg()
-            },
-        );
-        kv(ui, "file offset", format!("{:08X}", seg.file_offset));
-        kv(ui, "size", format!("{} bytes", seg.length));
-        kv(ui, "alloc", format!("{} bytes", seg.min_alloc));
-        kv(ui, "fixups", seg.relocs.len().to_string());
-        ui.add_space(4.0);
-        ui.horizontal_wrapped(|ui| {
-            for f in seg.flag_names().iter().skip(1) {
-                widgets::chip(ui, f, col::dim());
-            }
-        });
-    });
+    widgets::collapsing_card(
+        ui,
+        "inspector-segment",
+        &format!("SEGMENT {segno}"),
+        !collapsed,
+        |ui| {
+            kv_colored(
+                ui,
+                "kind",
+                seg.kind().as_str(),
+                if seg.is_code() {
+                    col::code_seg()
+                } else {
+                    col::data_seg()
+                },
+            );
+            kv(ui, "file offset", format!("{:08X}", seg.file_offset));
+            kv(ui, "size", format!("{} bytes", seg.length));
+            kv(ui, "alloc", format!("{} bytes", seg.min_alloc));
+            kv(ui, "fixups", seg.relocs.len().to_string());
+            ui.add_space(4.0);
+            ui.horizontal_wrapped(|ui| {
+                for f in seg.flag_names().iter().skip(1) {
+                    widgets::chip(ui, f, col::dim());
+                }
+            });
+        },
+    );
 }
 
 fn nothing_selected(app: &SithApp, ui: &mut Ui, segno: u16) {

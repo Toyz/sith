@@ -25,6 +25,8 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
         .auto_shrink([false, false])
         .show(ui, |ui| {
             ui.spacing_mut().item_spacing.y = 1.0;
+            // Sizes and chips are right-aligned; leave the scrollbar its strip.
+            ui.set_width((ui.available_width() - widgets::SCROLLBAR_GUTTER).max(120.0));
             let Some(doc) = app.doc() else {
                 crate::ui::empty(ui, "no file loaded");
                 return;
