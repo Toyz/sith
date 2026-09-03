@@ -352,11 +352,7 @@ pub fn preview(colors: Colors) {
 }
 
 pub fn themes_dir() -> Option<PathBuf> {
-    let dir = std::env::var_os("XDG_CONFIG_HOME")
-        .map(PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".config")))
-        .or_else(|| std::env::var_os("APPDATA").map(PathBuf::from))?;
-    Some(dir.join("sith").join("themes"))
+    crate::paths::themes_dir()
 }
 
 fn slug(name: &str) -> String {

@@ -17,6 +17,7 @@
 
 use crate::callargs;
 use crate::{Addr, Function, Program};
+use ne_core::Target;
 use iced_x86::Mnemonic;
 use ne_core::api::ApiDb;
 use ne_disasm::{Flow, Insn, SegmentCode};
@@ -92,11 +93,15 @@ pub fn function(program: &Program, db: &ApiDb, f: &Function, name: &str) -> Vec<
     }
 
     let labels = branch_targets(&body);
+    let plan = plan(&body, &labels);
     let locals = local_slots(&body);
     let args = argument_names(f);
+    // Frame setup and teardown, which the signature and the declarations
+    // above already say, and comparisons whose branch says them better.
+    let (hidden, saved) = frame_scaffolding(&body);
     let mut out = Vec::new();
 
-    header(&mut out, program, f, name);
+    header(&mut out, program, f, name, &saved);
     out.push(Line::new(Kind::Signature, 0, f.frame.signature(name)));
     out.push(Line::new(Kind::Punct, 0, "{"));
 
@@ -118,13 +123,22 @@ pub fn function(program: &Program, db: &ApiDb, f: &Function, name: &str) -> Vec<
     let mut folded: BTreeSet<u32> = BTreeSet::new();
     // Pushes already consumed as the arguments of a call below them.
     let consumed = consumed_pushes(code, &body, db);
-    // Frame setup and teardown, which the signature and the declarations
-    // above already say, and comparisons whose branch says them better.
-    let hidden = frame_scaffolding(&body);
+
+    // Blocks currently open, innermost last, each with the offset it ends at.
+    let mut depth: Vec<u32> = Vec::new();
+    let indent = |depth: &Vec<u32>| (depth.len() as u8) + 1;
 
     for (i, (idx, insn)) in body.iter().enumerate() {
-        if labels.contains(&insn.offset) {
+        while depth.last() == Some(&insn.offset) {
+            depth.pop();
+            out.push(Line::new(Kind::Punct, indent(&depth), "}"));
+        }
+        if plan.labels.contains(&insn.offset) {
             out.push(Line::new(Kind::Label, 0, format!("{}:", label_name(insn.offset))));
+        }
+        if plan.loops.contains(&insn.offset) {
+            out.push(Line::new(Kind::Control, indent(&depth), "do {"));
+            depth.push(u32::MAX);
         }
         // Flags are recorded before anything is skipped: a comparison hidden
         // because the branch below it says it better is exactly the
@@ -133,8 +147,66 @@ pub fn function(program: &Program, db: &ApiDb, f: &Function, name: &str) -> Vec<
         // `sbb r,r` / `inc r` is not arithmetic, it is how a 16-bit compiler
         // writes a comparison into a variable. Left as two instructions it is
         // unreadable; folded, it says what the code is actually computing.
+        // A branch that became a block writes the block instead of itself.
+        match plan.shape.get(&insn.offset) {
+            Some(Shape::If { end }) => {
+                let (_, ops) = insn.text.split_once(' ').unwrap_or((insn.text.as_str(), ""));
+                let mnem = insn.text.split(' ').next().unwrap_or("");
+                let _ = ops;
+                let cond = condition(invert(mnem), flags, &args, &locals);
+                let mut line =
+                    Line::at(insn.offset, Kind::Control, format!("if ({cond}) {{"));
+                line.indent = indent(&depth);
+                out.push(line);
+                depth.push(*end);
+                flags = None;
+                continue;
+            }
+            Some(Shape::Else { end }) => {
+                depth.pop();
+                out.push(Line::new(Kind::Control, indent(&depth), "} else {"));
+                depth.push(*end);
+                flags = None;
+                continue;
+            }
+            Some(Shape::JumpOver { target }) => {
+                let mnem = insn.text.split(' ').next().unwrap_or("");
+                let cond = condition(invert(mnem), flags, &args, &locals);
+                let mut line = Line::at(
+                    insn.offset,
+                    Kind::Control,
+                    format!("if ({cond}) goto {};", label_name(*target)),
+                );
+                line.indent = indent(&depth);
+                out.push(line);
+                flags = None;
+                continue;
+            }
+            Some(Shape::Folded) => {
+                flags = None;
+                continue;
+            }
+            Some(Shape::While) => {
+                let mnem = insn.text.split(' ').next().unwrap_or("");
+                let cond = condition(mnem, flags, &args, &locals);
+                depth.pop();
+                let mut line = Line::at(
+                    insn.offset,
+                    Kind::Control,
+                    format!("}} while ({cond});"),
+                );
+                line.indent = indent(&depth);
+                out.push(line);
+                flags = None;
+                continue;
+            }
+            None => {}
+        }
+
         if let Some((text, eat)) = boolean_idiom(&body, i, flags, &args, &locals) {
-            out.push(Line::at(insn.offset, Kind::Statement, text));
+            let mut line = Line::at(insn.offset, Kind::Statement, text);
+            line.indent = indent(&depth);
+            out.push(line);
             folded.insert(eat);
             flags = None;
             continue;
@@ -142,14 +214,16 @@ pub fn function(program: &Program, db: &ApiDb, f: &Function, name: &str) -> Vec<
         if !(consumed.contains(&insn.offset) || hidden.contains(&insn.offset)
             || folded.contains(&insn.offset))
         {
-            match statement(program, db, code, *idx, insn, flags, &args, &locals, &labels, f) {
-                Some(line) => out.push(line),
-                None => out.push(Line::at(
-                    insn.offset,
-                    Kind::Asm,
-                    format!("__asm {{ {} }}", squash(&insn.text)),
-                )),
-            }
+            let mut line = statement(program, db, code, *idx, insn, flags, &args, &locals, &labels, f)
+                .unwrap_or_else(|| {
+                    Line::at(
+                        insn.offset,
+                        Kind::Asm,
+                        format!("__asm {{ {} }}", squash(&insn.text)),
+                    )
+                });
+            line.indent = indent(&depth);
+            out.push(line);
         }
         flags = if sets_flags {
             Some(insn)
@@ -160,12 +234,17 @@ pub fn function(program: &Program, db: &ApiDb, f: &Function, name: &str) -> Vec<
         };
     }
 
+    // Anything still open ran to the end of the function.
+    while !depth.is_empty() {
+        depth.pop();
+        out.push(Line::new(Kind::Punct, indent(&depth), "}"));
+    }
     out.push(Line::new(Kind::Punct, 0, "}"));
     out
 }
 
 /// What the lifter wants the reader to know before they trust any of it.
-fn header(out: &mut Vec<Line>, program: &Program, f: &Function, name: &str) {
+fn header(out: &mut Vec<Line>, program: &Program, f: &Function, name: &str, saved: &[String]) {
     out.push(Line::new(
         Kind::Comment,
         0,
@@ -205,6 +284,189 @@ fn header(out: &mut Vec<Line>, program: &Program, f: &Function, name: &str) {
         0,
         "// by convention rather than by proof.",
     ));
+    if !saved.is_empty() {
+        out.push(Line::new(
+            Kind::Comment,
+            0,
+            format!("// saves and restores {}", saved.join(", ")),
+        ));
+    }
+}
+
+/// What structuring made of a branch.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Shape {
+    /// A forward conditional jump that skips a block: `if (!cond) { ... }`.
+    If { end: u32 },
+    /// The unconditional jump at the end of an if body, which is its else.
+    Else { end: u32 },
+    /// A backward conditional jump closing a loop: `} while (cond);`.
+    While,
+    /// A conditional jump over a single unconditional one, which is the long
+    /// way of writing the opposite branch straight to where it goes.
+    JumpOver { target: u32 },
+    /// The unconditional jump that a `JumpOver` above swallowed.
+    Folded,
+}
+
+/// Where blocks open and close, and which branches were spent doing it.
+#[derive(Debug, Default)]
+struct Plan {
+    /// Branch offset -> what it became.
+    shape: HashMap<u32, Shape>,
+    /// Offsets that a `do {` opens before.
+    loops: BTreeSet<u32>,
+    /// Offsets where a block ends, innermost last.
+    closes: HashMap<u32, usize>,
+    /// Labels still reached by a goto that survived structuring.
+    labels: BTreeSet<u32>,
+}
+
+/// Turn the branches into blocks, where the branches allow it.
+///
+/// Conservative on purpose. A region only becomes a block when nothing jumps
+/// into the middle of it from outside, because a block with two entrances is
+/// not a block -- writing one as if it were would be the first place this
+/// view lied. Everything else keeps its `goto`, which is ugly and correct.
+fn plan(body: &[(usize, &Insn)], labels: &BTreeSet<u32>) -> Plan {
+    let mut plan = Plan::default();
+    // target -> the offsets that branch to it.
+    let mut incoming: HashMap<u32, Vec<u32>> = HashMap::new();
+    for (_, insn) in body {
+        if matches!(insn.flow, Flow::Jump | Flow::CondJump) {
+            if let Some(t) = insn.near_target.filter(|t| labels.contains(t)) {
+                incoming.entry(t).or_default().push(insn.offset);
+            }
+        }
+    }
+
+    // Nothing outside `[lo, hi)` may branch into it past its first
+    // instruction. Entering at `lo` is how you get there; entering anywhere
+    // else means the region has a second entrance.
+    let sealed = |lo: u32, hi: u32| {
+        incoming.iter().all(|(to, froms)| {
+            !(lo < *to && *to < hi) || froms.iter().all(|f| *f >= lo && *f < hi)
+        })
+    };
+
+    let offsets: Vec<u32> = body.iter().map(|(_, i)| i.offset).collect();
+    let last_before = |t: u32| offsets.iter().rev().find(|o| **o < t).copied();
+
+    // Loops first: a back edge claims its whole span, so an `if` inside it
+    // nests rather than the other way round.
+    let mut ends: Vec<u32> = Vec::new();
+    for (_, insn) in body {
+        if insn.flow != Flow::CondJump {
+            continue;
+        }
+        let Some(t) = insn.near_target.filter(|t| labels.contains(t)) else {
+            continue;
+        };
+        if t <= insn.offset && sealed(t, insn.offset) {
+            plan.shape.insert(insn.offset, Shape::While);
+            plan.loops.insert(t);
+            ends.push(insn.offset);
+        }
+    }
+
+    // Then forward conditionals, outermost first so nesting is checked
+    // against blocks that are already open.
+    let mut open: Vec<u32> = Vec::new();
+    for (_, insn) in body {
+        while open.last().is_some_and(|e| *e <= insn.offset) {
+            open.pop();
+        }
+        if insn.flow != Flow::CondJump || plan.shape.contains_key(&insn.offset) {
+            continue;
+        }
+        let Some(t) = insn.near_target.filter(|t| labels.contains(t)) else {
+            continue;
+        };
+        if t <= insn.offset {
+            continue;
+        }
+        // A block has to close inside whatever already surrounds it.
+        if open.last().is_some_and(|e| t > *e) || !sealed(insn.offset, t) {
+            continue;
+        }
+        // `if (c) goto next; goto L;` is the long way of writing
+        // `if (!c) goto L;`. Fold it rather than wrapping it in a block,
+        // which would be a third way of saying the same thing.
+        let inner: Vec<&Insn> = body
+            .iter()
+            .map(|(_, i)| *i)
+            .filter(|i| i.offset > insn.offset && i.offset < t)
+            .collect();
+        if inner.len() == 1 && inner[0].flow == Flow::Jump {
+            if let Some(e) = inner[0].near_target {
+                plan.shape.insert(insn.offset, Shape::JumpOver { target: e });
+                plan.shape.insert(inner[0].offset, Shape::Folded);
+                continue;
+            }
+        }
+        if inner.is_empty() {
+            continue;
+        }
+
+        // An unconditional jump as the body's last instruction is its else.
+        let mut end = t;
+        let tail = last_before(t).and_then(|o| body.iter().find(|(_, i)| i.offset == o));
+        if let Some((_, j)) = tail {
+            if j.flow == Flow::Jump && !plan.shape.contains_key(&j.offset) {
+                if let Some(e) = j.near_target.filter(|e| *e > t && labels.contains(e)) {
+                    if sealed(t, e) && !open.last().is_some_and(|o| e > *o) {
+                        plan.shape.insert(j.offset, Shape::Else { end: e });
+                        end = e;
+                    }
+                }
+            }
+        }
+        plan.shape.insert(insn.offset, Shape::If { end: t });
+        *plan.closes.entry(end).or_default() += 1;
+        open.push(end);
+    }
+
+    // A label is only worth printing if something still jumps to it, and
+    // what each branch jumps to is decided by the shape it became.
+    for (_, insn) in body {
+        if !matches!(insn.flow, Flow::Jump | Flow::CondJump) {
+            continue;
+        }
+        match plan.shape.get(&insn.offset) {
+            // These say where they go with a block, not with a label.
+            Some(Shape::If { .. }) | Some(Shape::Else { .. }) | Some(Shape::While) => {}
+            // Folded into the branch above it, which now carries the target.
+            Some(Shape::Folded) => {}
+            Some(Shape::JumpOver { target }) => {
+                plan.labels.insert(*target);
+            }
+            None => {
+                if let Some(t) = insn.near_target.filter(|t| labels.contains(t)) {
+                    plan.labels.insert(t);
+                }
+            }
+        }
+    }
+    plan
+}
+
+/// The opposite branch, for writing `if (cond) skip` as `if (!cond) do`.
+fn invert(mnem: &str) -> &str {
+    match mnem {
+        "je" | "jz" => "jne",
+        "jne" | "jnz" => "je",
+        "jl" | "jnge" => "jge",
+        "jge" | "jnl" => "jl",
+        "jle" | "jng" => "jg",
+        "jg" | "jnle" => "jle",
+        "jb" | "jnae" | "jc" => "jae",
+        "jae" | "jnb" | "jnc" => "jb",
+        "jbe" | "jna" => "ja",
+        "ja" | "jnbe" => "jbe",
+        "js" => "jns",
+        "jns" => "js",
+        other => other,
+    }
 }
 
 /// Whether an instruction is there to set flags for the branch below it.
@@ -398,46 +660,120 @@ fn boolean_idiom(
 
 /// Instructions that say nothing the reader has not already been told.
 ///
-/// The prologue and epilogue are the frame the signature and the local
-/// declarations describe; `inc bp` is the Win16 marker for a far frame, not
-/// arithmetic; a `nop` is padding; and a comparison immediately above a
-/// conditional jump is written into the condition instead.
-fn frame_scaffolding(body: &[(usize, &Insn)]) -> BTreeSet<u32> {
+/// The prologue and epilogue describe the frame that the signature and the
+/// local declarations already describe. They are matched as runs from each
+/// end rather than by pattern anywhere in the body, because the same
+/// instruction means something quite different in the middle of a function:
+/// `mov ds,ax` on the way in is the Win16 data-segment reload, and `mov ds,ax`
+/// two hundred bytes later is the program doing something.
+///
+/// Also returns the registers the prologue saved, which is worth stating once
+/// rather than as four lines of pushes and four of pops.
+fn frame_scaffolding(body: &[(usize, &Insn)]) -> (BTreeSet<u32>, Vec<String>) {
     use iced_x86::Register;
     let mut out = BTreeSet::new();
-    for (i, (_, insn)) in body.iter().enumerate() {
-        let next = body.get(i + 1).map(|(_, n)| *n);
-        let hide = match insn.mnemonic {
-            Mnemonic::Nop => true,
-            // `inc bp` / `dec bp` around the frame, the marker a Win16
-            // compiler sets so a debugger can tell a far frame from a near
-            // one.
-            Mnemonic::Inc | Mnemonic::Dec if insn.op0_register == Some(Register::BP) => true,
-            // `push bp` followed by `mov bp,sp`, and the `sub sp,n` that
-            // reserves the locals.
-            Mnemonic::Push
-                if insn.op0_register == Some(Register::BP)
-                    && next.is_some_and(|n| {
-                        n.mnemonic == Mnemonic::Mov && n.op0_register == Some(Register::BP)
-                    }) =>
-            {
-                true
+    let mut saved: Vec<String> = Vec::new();
+
+    let reg_of = |insn: &Insn, n: usize| -> Option<String> {
+        insn.text
+            .split_once(' ')
+            .map(|(_, o)| split_operands(o))
+            .and_then(|ops| ops.get(n).cloned())
+    };
+    let is_reg = |name: &str| {
+        matches!(
+            name,
+            "ax" | "bx" | "cx" | "dx" | "si" | "di" | "bp" | "sp" | "ds" | "es" | "ss" | "cs"
+        )
+    };
+
+    for (_, insn) in body {
+        let keep = match insn.mnemonic {
+            Mnemonic::Nop => false,
+            // The far-frame marker a Win16 compiler sets so a debugger can
+            // tell a far frame from a near one.
+            Mnemonic::Inc | Mnemonic::Dec if insn.op0_register == Some(Register::BP) => false,
+            Mnemonic::Push => {
+                let r = reg_of(insn, 0).unwrap_or_default();
+                if r == "bp" || r == "ds" {
+                    false
+                } else if is_reg(&r) {
+                    saved.push(r);
+                    false
+                } else {
+                    true
+                }
             }
-            Mnemonic::Mov if insn.op0_register == Some(Register::BP) && i < 6 => true,
-            Mnemonic::Sub | Mnemonic::Add if insn.op0_register == Some(Register::SP) => true,
-            Mnemonic::Pop if insn.op0_register == Some(Register::BP) => true,
-            Mnemonic::Leave => true,
-            // A flag test whose result is written out by what follows -- a
-            // conditional jump, or the sbb idiom -- is said better there.
-            _ if is_flag_test(insn) => next
-                .is_some_and(|n| n.flow == Flow::CondJump || starts_boolean_idiom(n)),
-            _ => false,
+            Mnemonic::Mov => {
+                let dst = reg_of(insn, 0).unwrap_or_default();
+                let src = reg_of(insn, 1).unwrap_or_default();
+                !((dst == "bp" || dst == "ds" || dst == "sp") && is_reg(&src)
+                    || dst == "ax" && src == "ds")
+            }
+            Mnemonic::Sub | Mnemonic::Add if insn.op0_register == Some(Register::SP) => false,
+            _ => true,
         };
-        if hide {
+        if keep {
+            break;
+        }
+        out.insert(insn.offset);
+    }
+    // `mov ax,ds` only belongs to the prologue if `mov ds,ax` follows it.
+    // Otherwise it is a real read, and dropping it would hide one.
+    if !body
+        .iter()
+        .any(|(_, i)| out.contains(&i.offset) && i.op0_register == Some(Register::DS))
+    {
+        if let Some((_, first)) = body.first() {
+            if first.op0_register == Some(Register::AX) {
+                out.remove(&first.offset);
+            }
+        }
+    }
+    let _ = Register::AX;
+
+    for (_, insn) in body.iter().rev() {
+        let keep = match insn.mnemonic {
+            Mnemonic::Ret | Mnemonic::Retf | Mnemonic::Nop | Mnemonic::Leave => false,
+            Mnemonic::Inc | Mnemonic::Dec if insn.op0_register == Some(Register::BP) => false,
+            Mnemonic::Pop => !is_reg(&reg_of(insn, 0).unwrap_or_default()),
+            // `lea sp,[bp-n]` and `mov sp,bp` both put the stack back.
+            Mnemonic::Lea | Mnemonic::Mov if insn.op0_register == Some(Register::SP) => false,
+            Mnemonic::Add | Mnemonic::Sub if insn.op0_register == Some(Register::SP) => false,
+            _ => true,
+        };
+        if keep {
+            break;
+        }
+        // The return itself is the one part of the epilogue worth keeping:
+        // it is where the function ends.
+        if !matches!(insn.mnemonic, Mnemonic::Ret | Mnemonic::Retf) {
             out.insert(insn.offset);
         }
     }
-    out
+
+    // A nop is padding wherever it sits, not only in the prologue.
+    for (_, insn) in body {
+        if insn.mnemonic == Mnemonic::Nop {
+            out.insert(insn.offset);
+        }
+    }
+
+    // Then, anywhere in the body, a flag test whose result is written out by
+    // what follows -- a conditional jump, or the sbb idiom -- is said better
+    // there than on a line of its own.
+    for (i, (_, insn)) in body.iter().enumerate() {
+        let next = body.get(i + 1).map(|(_, n)| *n);
+        if is_flag_test(insn)
+            && next.is_some_and(|n| n.flow == Flow::CondJump || starts_boolean_idiom(n))
+        {
+            out.insert(insn.offset);
+        }
+    }
+
+    saved.sort();
+    saved.dedup();
+    (out, saved)
 }
 
 /// One instruction as a C statement, or `None` when it has no C shape.
@@ -479,7 +815,7 @@ fn statement(
         return Some(Line::at(
             insn.offset,
             Kind::Call,
-            call_text(program, db, code, idx, insn, args, locals),
+            call_text(program, db, code, idx, insn, args, locals, f.addr.segment),
         ));
     }
     if insn.flow == Flow::CallIndirect {
@@ -487,7 +823,8 @@ fn statement(
     }
 
     let text = match insn.mnemonic {
-        Mnemonic::Mov | Mnemonic::Lea => format!("{a} = {b};"),
+        Mnemonic::Mov => format!("{a} = {b};"),
+        Mnemonic::Lea => format!("{a} = &{b};"),
         Mnemonic::Movzx => format!("{a} = (unsigned){b};"),
         Mnemonic::Movsx => format!("{a} = (int){b};"),
         Mnemonic::Xchg => format!("swap({a}, {b});"),
@@ -515,7 +852,6 @@ fn statement(
         Mnemonic::Idiv | Mnemonic::Div => format!("ax = dx:ax / {a};  dx = dx:ax % {a};"),
         Mnemonic::Push => format!("push({a});"),
         Mnemonic::Pop => format!("{a} = pop();"),
-        Mnemonic::Nop => return None,
         Mnemonic::Int => format!("interrupt({a});"),
         // A comparison has no effect of its own; it is the branch below it
         // that says what was being asked.
@@ -546,6 +882,7 @@ fn statement(
 }
 
 /// The call, with whatever the reconstruction could establish about it.
+#[allow(clippy::too_many_arguments)]
 fn call_text(
     program: &Program,
     db: &ApiDb,
@@ -554,6 +891,7 @@ fn call_text(
     insn: &Insn,
     args: &HashMap<i32, String>,
     locals: &[(i32, String)],
+    f_segment: u16,
 ) -> String {
     if let Some(call) = callargs::reconstruct(code, idx, db) {
         let args: Vec<String> = call
@@ -597,39 +935,33 @@ fn call_text(
         };
     }
 
-    // No signature, so the name is all we have.
-    let target = insn
-        .near_target
-        .map(|t| Addr {
-            segment: insn_segment(program, insn),
-            offset: t,
-        })
-        .and_then(|a| program.function_at(a))
-        .map(|f| f.label());
-    match target {
+    // No signature, so the name is all we have -- but a call inside this
+    // module has one, and the fixup only knows where it points.
+    let named = match insn.fixup.as_ref().map(|x| &x.target) {
+        Some(Target::Internal {
+            segment,
+            offset: Some(off),
+        }) => program
+            .function_at(Addr {
+                segment: *segment,
+                offset: *off as u32,
+            })
+            .map(|f| f.label()),
+        Some(t) => Some(t.to_string()),
+        None => insn
+            .near_target
+            .and_then(|t| {
+                program.function_at(Addr {
+                    segment: f_segment,
+                    offset: t,
+                })
+            })
+            .map(|f| f.label()),
+    };
+    match named {
         Some(name) => format!("ax = {name}();"),
-        None => match insn.fixup.as_ref() {
-            Some(fx) => format!("ax = {}();", fx.target),
-            None => format!("ax = {}();", squash(&insn.text)),
-        },
+        None => format!("ax = {}();", squash(&insn.text)),
     }
-}
-
-/// Which segment an instruction came from.
-///
-/// The instruction does not carry it, so it is recovered from the segment
-/// whose code contains this exact instruction.
-fn insn_segment(program: &Program, insn: &Insn) -> u16 {
-    program
-        .code
-        .iter()
-        .find(|(_, c)| {
-            c.insns
-                .binary_search_by_key(&insn.offset, |i| i.offset)
-                .is_ok()
-        })
-        .map(|(s, _)| *s)
-        .unwrap_or(0)
 }
 
 /// A conditional jump written as the test it performs.
@@ -897,6 +1229,99 @@ mod tests {
         };
         assert_eq!(condition("je", Some(&test), &args(), &[]), "ax == 0");
         assert_eq!(condition("jne", Some(&test), &args(), &[]), "ax != 0");
+    }
+
+    fn insn(offset: u32, text: &str, m: Mnemonic, flow: Flow, target: Option<u32>) -> Insn {
+        Insn {
+            offset,
+            len: 2,
+            bytes: vec![],
+            text: text.into(),
+            mnemonic: m,
+            flow,
+            near_target: target,
+            fixup: None,
+            immediate: None,
+            bp_displacement: None,
+            op0_register: None,
+            operand_values: vec![],
+        }
+    }
+
+    #[test]
+    fn every_branch_has_an_opposite() {
+        for m in ["je", "jne", "jl", "jge", "jle", "jg", "jb", "jae", "jbe", "ja", "js", "jns"] {
+            assert_eq!(invert(invert(m)), m, "{m}");
+            assert_ne!(invert(m), m, "{m}");
+        }
+        // Anything with no opposite is left alone rather than guessed at.
+        assert_eq!(invert("jcxz"), "jcxz");
+    }
+
+    #[test]
+    fn a_forward_branch_over_a_body_becomes_a_block() {
+        let insns = vec![
+            insn(0, "je 8h", Mnemonic::Je, Flow::CondJump, Some(8)),
+            insn(2, "mov ax,1", Mnemonic::Mov, Flow::Next, None),
+            insn(5, "mov bx,2", Mnemonic::Mov, Flow::Next, None),
+            insn(8, "retf", Mnemonic::Retf, Flow::Return, None),
+        ];
+        let body: Vec<(usize, &Insn)> = insns.iter().enumerate().collect();
+        let labels = branch_targets(&body);
+        let p = plan(&body, &labels);
+        assert_eq!(p.shape.get(&0), Some(&Shape::If { end: 8 }));
+        // The block says where it goes, so the label is not needed.
+        assert!(!p.labels.contains(&8));
+    }
+
+    #[test]
+    fn a_branch_over_a_single_jump_folds_into_it() {
+        let insns = vec![
+            insn(0, "je 5h", Mnemonic::Je, Flow::CondJump, Some(5)),
+            insn(2, "jmp 20h", Mnemonic::Jmp, Flow::Jump, Some(0x20)),
+            insn(5, "mov ax,1", Mnemonic::Mov, Flow::Next, None),
+            insn(0x20, "retf", Mnemonic::Retf, Flow::Return, None),
+        ];
+        let body: Vec<(usize, &Insn)> = insns.iter().enumerate().collect();
+        let labels = branch_targets(&body);
+        let p = plan(&body, &labels);
+        assert_eq!(p.shape.get(&0), Some(&Shape::JumpOver { target: 0x20 }));
+        assert_eq!(p.shape.get(&2), Some(&Shape::Folded));
+        // The branch now carries the far target, and only that one.
+        assert!(p.labels.contains(&0x20));
+        assert!(!p.labels.contains(&5));
+    }
+
+    #[test]
+    fn a_region_something_else_jumps_into_is_not_a_block() {
+        let insns = vec![
+            insn(0, "jmp 5h", Mnemonic::Jmp, Flow::Jump, Some(5)),
+            insn(2, "je 8h", Mnemonic::Je, Flow::CondJump, Some(8)),
+            insn(5, "mov ax,1", Mnemonic::Mov, Flow::Next, None),
+            insn(8, "retf", Mnemonic::Retf, Flow::Return, None),
+        ];
+        let body: Vec<(usize, &Insn)> = insns.iter().enumerate().collect();
+        let labels = branch_targets(&body);
+        let p = plan(&body, &labels);
+        // Offset 5 is reached from outside (2, 8), so it has two entrances
+        // and writing it as a block would be a lie.
+        assert_eq!(p.shape.get(&2), None);
+        assert!(p.labels.contains(&8));
+    }
+
+    #[test]
+    fn a_backward_branch_closes_a_loop() {
+        let insns = vec![
+            insn(0, "mov ax,1", Mnemonic::Mov, Flow::Next, None),
+            insn(3, "dec cx", Mnemonic::Dec, Flow::Next, None),
+            insn(5, "jne 0h", Mnemonic::Jne, Flow::CondJump, Some(0)),
+            insn(7, "retf", Mnemonic::Retf, Flow::Return, None),
+        ];
+        let body: Vec<(usize, &Insn)> = insns.iter().enumerate().collect();
+        let labels = branch_targets(&body);
+        let p = plan(&body, &labels);
+        assert_eq!(p.shape.get(&5), Some(&Shape::While));
+        assert!(p.loops.contains(&0));
     }
 
     #[test]

@@ -1658,15 +1658,10 @@ impl RecentEntry {
     }
 }
 
-/// Where the recent list is kept. Follows the XDG layout on Linux and falls
-/// back to the home directory elsewhere; a missing or unreadable file simply
-/// means an empty list.
+/// Where the recent list is kept. A missing or unreadable file simply means
+/// an empty list.
 fn recent_path() -> Option<PathBuf> {
-    let dir = std::env::var_os("XDG_CONFIG_HOME")
-        .map(PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".config")))
-        .or_else(|| std::env::var_os("APPDATA").map(PathBuf::from))?;
-    Some(dir.join("sith").join("recent.json"))
+    crate::paths::recent_file()
 }
 
 fn load_recent() -> Vec<RecentEntry> {
