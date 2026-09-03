@@ -1,7 +1,7 @@
 //! Vector icons.
 //!
 //! Drawn with the painter rather than loaded from files: the set is small, it
-//! stays crisp at any zoom or DPI, it takes its colour from the theme, and it
+//! stays crisp at any zoom or DPI, it takes its color from the theme, and it
 //! costs no dependency. (egui can render SVG through `egui_extras`' `svg`
 //! feature if a richer set is ever wanted; this avoids pulling in a renderer
 //! for sixteen glyphs.)

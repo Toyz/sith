@@ -89,7 +89,7 @@ fn identity(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segment: u16, off
                 });
             });
 
-            // Colour is an annotation like naming, and belongs beside it.
+            // Color is an annotation like naming, and belongs beside it.
             ui.horizontal(|ui| {
                 ui.spacing_mut().item_spacing.x = 4.0;
                 for name in crate::theme::USER_COLORS {
@@ -112,7 +112,7 @@ fn identity(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segment: u16, off
                             egui::StrokeKind::Outside,
                         );
                     }
-                    // Clicking the colour it already has clears it.
+                    // Clicking the color it already has clears it.
                     if resp
                         .on_hover_text(if picked {
                             format!("{name} — click to clear")
@@ -309,7 +309,7 @@ fn api_call(app: &SithApp, ui: &mut Ui, segment: u16, index: usize) {
             // column: an operand like `word [bp+0Ah]:word [bp+8]` already says
             // it, and a third column collides with the value in a narrow panel.
             let value = a.render();
-            let colour = if a.name.is_some() {
+            let color = if a.name.is_some() {
                 col::green()
             } else if a.value.is_some() {
                 col::text()
@@ -325,7 +325,7 @@ fn api_call(app: &SithApp, ui: &mut Ui, segment: u16, index: usize) {
                         .color(col::cyan()),
                 );
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    ui.label(mono_c(elide(&strip_size(&value), 22), colour));
+                    ui.label(mono_c(elide(&strip_size(&value), 22), color));
                 });
             });
             r.response.on_hover_text(format!(
@@ -359,33 +359,63 @@ fn bytes_at(app: &SithApp, ui: &mut Ui, segment: u16, offset: u32) {
     }
 
     card(ui, "DATA AT CURSOR", |ui| {
-        ui.label(mono_c(
-            b.iter().map(|x| format!("{x:02X} ")).collect::<String>(),
-            col::bytes(),
-        ));
+        // The bytes and how they read as text belong on one line: they are the
+        // same thing twice, not two facts.
+        ui.horizontal(|ui| {
+            ui.label(mono_c(
+                b.iter().map(|x| format!("{x:02X} ")).collect::<String>(),
+                col::bytes(),
+            ));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let ascii: String = b
+                    .iter()
+                    .map(|&x| if (0x20..0x7F).contains(&x) { x as char } else { '\u{b7}' })
+                    .collect();
+                ui.label(mono_c(ascii, col::dim()));
+            });
+        });
         ui.add_space(4.0);
-        kv(ui, "u8", format!("{:#04X}   {}", b[0], b[0]));
-        if b.len() >= 2 {
-            let w = u16::from_le_bytes([b[0], b[1]]);
-            kv(ui, "u16", format!("{w:#06X}   {w}"));
-            kv_colored(ui, "i16", format!("{}", w as i16), col::dim());
-        }
-        if b.len() >= 4 {
-            let d = u32::from_le_bytes([b[0], b[1], b[2], b[3]]);
-            kv(ui, "u32", format!("{d:#010X}   {d}"));
-            // A far pointer is the other thing four bytes usually mean here.
-            kv_colored(
-                ui,
-                "seg:off",
-                format!("{:04X}:{:04X}", d >> 16, d & 0xFFFF),
-                col::dim(),
-            );
-        }
-        let ascii: String = b
-            .iter()
-            .map(|&x| if (0x20..0x7F).contains(&x) { x as char } else { '·' })
-            .collect();
-        kv_colored(ui, "ascii", ascii, col::dim());
+
+        // A grid, so hex lines up under hex and decimal under decimal. Read as
+        // separate right-aligned labels they drift apart by a character.
+        egui::Grid::new("byte-inspector")
+            .num_columns(3)
+            .spacing([12.0, 2.0])
+            .show(ui, |ui| {
+                let mut row = |name: &str, hex: String, dec: String| {
+                    ui.label(
+                        egui::RichText::new(name)
+                            .monospace()
+                            .size(11.0)
+                            .color(col::faint()),
+                    );
+                    ui.label(mono_c(hex, col::text()));
+                    ui.label(mono_c(dec, col::dim()));
+                    ui.end_row();
+                };
+                row("u8", format!("{:#04X}", b[0]), format!("{}", b[0]));
+                if b.len() >= 2 {
+                    let w = u16::from_le_bytes([b[0], b[1]]);
+                    // The signed reading only earns its place when it differs.
+                    let dec = if (w as i16) < 0 {
+                        format!("{w}  ({})", w as i16)
+                    } else {
+                        format!("{w}")
+                    };
+                    row("u16", format!("{w:#06X}"), dec);
+                }
+                if b.len() >= 4 {
+                    let d = u32::from_le_bytes([b[0], b[1], b[2], b[3]]);
+                    row("u32", format!("{d:#010X}"), format!("{d}"));
+                    // Four bytes here are as likely to be a far pointer as a
+                    // number, so they are shown both ways.
+                    row(
+                        "far",
+                        format!("{:04X}:{:04X}", d >> 16, d & 0xFFFF),
+                        String::new(),
+                    );
+                }
+            });
     });
 }
 

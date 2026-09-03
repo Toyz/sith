@@ -191,8 +191,6 @@ pub struct GraphState {
     pub moved: std::collections::HashMap<String, egui::Vec2>,
     /// The node currently being dragged.
     pub dragging: Option<String>,
-    /// The node whose context menu is open.
-    pub menu_for: Option<String>,
     /// The node the user last clicked. Selecting reads it in the inspector
     /// without moving the graph, which is what a click should do.
     pub selected: Option<Addr>,
@@ -217,7 +215,6 @@ impl Default for GraphState {
             zoom_nudge: 1.0,
             moved: Default::default(),
             dragging: None,
-            menu_for: None,
             selected: None,
             expanded: Default::default(),
             root_history: Vec::new(),
@@ -316,7 +313,6 @@ pub enum Action {
     GraphDragBy(egui::Vec2),
     GraphDragEnd,
     GraphResetLayout,
-    GraphMenuFor(Option<String>),
     GraphSelect(Option<Addr>),
     GraphExpandLevel(i32),
     GraphBack,
@@ -604,7 +600,7 @@ impl SithApp {
             .comment_at(segment, offset)
     }
 
-    /// The colour the user gave an address, resolved against the theme.
+    /// The color the user gave an address, resolved against the theme.
     ///
     /// Stored by name, so a project keeps its meaning when the theme changes.
     pub fn user_color(&self, segment: u16, offset: u32) -> Option<egui::Color32> {
@@ -961,8 +957,8 @@ impl SithApp {
                 }
                 self.autosave();
                 self.status = match color {
-                    Some(c) => format!("coloured seg{segment:02}:{offset:04X} {c}"),
-                    None => format!("cleared the colour on seg{segment:02}:{offset:04X}"),
+                    Some(c) => format!("colored seg{segment:02}:{offset:04X} {c}"),
+                    None => format!("cleared the color on seg{segment:02}:{offset:04X}"),
                 };
             }
             Action::ToggleBookmark { segment, offset } => {
@@ -1086,11 +1082,6 @@ impl SithApp {
                     t.graph.expanded.insert(level);
                     // The column is about to get much taller, so re-frame.
                     t.graph.framed = false;
-                }
-            }
-            Action::GraphMenuFor(key) => {
-                if let Some(t) = self.tab_mut() {
-                    t.graph.menu_for = key;
                 }
             }
             Action::GraphResetLayout => {

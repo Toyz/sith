@@ -197,7 +197,7 @@ fn controls(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, g: &GraphState) {
                             .color(col::faint()),
                     );
                     ui.add_space(8.0);
-                    // A key to the colours, since the shapes are all alike.
+                    // A key to the colors, since the shapes are all alike.
                     // Reversed, because the layout runs right to left and the
                     // key should still read root, function, import.
                     for (color, label) in [
@@ -332,7 +332,7 @@ fn canvas(
                 if over {
                     hovered = Some(i);
                 }
-                // A colour the user assigned outranks everything but the
+                // A color the user assigned outranks everything but the
                 // root marker: it is the whole point of assigning one.
                 let tint = n
                     .addr
@@ -371,7 +371,7 @@ fn canvas(
                     );
                 }
                 if n.is_root && tint.is_some() {
-                    // The root still has to be findable once it is coloured.
+                    // The root still has to be findable once it is colored.
                     painter.rect_stroke(
                         r.expand(2.0),
                         radius_of(zoom),
@@ -414,21 +414,31 @@ fn canvas(
                 }
             }
 
-            // Right-click opens the menu for whichever node it landed on, and
-            // the choice is remembered: the pointer moves into the menu, so
-            // "what is hovered now" is the wrong question by then.
+            // Which node the menu belongs to is recorded the instant the
+            // right-click happens, not through the action queue: egui opens a
+            // context menu during the click that registers it, so deciding a
+            // frame later means the click has already been consumed and the
+            // menu never appears.
+            let menu_key = ui.id().with("graph-menu-node");
             if resp.secondary_clicked() {
-                let key = resp.interact_pointer_pos().and_then(at_pointer).map(|i| nodes[i].key.clone());
-                act.push(Action::GraphMenuFor(key));
+                let key = resp
+                    .interact_pointer_pos()
+                    .and_then(at_pointer)
+                    .map(|i| nodes[i].key.clone());
+                ui.ctx()
+                    .memory_mut(|m| m.data.insert_temp(menu_key, key.unwrap_or_default()));
             }
-            let menu_node = g
-                .menu_for
-                .as_ref()
-                .and_then(|k| nodes.iter().find(|n| n.key == *k));
+            let chosen: String = ui
+                .ctx()
+                .memory(|m| m.data.get_temp(menu_key))
+                .unwrap_or_default();
+            let menu_node = nodes.iter().find(|n| n.key == chosen).cloned();
+
+            let mut menu_open = false;
             if let Some(n) = menu_node {
                 let addr = n.addr;
                 let label = n.label.clone();
-                resp.context_menu(|ui| {
+                let shown = resp.context_menu(|ui| {
                     ui.label(
                         egui::RichText::new(&label)
                             .monospace()
@@ -453,21 +463,15 @@ fn canvas(
                             ui.close();
                         }
                         ui.separator();
-                        ui.label(
-                            egui::RichText::new("colour")
-                                .size(10.5)
-                                .color(col::faint()),
-                        );
+                        ui.label(egui::RichText::new("color").size(10.5).color(col::faint()));
                         ui.horizontal(|ui| {
                             ui.spacing_mut().item_spacing.x = 4.0;
                             for name in crate::theme::USER_COLORS {
                                 let Some(c) = crate::theme::named_color(name) else {
                                     continue;
                                 };
-                                let (sw, swr) = ui.allocate_exact_size(
-                                    egui::vec2(16.0, 16.0),
-                                    egui::Sense::click(),
-                                );
+                                let (sw, swr) = ui
+                                    .allocate_exact_size(egui::vec2(16.0, 16.0), egui::Sense::click());
                                 ui.painter().rect_filled(
                                     sw,
                                     egui::CornerRadius::same(4),
@@ -491,7 +495,7 @@ fn canvas(
                                 }
                             }
                         });
-                        if ui.button("Clear colour").clicked() {
+                        if ui.button("Clear color").clicked() {
                             act.push(Action::SetColor {
                                 segment: addr.segment,
                                 offset: addr.offset,
@@ -509,9 +513,10 @@ fn canvas(
                         ui.close();
                     }
                 });
+                menu_open = shown.is_some();
             }
 
-            if let Some(i) = hovered {
+            if let Some(i) = hovered.filter(|_| !menu_open) {
                 let n = &nodes[i];
                 ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
                 // A click reads the node; it does not move the graph or leave

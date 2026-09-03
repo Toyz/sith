@@ -276,6 +276,41 @@ pub struct Program {
     /// Used to tie data offsets, and therefore strings, back to the code that
     /// loads them. See [`Program::data_refs`].
     pub value_refs: HashMap<u32, Vec<Addr>>,
+
+    // Indices built once, so the views that ask these questions on every
+    // frame -- the call graph rebuilds its whole layout each time it is drawn
+    // -- are not each a scan over every function and every call it makes.
+    /// Function start -> its index in `functions`.
+    by_addr: HashMap<Addr, usize>,
+    /// Function index -> the functions it calls.
+    callees: Vec<Vec<usize>>,
+    /// Function index -> the functions that call it.
+    callers: Vec<Vec<usize>>,
+    /// Function index -> the imported symbols it calls, in call order.
+    externals: Vec<Vec<String>>,
+    /// Segment -> its functions, ordered by address, for containment lookups.
+    by_segment: HashMap<u16, Vec<usize>>,
+}
+
+/// The address a call goes to, when it is a place in this module.
+fn target_address(target: &CallTarget) -> Option<Addr> {
+    match target {
+        CallTarget::Near(a) => Some(*a),
+        CallTarget::Fixup(Target::Internal {
+            segment,
+            offset: Some(off),
+        }) => Some(Addr {
+            segment: *segment,
+            offset: *off as u32,
+        }),
+        CallTarget::Fixup(Target::Entry {
+            segment, offset, ..
+        }) => Some(Addr {
+            segment: *segment,
+            offset: *offset as u32,
+        }),
+        _ => None,
+    }
 }
 
 impl Program {
@@ -333,11 +368,58 @@ impl Program {
             v.dedup();
         }
 
+        let by_addr: HashMap<Addr, usize> = functions
+            .iter()
+            .enumerate()
+            .map(|(i, f)| (f.addr, i))
+            .collect();
+
+        let mut callees: Vec<Vec<usize>> = vec![Vec::new(); functions.len()];
+        let mut callers: Vec<Vec<usize>> = vec![Vec::new(); functions.len()];
+        let mut externals: Vec<Vec<String>> = vec![Vec::new(); functions.len()];
+        for (i, f) in functions.iter().enumerate() {
+            for c in &f.calls {
+                if let Some(addr) = target_address(&c.target) {
+                    if let Some(&j) = by_addr.get(&addr) {
+                        if !callees[i].contains(&j) {
+                            callees[i].push(j);
+                        }
+                        if !callers[j].contains(&i) {
+                            callers[j].push(i);
+                        }
+                    }
+                    continue;
+                }
+                if let CallTarget::Fixup(
+                    t @ (Target::ImportOrdinal { .. } | Target::ImportName { .. }),
+                ) = &c.target
+                {
+                    let name = t.to_string();
+                    if !externals[i].contains(&name) {
+                        externals[i].push(name);
+                    }
+                }
+            }
+        }
+
+        let mut by_segment: HashMap<u16, Vec<usize>> = HashMap::new();
+        for (i, f) in functions.iter().enumerate() {
+            by_segment.entry(f.addr.segment).or_default().push(i);
+        }
+        for v in by_segment.values_mut() {
+            v.sort_by_key(|i| functions[*i].addr.offset);
+        }
+
         Program {
             code,
             functions,
             xrefs,
             value_refs,
+            by_addr,
+            callees,
+            callers,
+            externals,
+            by_segment,
         }
     }
 
@@ -353,91 +435,40 @@ impl Program {
 
     /// Functions that call `addr`, following near calls and entry thunks.
     pub fn callers_of(&self, addr: Addr) -> Vec<&Function> {
-        let near = Addr {
-            segment: addr.segment,
-            offset: addr.offset,
+        let Some(&i) = self.by_addr.get(&addr) else {
+            return Vec::new();
         };
-        let label = format!("seg{:02X}:{:04X}", addr.segment, addr.offset);
-        self.functions
-            .iter()
-            .filter(|f| {
-                f.calls.iter().any(|c| match &c.target {
-                    CallTarget::Near(a) => *a == near,
-                    CallTarget::Fixup(t) => t.to_string() == label || matches!(
-                        t,
-                        Target::Internal { segment, offset: Some(off) }
-                            if *segment == addr.segment && *off as u32 == addr.offset
-                    ) || matches!(
-                        t,
-                        Target::Entry { segment, offset, .. }
-                            if *segment == addr.segment && *offset as u32 == addr.offset
-                    ),
-                    CallTarget::Indirect => false,
-                })
-            })
-            .collect()
+        self.callers[i].iter().map(|j| &self.functions[*j]).collect()
     }
 
     /// Functions `f` calls that are themselves known functions of this module.
     pub fn callees_of(&self, f: &Function) -> Vec<&Function> {
-        let mut out = Vec::new();
-        for c in &f.calls {
-            let addr = match &c.target {
-                CallTarget::Near(a) => Some(*a),
-                CallTarget::Fixup(Target::Internal {
-                    segment,
-                    offset: Some(off),
-                }) => Some(Addr {
-                    segment: *segment,
-                    offset: *off as u32,
-                }),
-                CallTarget::Fixup(Target::Entry {
-                    segment, offset, ..
-                }) => Some(Addr {
-                    segment: *segment,
-                    offset: *offset as u32,
-                }),
-                _ => None,
-            };
-            if let Some(a) = addr {
-                if let Some(g) = self.function_at(a) {
-                    if !out.iter().any(|x: &&Function| x.addr == g.addr) {
-                        out.push(g);
-                    }
-                }
-            }
-        }
-        out
+        let Some(&i) = self.by_addr.get(&f.addr) else {
+            return Vec::new();
+        };
+        self.callees[i].iter().map(|j| &self.functions[*j]).collect()
     }
 
     /// External symbols `f` calls, in call order without repeats.
     pub fn external_calls_of(&self, f: &Function) -> Vec<String> {
-        let mut out: Vec<String> = Vec::new();
-        for c in &f.calls {
-            let name = match &c.target {
-                CallTarget::Fixup(t @ (Target::ImportOrdinal { .. } | Target::ImportName { .. })) => {
-                    t.to_string()
-                }
-                _ => continue,
-            };
-            if !out.contains(&name) {
-                out.push(name);
-            }
-        }
-        out
+        self.by_addr
+            .get(&f.addr)
+            .map(|i| self.externals[*i].clone())
+            .unwrap_or_default()
     }
 
     pub fn function_at(&self, addr: Addr) -> Option<&Function> {
-        self.functions.iter().find(|f| f.addr == addr)
+        self.by_addr.get(&addr).map(|i| &self.functions[*i])
     }
 
     /// The function containing `addr`, if any.
     pub fn function_containing(&self, addr: Addr) -> Option<&Function> {
-        self.functions
-            .iter()
-            .filter(|f| f.addr.segment == addr.segment)
-            .filter(|f| f.addr.offset <= addr.offset && addr.offset < f.end)
-            .max_by_key(|f| f.addr.offset)
+        let col = self.by_segment.get(&addr.segment)?;
+        // The column is ordered by address, so the candidate is the last start
+        // at or before this one.
+        let pos = col.partition_point(|i| self.functions[*i].addr.offset <= addr.offset);
+        let f = &self.functions[*col.get(pos.checked_sub(1)?)?];
+        (addr.offset < f.end).then_some(f)
     }
 
     /// Call sites whose target label matches `needle`, case-insensitively.

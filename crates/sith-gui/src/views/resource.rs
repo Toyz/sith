@@ -56,7 +56,7 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, index: usize) {
         let tex = cache.entry(index).or_insert_with(|| {
             let color =
                 egui::ColorImage::from_rgba_unmultiplied([img.width, img.height], &img.rgba);
-            // Nearest-neighbour keeps 16-colour pixel art legible when zoomed.
+            // Nearest-neighbour keeps 16-color pixel art legible when zoomed.
             ui.ctx()
                 .load_texture(format!("res{index}"), color, egui::TextureOptions::NEAREST)
         });

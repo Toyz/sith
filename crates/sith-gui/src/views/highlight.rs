@@ -1,7 +1,7 @@
 //! Syntax highlighting for decoded resources.
 //!
 //! Menus, dialogs, version blocks and font headers all decode to a small
-//! resource-script-like language. Rendered as one flat colour it reads as a
+//! resource-script-like language. Rendered as one flat color it reads as a
 //! wall; picking out the keyword, the string and the number is most of what
 //! makes a listing scannable, and it is the same three things every time.
 

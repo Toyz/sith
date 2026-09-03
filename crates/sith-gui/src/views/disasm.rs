@@ -425,7 +425,20 @@ fn function_banner(
             ui.add_space(gutter_w);
             icons::inline(ui, Icon::Code, col::symbol());
             let named = app.user_name(f.addr.segment, f.addr.offset).is_some();
-            ui.label(mono_c(app.label(f), if named { col::cyan() } else { col::symbol() }).strong());
+            // A color the user gave the function follows it wherever its name
+            // appears, which is the point of giving it one.
+            let tint = app.user_color(f.addr.segment, f.addr.offset);
+            if let Some(c) = tint {
+                let (dot, _) = ui.allocate_exact_size(egui::vec2(8.0, 8.0), egui::Sense::hover());
+                ui.painter().circle_filled(dot.center(), 4.0, c);
+            }
+            ui.label(
+                mono_c(
+                    app.label(f),
+                    tint.unwrap_or(if named { col::cyan() } else { col::symbol() }),
+                )
+                .strong(),
+            );
             if named {
                 widgets::chip(ui, "named", col::cyan());
             }

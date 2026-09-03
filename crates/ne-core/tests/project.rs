@@ -156,8 +156,8 @@ fn a_newer_format_version_is_refused_rather_than_misread() {
 }
 
 #[test]
-fn colours_are_stored_by_name_and_survive_a_save() {
-    let dir = tmpdir("colours");
+fn colors_are_stored_by_name_and_survive_a_save() {
+    let dir = tmpdir("colors");
     let file = dir.join("p.sith");
     let bin = Path::new("/x/A.EXE");
     let mut p = Project::new("p");
@@ -176,7 +176,7 @@ fn colours_are_stored_by_name_and_survive_a_save() {
 }
 
 #[test]
-fn clearing_a_colour_removes_it() {
+fn clearing_a_color_removes_it() {
     let mut p = Project::new("p");
     let bin = Path::new("/x/A.EXE");
     p.notes_mut(bin, "A").set_color(1, 0x10, Some("red"));

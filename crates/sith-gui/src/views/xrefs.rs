@@ -43,11 +43,11 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, preset: &str) {
                 .default_open(sites.len() <= 40)
                 .show(ui, |ui| {
                     for (i, a) in sites.iter().enumerate() {
-                        let owner = doc
-                            .program
-                            .function_containing(*a)
-                            .map(|f| app.label(f))
-                            .unwrap_or_default();
+                        let owner = doc.program.function_containing(*a);
+                        // A color the user gave a function follows its name.
+                        let tint =
+                            owner.and_then(|f| app.user_color(f.addr.segment, f.addr.offset));
+                        let label = owner.map(|f| app.label(f)).unwrap_or_default();
                         let (_, resp) = widgets::row(
                             ui,
                             ui.id().with(("xr", target, i)),
@@ -55,7 +55,7 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, preset: &str) {
                             i % 2 == 1,
                             |ui| {
                                 ui.label(mono_c(a.to_string(), col::addr()));
-                                ui.label(mono_c(owner, col::symbol()));
+                                ui.label(mono_c(label, tint.unwrap_or(col::symbol())));
                             },
                         );
                         if resp.clicked() {

@@ -106,7 +106,7 @@ pub fn strip_item<R>(ui: &mut Ui, content: impl FnOnce(&mut Ui) -> R) -> R {
 /// itself per interaction state, so hovering one segment made the strip two
 /// pixels narrower and shunted everything after it sideways; laying the text
 /// out once and allocating from that keeps the size fixed whatever the
-/// pointer is doing, and leaves hover free to be a colour change.
+/// pointer is doing, and leaves hover free to be a color change.
 pub fn segmented<T: PartialEq + Copy>(ui: &mut Ui, current: T, options: &[(T, &str)]) -> Option<T> {
     let mut picked = None;
     egui::Frame::new()
@@ -119,7 +119,7 @@ pub fn segmented<T: PartialEq + Copy>(ui: &mut Ui, current: T, options: &[(T, &s
                 ui.spacing_mut().item_spacing.x = 2.0;
                 for (value, label) in options {
                     let active = *value == current;
-                    // Laid out in one fixed colour: a galley's size must not
+                    // Laid out in one fixed color: a galley's size must not
                     // depend on the state it is drawn in.
                     let galley = ui.painter().layout_no_wrap(
                         (*label).to_owned(),

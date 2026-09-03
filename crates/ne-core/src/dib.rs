@@ -19,7 +19,7 @@ pub struct DibInfo {
     pub header_size: u32,
     pub width: i32,
     /// As stored. For an icon or cursor this is twice the visible height,
-    /// because the AND mask is appended below the colour bits.
+    /// because the AND mask is appended below the color bits.
     pub height: i32,
     pub planes: u16,
     pub bit_count: u16,
@@ -90,7 +90,7 @@ impl DibInfo {
 
         let palette_offset = header_size as usize;
         // BI_BITFIELDS puts three 32-bit channel masks where the palette
-        // would be; they are not colour entries but they do shift the bits.
+        // would be; they are not color entries but they do shift the bits.
         let masks = if compression == BI_BITFIELDS { 12 } else { 0 };
         let bits_offset = palette_offset + palette_len * entry + masks;
 
@@ -167,7 +167,7 @@ impl Image {
         }
     }
 
-    /// Paint every pixel one colour, used as the RLE background.
+    /// Paint every pixel one color, used as the RLE background.
     pub fn fill(&mut self, px: [u8; 4]) {
         for c in self.rgba.chunks_mut(4) {
             c.copy_from_slice(&px);
@@ -201,7 +201,7 @@ fn palette(data: &[u8], info: &DibInfo) -> Vec<[u8; 4]> {
 /// Decode a bare DIB.
 ///
 /// `height_override` forces the visible height, which icon and cursor
-/// resources need: their header height covers the colour bits *and* the AND
+/// resources need: their header height covers the color bits *and* the AND
 /// mask stacked below them.
 pub fn decode(data: &[u8], height_override: Option<usize>) -> Option<Image> {
     let info = DibInfo::parse(data)?;
@@ -219,7 +219,7 @@ pub fn decode(data: &[u8], height_override: Option<usize>) -> Option<Image> {
             // An RLE stream need not cover every pixel: delta and
             // end-of-line codes skip forward, and the encoder may stop short
             // of the last row. Windows leaves whatever was already in the
-            // destination there; for a standalone decode, colour index 0 is
+            // destination there; for a standalone decode, color index 0 is
             // the conventional fill and matches what other readers produce.
             img.fill(idx(&pal, 0));
             if info.compression == BI_RLE8 {
@@ -378,7 +378,7 @@ fn decode_rle4(bits: &[u8], pal: &[[u8; 4]], info: &DibInfo, img: &mut Image) {
 }
 
 /// Apply an icon/cursor AND mask as alpha. The mask is a 1bpp bitmap of the
-/// same width stacked below the colour bits; a set bit means transparent.
+/// same width stacked below the color bits; a set bit means transparent.
 pub fn apply_and_mask(img: &mut Image, data: &[u8], info: &DibInfo) {
     let color_rows = img.height;
     let color_bytes = info.stride() * color_rows;

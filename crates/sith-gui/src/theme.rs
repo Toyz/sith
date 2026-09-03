@@ -1,15 +1,15 @@
 //! Palettes and style.
 //!
-//! Colour is load-bearing in a disassembly listing: the three things a reader
+//! Color is load-bearing in a disassembly listing: the three things a reader
 //! scans for -- control flow, resolved symbols, and addresses -- have to be
 //! separable at a glance without the page turning into confetti. Every theme
 //! here fills the same set of roles, so switching one changes the look without
-//! changing what the colours mean.
+//! changing what the colors mean.
 
 use eframe::egui::{self, Color32, CornerRadius, FontFamily, FontId, RichText, Stroke, TextStyle};
 use std::sync::RwLock;
 
-/// The roles a theme must fill. Views name roles, never raw colours.
+/// The roles a theme must fill. Views name roles, never raw colors.
 #[derive(Debug, Clone, Copy)]
 pub struct Palette {
     pub name: &'static str,
@@ -190,10 +190,10 @@ pub fn set_theme(name: &str) -> bool {
     }
 }
 
-/// Colour roles, resolved against the current theme.
+/// Color roles, resolved against the current theme.
 ///
 /// These are functions rather than constants because the theme changes at
-/// runtime; naming the role rather than the colour is what keeps every view
+/// runtime; naming the role rather than the color is what keeps every view
 /// theme-agnostic.
 pub mod col {
     use super::{current, Color32};
@@ -294,7 +294,7 @@ pub mod col {
     }
 }
 
-/// Colours a user can assign to an address, by name.
+/// Colors a user can assign to an address, by name.
 ///
 /// A short list on purpose: enough to separate subsystems at a glance, few
 /// enough that each stays distinguishable from the next.
@@ -302,7 +302,7 @@ pub const USER_COLORS: &[&str] = &[
     "red", "orange", "yellow", "green", "cyan", "blue", "purple", "grey",
 ];
 
-/// Resolve a stored colour name against the active theme.
+/// Resolve a stored color name against the active theme.
 pub fn named_color(name: &str) -> Option<Color32> {
     let p = current();
     Some(match name {
@@ -368,7 +368,7 @@ pub fn install(ctx: &egui::Context) {
         // egui grows a widget by a pixel on hover, which nudges everything
         // beside it. In a toolbar of adjacent controls that reads as the row
         // twitching, so the growth is switched off and hover is shown by
-        // colour alone.
+        // color alone.
         w.expansion = 0.0;
     }
     v.widgets.noninteractive.bg_stroke = Stroke::new(1.0, p.border);

@@ -1,4 +1,4 @@
-//! Minimal ANSI styling. Colour is a real aid when scanning a fixup map or a
+//! Minimal ANSI styling. Color is a real aid when scanning a fixup map or a
 //! segment table, but not worth a dependency, and it must switch itself off
 //! when the output is a pipe.
 

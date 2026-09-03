@@ -583,7 +583,7 @@ impl NeFile {
 
     /// Decode a resource to RGBA for preview, where it holds an image.
     ///
-    /// Icons and cursors store the AND mask stacked below the colour bits, so
+    /// Icons and cursors store the AND mask stacked below the color bits, so
     /// the visible height is half the header height and the mask becomes the
     /// alpha channel.
     pub fn resource_image(&self, r: &Resource) -> Option<dib::Image> {
@@ -605,7 +605,7 @@ impl NeFile {
                 let is_cursor = r.type_id.as_id() == Some(resource::rt::GROUP_CURSOR);
                 let dir = GroupDir::parse(data, is_cursor)?;
                 // Preview the largest member; a group is usually the same
-                // artwork at several sizes and colour depths.
+                // artwork at several sizes and color depths.
                 let best = dir
                     .entries
                     .iter()

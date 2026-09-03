@@ -170,8 +170,8 @@ fn small_dib() -> Vec<u8> {
     b.extend_from_slice(&0u32.to_le_bytes()); // BI_RGB
     b.extend_from_slice(&0u32.to_le_bytes()); // image size
     b.extend_from_slice(&[0u8; 8]); // pixels per metre
-    b.extend_from_slice(&4u32.to_le_bytes()); // colours used
-    b.extend_from_slice(&0u32.to_le_bytes()); // colours important
+    b.extend_from_slice(&4u32.to_le_bytes()); // colors used
+    b.extend_from_slice(&0u32.to_le_bytes()); // colors important
     for bgr in [[0, 0, 0], [255, 0, 0], [0, 255, 0], [0, 0, 255]] {
         b.extend_from_slice(&bgr);
         b.push(0);

@@ -17,7 +17,7 @@ use std::path::PathBuf;
 relocation chains, imports and exports, resources, and fixup-aware disassembly."
 )]
 struct Cli {
-    /// Colourise output.
+    /// Colorise output.
     #[arg(long, global = true, default_value = "auto", value_parser = ["auto", "always", "never"])]
     color: String,
 

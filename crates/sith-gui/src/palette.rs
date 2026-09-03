@@ -14,7 +14,7 @@ use crate::icons::Icon;
 use crate::state::{Action, Doc, Nav, SithApp};
 use eframe::egui::Color32;
 
-/// What kind of thing a candidate is, which decides its icon and colour.
+/// What kind of thing a candidate is, which decides its icon and color.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Kind {
     Command,

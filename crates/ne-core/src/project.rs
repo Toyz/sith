@@ -54,9 +54,9 @@ pub struct BinaryNotes {
     /// Addresses worth coming back to.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub bookmarks: Vec<String>,
-    /// `SS:OOOO` -> a colour name.
+    /// `SS:OOOO` -> a color name.
     ///
-    /// Colours are stored by name rather than as a value so a project keeps
+    /// Colors are stored by name rather than as a value so a project keeps
     /// its meaning under a different theme: "this subsystem is the green one"
     /// survives, where a stored `#A6E3A1` would not.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
@@ -91,7 +91,7 @@ impl BinaryNotes {
             .map(String::as_str)
     }
 
-    /// Set or clear a colour. `None` removes the entry.
+    /// Set or clear a color. `None` removes the entry.
     pub fn set_color(&mut self, segment: u16, offset: u32, color: Option<&str>) {
         let key = addr_key(segment, offset);
         match color {

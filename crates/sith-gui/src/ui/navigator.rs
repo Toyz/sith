@@ -311,7 +311,7 @@ fn function_row(
             let user_named = app.user_name(f.addr.segment, f.addr.offset).is_some();
             let tint = app.user_color(f.addr.segment, f.addr.offset);
             if let Some(c) = tint {
-                // A colour the user chose is the strongest signal on the row.
+                // A color the user chose is the strongest signal on the row.
                 let (dot, _) =
                     ui.allocate_exact_size(egui::vec2(7.0, 7.0), egui::Sense::hover());
                 ui.painter().circle_filled(dot.center(), 3.5, c);

@@ -169,7 +169,7 @@ pub struct GroupDir {
 
 impl GroupDir {
     /// The directory layouts differ: an icon entry stores width and height as
-    /// bytes with a colour count, a cursor entry stores them as words and its
+    /// bytes with a color count, a cursor entry stores them as words and its
     /// "planes/bitcount" slots are really the hotspot.
     pub fn parse(data: &[u8], is_cursor: bool) -> Option<GroupDir> {
         if data.len() < 6 {
