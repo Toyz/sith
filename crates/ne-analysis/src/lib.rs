@@ -41,6 +41,65 @@ pub struct Frame {
     pub local_bytes: Option<u16>,
     /// Distinct positive `[bp+n]` offsets the body reads, sorted.
     pub argument_offsets: Vec<i32>,
+    /// Offsets loaded with `les`/`lds`, so four bytes wide and a far pointer.
+    pub pointer_offsets: Vec<i32>,
+    /// Offsets read into an 8-bit register, so the value is a byte or a flag.
+    ///
+    /// Only loads are seen this way. `mov [bp+6], al` puts the memory operand
+    /// first and leaves no register for us to size, so a slot only ever
+    /// written as a byte still reads as a word.
+    pub byte_offsets: Vec<i32>,
+}
+
+/// How wide a stack slot is and what the code does with it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ParamKind {
+    /// Two bytes, read as a word.
+    Word,
+    /// Two bytes, read as a byte or a flag.
+    Byte,
+    /// Four bytes, loaded with `les` or `lds`, so a far pointer.
+    FarPointer,
+}
+
+impl ParamKind {
+    pub fn bytes(self) -> u16 {
+        match self {
+            ParamKind::FarPointer => 4,
+            _ => 2,
+        }
+    }
+
+    /// The nearest Windows type, for a signature the reader can recognise.
+    pub fn type_name(self) -> &'static str {
+        match self {
+            ParamKind::Word => "WORD",
+            ParamKind::Byte => "BYTE",
+            ParamKind::FarPointer => "LPVOID",
+        }
+    }
+}
+
+/// One argument slot in a caller's frame.
+#[derive(Debug, Clone, Copy)]
+pub struct Param {
+    /// Position in the argument list, counting from the frame pointer out.
+    pub index: usize,
+    /// Its `[bp+n]` displacement.
+    pub offset: i32,
+    pub kind: ParamKind,
+    /// Whether the body ever reads it.
+    ///
+    /// An argument the function ignores is still an argument -- the caller
+    /// pushed it and the `retf` pops it -- but saying which ones are dead is
+    /// often the most useful thing on the list.
+    pub read: bool,
+}
+
+impl Param {
+    pub fn name(&self) -> String {
+        format!("arg{}", self.index)
+    }
 }
 
 impl Frame {
@@ -69,6 +128,60 @@ impl Frame {
     /// Does it take arguments at all?
     pub fn takes_arguments(&self) -> bool {
         self.popped_bytes.is_some_and(|n| n > 0) || !self.argument_offsets.is_empty()
+    }
+
+    /// The argument slots, in the order the caller pushed them.
+    ///
+    /// This is reconstruction, not fact. The stack says how many bytes were
+    /// passed and how the body reached into them; it says nothing about types
+    /// or names, and two consecutive words could equally be one long. Slots
+    /// are therefore words unless the code itself proves otherwise by loading
+    /// four bytes into a segment register.
+    pub fn parameters(&self) -> Vec<Param> {
+        let first = self.first_argument_offset();
+        // Prefer the stated size: a `retf 0Ah` is the compiler telling us
+        // exactly how much the caller pushed, including anything unread.
+        let span = match self.argument_bytes() {
+            Some(0) | None => match self.argument_offsets.last() {
+                Some(h) => (h - first) as u16 + 2,
+                None => return Vec::new(),
+            },
+            Some(n) => n,
+        };
+
+        let mut out = Vec::new();
+        let mut at = first;
+        let limit = first + span as i32;
+        while at < limit {
+            let kind = if self.pointer_offsets.contains(&at) {
+                ParamKind::FarPointer
+            } else if self.byte_offsets.contains(&at) {
+                ParamKind::Byte
+            } else {
+                ParamKind::Word
+            };
+            out.push(Param {
+                index: out.len(),
+                offset: at,
+                kind,
+                read: self.argument_offsets.contains(&at),
+            });
+            at += kind.bytes() as i32;
+        }
+        out
+    }
+
+    /// The reconstructed signature, as it would be written out.
+    pub fn signature(&self, name: &str) -> String {
+        let params = self.parameters();
+        if params.is_empty() {
+            return format!("{name}(void)");
+        }
+        let args: Vec<String> = params
+            .iter()
+            .map(|p| format!("{} {}", p.kind.type_name(), p.name()))
+            .collect();
+        format!("{name}({})", args.join(", "))
     }
 
     /// A short description for a listing or a tooltip.
@@ -139,15 +252,34 @@ pub fn analyze_frame(code: &SegmentCode, start: u32, end: u32) -> Frame {
         if let Some(d) = insn.bp_displacement {
             if d > 0 {
                 frame.argument_offsets.push(d);
+                match insn.mnemonic {
+                    // `les bx, [bp+6]` reads four bytes and puts the top half
+                    // in a segment register, which is a far pointer and
+                    // nothing else.
+                    Mnemonic::Les | Mnemonic::Lds => frame.pointer_offsets.push(d),
+                    _ => {
+                        if insn.op0_register.is_some_and(|r| r.size() == 1) {
+                            frame.byte_offsets.push(d);
+                        }
+                    }
+                }
             }
         }
     }
-    frame.argument_offsets.sort_unstable();
-    frame.argument_offsets.dedup();
+    for v in [
+        &mut frame.argument_offsets,
+        &mut frame.pointer_offsets,
+        &mut frame.byte_offsets,
+    ] {
+        v.sort_unstable();
+        v.dedup();
+    }
     // Anything at or below the saved frame pointer and return address is not an
     // argument, whatever the displacement says.
     let first = frame.first_argument_offset();
     frame.argument_offsets.retain(|d| *d >= first);
+    frame.pointer_offsets.retain(|d| *d >= first);
+    frame.byte_offsets.retain(|d| *d >= first);
     frame
 }
 
@@ -461,6 +593,11 @@ impl Program {
         self.by_addr.get(&addr).map(|i| &self.functions[*i])
     }
 
+    /// How many functions were found in a segment.
+    pub fn function_count_in(&self, segment: u16) -> usize {
+        self.by_segment.get(&segment).map_or(0, Vec::len)
+    }
+
     /// The function containing `addr`, if any.
     pub fn function_containing(&self, addr: Addr) -> Option<&Function> {
         let col = self.by_segment.get(&addr.segment)?;
@@ -670,4 +807,82 @@ fn is_prologue(insns: &[Insn], i: usize) -> bool {
 
     // `enter imm16, 0`, used by Borland for frames with locals.
     matches!(at(0), Some([0xC8, ..]))
+}
+
+#[cfg(test)]
+mod frame_tests {
+    use super::*;
+
+    fn far(popped: u16, reads: &[i32]) -> Frame {
+        Frame {
+            has_frame: true,
+            far: true,
+            popped_bytes: Some(popped),
+            local_bytes: None,
+            argument_offsets: reads.to_vec(),
+            pointer_offsets: Vec::new(),
+            byte_offsets: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn slots_come_from_what_the_callee_popped() {
+        let f = far(8, &[6, 8, 10, 12]);
+        let p = f.parameters();
+        assert_eq!(p.len(), 4);
+        assert_eq!(p[0].offset, 6);
+        assert_eq!(p[3].offset, 12);
+        assert!(p.iter().all(|p| p.read));
+    }
+
+    #[test]
+    fn an_argument_the_body_ignores_is_still_an_argument() {
+        // The caller pushed six bytes and the body only ever reads the first
+        // word. The other two slots are still arguments.
+        let f = far(6, &[6]);
+        let p = f.parameters();
+        assert_eq!(p.len(), 3);
+        assert!(p[0].read);
+        assert!(!p[1].read && !p[2].read);
+    }
+
+    #[test]
+    fn a_far_pointer_takes_two_slots() {
+        let mut f = far(6, &[6, 10]);
+        f.pointer_offsets = vec![6];
+        let p = f.parameters();
+        assert_eq!(p.len(), 2);
+        assert_eq!(p[0].kind, ParamKind::FarPointer);
+        assert_eq!(p[1].offset, 10);
+    }
+
+    #[test]
+    fn nothing_popped_falls_back_to_how_far_the_reads_reached() {
+        let mut f = far(0, &[6, 8]);
+        f.popped_bytes = None;
+        assert_eq!(f.parameters().len(), 2);
+    }
+
+    #[test]
+    fn a_function_that_takes_nothing_has_no_slots() {
+        let f = far(0, &[]);
+        assert!(f.parameters().is_empty());
+        assert_eq!(f.signature("sub_01_0100"), "sub_01_0100(void)");
+    }
+
+    #[test]
+    fn near_calls_start_two_bytes_lower() {
+        let mut f = far(4, &[4, 6]);
+        f.far = false;
+        let p = f.parameters();
+        assert_eq!(p[0].offset, 4);
+        assert_eq!(p.len(), 2);
+    }
+
+    #[test]
+    fn a_byte_sized_read_is_reported_as_one() {
+        let mut f = far(2, &[6]);
+        f.byte_offsets = vec![6];
+        assert_eq!(f.signature("f"), "f(BYTE arg0)");
+    }
 }
