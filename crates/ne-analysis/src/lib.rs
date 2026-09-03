@@ -5,6 +5,7 @@
 //! instead of by a regular expression over a formatted line.
 
 pub mod callargs;
+pub mod pseudo;
 pub mod resrefs;
 
 use ne_core::{NeFile, Target};

@@ -81,18 +81,26 @@ impl Nav {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SegTab {
     Disasm,
+    /// The same code written as C-shaped statements.
+    Pseudo,
     Hex,
     Fixups,
     Strings,
 }
 
 impl SegTab {
-    pub const ALL: [(SegTab, &'static str); 4] = [
+    pub const ALL: [(SegTab, &'static str); 5] = [
         (SegTab::Disasm, "Disassembly"),
+        (SegTab::Pseudo, "C"),
         (SegTab::Hex, "Hex"),
         (SegTab::Fixups, "Fixups"),
         (SegTab::Strings, "Strings"),
     ];
+
+    /// Whether this view only makes sense for code.
+    pub fn needs_code(self) -> bool {
+        matches!(self, SegTab::Disasm | SegTab::Pseudo)
+    }
 }
 
 /// A loaded binary and everything derived from it.
@@ -247,6 +255,9 @@ pub enum Action {
     Goto(Addr),
     GotoNewTab(Addr),
     SegTab(SegTab),
+    /// Switch view and land on this address, which is what following a
+    /// function across from one view to another means.
+    SegTabAt(SegTab, ne_analysis::Addr),
     Select(u32),
     /// Move the selection by a number of rows, for keyboard navigation.
     MoveSelection(i32),
@@ -743,6 +754,14 @@ impl SithApp {
                 if let Some(t) = self.tab_mut() {
                     t.seg_tab = tab;
                     t.sel = None;
+                }
+            }
+            Action::SegTabAt(tab, addr) => {
+                self.go(Nav::Segment(addr.segment));
+                if let Some(t) = self.tab_mut() {
+                    t.seg_tab = tab;
+                    t.scroll_to = Some(addr.offset);
+                    t.sel = Some(addr.offset);
                 }
             }
             Action::Select(off) => {

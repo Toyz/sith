@@ -270,8 +270,10 @@ fn palette(app: &SithApp, ctx: &Context, act: &mut Vec<Action>) {
                     i == sel,
                     false,
                     |ui| {
-                        // Every cell is width-bounded: a palette that grows to
-                        // fit its longest string resource is unusable.
+                        // Every cell is width-bounded -- a palette that grows
+                        // to fit its longest string resource is unusable --
+                        // but the bounds come from the row, not from a
+                        // character count that ignores how wide it is.
                         ui.spacing_mut().item_spacing.x = 8.0;
                         ui.add_space(4.0);
                         icons::inline(ui, c.kind.icon(), c.kind.color());
@@ -280,12 +282,30 @@ fn palette(app: &SithApp, ctx: &Context, act: &mut Vec<Action>) {
                             egui::Layout::left_to_right(egui::Align::Center),
                             |ui| crate::widgets::chip(ui, c.kind.label(), c.kind.color()),
                         );
-                        ui.allocate_ui_with_layout(
-                            egui::vec2(330.0, row_h),
-                            egui::Layout::left_to_right(egui::Align::Center),
-                            |ui| highlighted(ui, &one_line(&c.title, 46), &c.hits, c.kind.color()),
+                        let rest = ui.available_width();
+                        let title_w = rest * 0.58;
+                        let detail_w = rest - title_w - 16.0;
+                        let title = crate::widgets::fit(
+                            ui,
+                            &one_line(&c.title, 400),
+                            egui::FontId::proportional(13.0),
+                            title_w,
+                            false,
                         );
-                        ui.label(mono_c(one_line(&c.detail, 34), col::faint()));
+                        ui.allocate_ui_with_layout(
+                            egui::vec2(title_w, row_h),
+                            egui::Layout::left_to_right(egui::Align::Center),
+                            |ui| highlighted(ui, &title, &c.hits, c.kind.color()),
+                        );
+                        // A detail is usually a path, so it keeps its end.
+                        let detail = crate::widgets::fit(
+                            ui,
+                            &one_line(&c.detail, 400),
+                            egui::FontId::monospace(13.0),
+                            detail_w,
+                            c.detail.contains('/') || c.detail.contains('\\'),
+                        );
+                        ui.label(mono_c(detail, col::faint()));
                     },
                 );
                 if resp.clicked() {

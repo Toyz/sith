@@ -54,6 +54,11 @@ pub struct CallArgs {
     pub args: Vec<Arg>,
     /// Every argument was a literal push, so the rendering is complete.
     pub complete: bool,
+    /// How many push instructions immediately above the call were accounted
+    /// for. A renderer that shows the call as a statement needs this to know
+    /// which pushes it has already said, whether or not their values were
+    /// recovered.
+    pub pushes: usize,
 }
 
 impl CallArgs {
@@ -94,10 +99,14 @@ pub fn reconstruct(code: &SegmentCode, index: usize, db: &ApiDb) -> Option<CallA
 
     // Collect the pushed words immediately before the call, nearest first.
     let mut pushed: Vec<PushedWord> = Vec::new();
+    let mut pushes = 0usize;
     let start = index.saturating_sub(LOOKBACK);
     for prev in code.insns[start..index].iter().rev() {
         match classify_push(prev) {
-            Some(p) => pushed.push(p),
+            Some(p) => {
+                pushed.push(p);
+                pushes += 1;
+            }
             // Anything that is not a push ends the run: a call's arguments are
             // contiguous, and continuing past other work would pick up pushes
             // belonging to an earlier statement.
@@ -157,6 +166,7 @@ pub fn reconstruct(code: &SegmentCode, index: usize, db: &ApiDb) -> Option<CallA
         signature,
         args,
         complete,
+        pushes,
     })
 }
 
@@ -205,7 +215,7 @@ fn classify_push(insn: &Insn) -> Option<PushedWord> {
     })
 }
 
-mod iced_mnemonic {
+pub mod iced_mnemonic {
     use ne_disasm::Insn;
 
     /// `push`, in any of its forms, including `push imm` and `push seg`.

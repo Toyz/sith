@@ -109,6 +109,43 @@ pub fn human(n: impl Into<u64>) -> String {
     }
 }
 
+/// Fit `text` into `max` pixels, cutting at whichever end matters least.
+///
+/// Measured, not counted. A character budget has to assume a width, and the
+/// assumption is wrong in both directions: it truncates a proportional string
+/// with half the row still empty, and overflows a monospace one that looked
+/// short. `front` cuts the beginning, which is what a path wants -- the end
+/// is the part that identifies the file.
+pub fn fit(ui: &Ui, text: &str, font: egui::FontId, max: f32, front: bool) -> String {
+    let width = |s: &str| {
+        ui.painter()
+            .layout_no_wrap(s.to_owned(), font.clone(), Color32::WHITE)
+            .size()
+            .x
+    };
+    if max <= 0.0 || width(text) <= max {
+        return text.to_owned();
+    }
+    let chars: Vec<char> = text.chars().collect();
+    // Start from a proportional guess and walk in, rather than laying the
+    // string out once per character.
+    let mut keep = ((max / width(text)) * chars.len() as f32) as usize;
+    keep = keep.min(chars.len().saturating_sub(1));
+    loop {
+        let cut: String = if front {
+            std::iter::once('\u{2026}')
+                .chain(chars[chars.len() - keep..].iter().copied())
+                .collect()
+        } else {
+            chars[..keep].iter().copied().chain(std::iter::once('\u{2026}')).collect()
+        };
+        if keep == 0 || width(&cut) <= max {
+            return cut;
+        }
+        keep -= 1;
+    }
+}
+
 /// The end of a long string, elided at the front.
 ///
 /// Paths are elided from the front because the end is the part that
@@ -340,7 +377,7 @@ pub fn section(ui: &mut Ui, text: &str) {
 /// Fixed, rather than shrink-to-fit. Values in a tooltip are right-aligned
 /// against this edge, and a card that resizes itself around whichever row
 /// happens to be longest makes the column jump every time the pointer moves.
-const HOVER_W: f32 = 300.0;
+const HOVER_W: f32 = 330.0;
 
 /// A hairline across a card, separating its parts.
 fn hairline(ui: &mut Ui) {
@@ -392,18 +429,63 @@ pub fn hover_card<R>(
 }
 
 /// A fact line inside a tooltip: a dim label, and its value against the edge.
+///
+/// A value too long to share the line drops under its label and wraps
+/// instead. Right-aligned text does not clip -- given less room than it needs
+/// it draws over the label beside it -- and a reconstructed signature is
+/// routinely longer than the card is wide.
 pub fn hover_row(ui: &mut Ui, key: &str, value: impl Into<String>, color: Color32) {
-    ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 8.0;
-        ui.label(
-            egui::RichText::new(key)
-                .monospace()
-                .size(11.0)
-                .color(col::faint()),
-        );
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            ui.label(egui::RichText::new(value).monospace().size(11.0).color(color));
+    let value = value.into();
+    let font = egui::FontId::monospace(11.0);
+    let width = ui.available_width();
+    let key_w = ui
+        .painter()
+        .layout_no_wrap(key.to_owned(), font.clone(), color)
+        .size()
+        .x;
+    let val_w = ui
+        .painter()
+        .layout_no_wrap(value.clone(), font, color)
+        .size()
+        .x;
+
+    if key_w + val_w + 12.0 <= width {
+        ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 8.0;
+            ui.label(
+                egui::RichText::new(key)
+                    .monospace()
+                    .size(11.0)
+                    .color(col::faint()),
+            );
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.label(egui::RichText::new(value).monospace().size(11.0).color(color));
+            });
         });
+        return;
+    }
+
+    ui.label(
+        egui::RichText::new(key)
+            .monospace()
+            .size(11.0)
+            .color(col::faint()),
+    );
+    ui.horizontal_top(|ui| {
+        ui.add_space(10.0);
+        ui.allocate_ui_with_layout(
+            egui::vec2(width - 10.0, 0.0),
+            egui::Layout::top_down(egui::Align::Min),
+            |ui| {
+                ui.set_width(width - 10.0);
+                ui.add(
+                    egui::Label::new(
+                        egui::RichText::new(value).monospace().size(11.0).color(color),
+                    )
+                    .wrap(),
+                );
+            },
+        );
     });
 }
 

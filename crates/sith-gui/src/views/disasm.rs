@@ -7,7 +7,7 @@
 //! symbol together.
 
 use crate::icons::{self, Icon};
-use crate::state::{Action, Nav, SithApp};
+use crate::state::{Action, Nav, SithApp, SegTab};
 use crate::theme::{col, *};
 use crate::widgets;
 use eframe::egui::{self, Color32, Pos2, Rect, Stroke, Ui};
@@ -504,6 +504,13 @@ fn sticky_header(
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if ui.small_button("call graph").clicked() {
                         act.push(Action::SetGraphRoot(f.addr));
+                    }
+                    if ui
+                        .small_button("as C")
+                        .on_hover_text("Read this function as statements")
+                        .clicked()
+                    {
+                        act.push(Action::SegTabAt(SegTab::Pseudo, f.addr));
                     }
                 });
             });

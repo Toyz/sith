@@ -25,7 +25,7 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16) {
         );
         ui.separator();
         for (mode, name) in SegTab::ALL {
-            if mode == SegTab::Disasm && !seg.is_code() {
+            if mode.needs_code() && !seg.is_code() {
                 continue;
             }
             if ui.selectable_label(tab.seg_tab == mode, name).clicked() {
@@ -53,13 +53,14 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16) {
     });
     crate::ui::sep(ui);
 
-    let mode = if !seg.is_code() && tab.seg_tab == SegTab::Disasm {
+    let mode = if !seg.is_code() && tab.seg_tab.needs_code() {
         SegTab::Hex
     } else {
         tab.seg_tab
     };
     match mode {
         SegTab::Disasm => disasm::show(app, ui, act, segno),
+        SegTab::Pseudo => super::pseudo::show(app, ui, act, segno),
         SegTab::Hex => hex::show(app, ui, act, segno),
         SegTab::Fixups => fixups(app, ui, act, segno),
         SegTab::Strings => strings::segment_strings(app, ui, act, segno),

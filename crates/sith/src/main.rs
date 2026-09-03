@@ -90,6 +90,20 @@ enum Command {
         syntax: String,
     },
 
+    /// Render a function as C-shaped pseudocode.
+    Pseudo {
+        file: PathBuf,
+        /// Segment number (1-based).
+        #[arg(short, long)]
+        segment: u16,
+        /// Offset of the function within the segment.
+        #[arg(short, long, value_parser = parse_num)]
+        func: Option<u32>,
+        /// Segments holding 32-bit code, comma separated.
+        #[arg(long, value_name = "LIST")]
+        bits32: Option<String>,
+    },
+
     /// Discovered functions, with the evidence for each start.
     Funcs {
         file: PathBuf,
@@ -240,6 +254,12 @@ fn main() -> Result<()> {
             *bits32,
             syntax,
         ),
+        Command::Pseudo {
+            file,
+            segment,
+            func,
+            bits32,
+        } => cmd::analyze::pseudo(&load(file)?, *segment, *func, &parse_seg_list(bits32)),
         Command::Funcs {
             file,
             segment,

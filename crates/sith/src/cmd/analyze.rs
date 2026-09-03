@@ -7,6 +7,38 @@ use ne_core::NeFile;
 use serde_json::json;
 use std::collections::BTreeSet;
 
+/// Print one function, or every function in a segment, as pseudocode.
+pub fn pseudo(
+    ne: &NeFile,
+    segment: u16,
+    func: Option<u32>,
+    bits32: &BTreeSet<u16>,
+) -> Result<()> {
+    let program = Program::analyze(ne, bits32);
+    let db = ne_core::ApiDb::embedded();
+    let chosen: Vec<_> = program
+        .functions
+        .iter()
+        .filter(|f| f.addr.segment == segment)
+        .filter(|f| func.is_none_or(|o| f.addr.offset == o))
+        .collect();
+    if chosen.is_empty() {
+        anyhow::bail!("no function found there");
+    }
+
+    for f in chosen {
+        for line in ne_analysis::pseudo::function(&program, db, f, &f.label()) {
+            let pad = "    ".repeat(line.indent as usize);
+            match line.addr {
+                Some(a) => println!("{}  {pad}{}", dim(&format!("{a:04X}")), line.text),
+                None => println!("      {pad}{}", line.text),
+            }
+        }
+        println!();
+    }
+    Ok(())
+}
+
 pub fn funcs(
     ne: &NeFile,
     segment: Option<u16>,
