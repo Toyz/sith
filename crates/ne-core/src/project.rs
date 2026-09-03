@@ -249,8 +249,8 @@ impl Project {
             .sum()
     }
 
-    /// Drop entries that carry nothing, so saving does not preserve clutter.
-    pub fn prune(&mut self) {
-        self.binaries.retain(|b| !b.is_empty());
-    }
+    // There is deliberately no "drop the empty entries" helper. An entry with
+    // no annotations still records that the binary belongs to the project,
+    // which is information in its own right: pruning them turns a project you
+    // have not annotated yet into one that lists nothing at all.
 }

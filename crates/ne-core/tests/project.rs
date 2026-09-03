@@ -118,17 +118,25 @@ fn bookmarks_toggle() {
 }
 
 #[test]
-fn empty_entries_are_pruned_on_save() {
-    let dir = tmpdir("prune");
+fn a_binary_with_no_annotations_still_belongs_to_the_project() {
+    // Membership is information. Dropping entries that carry no names or
+    // notes turns a project you have not annotated yet into one that lists
+    // nothing, and the binaries it was made from are lost.
+    let dir = tmpdir("membership");
     let file = dir.join("p.sith");
     let mut p = Project::new("p");
     p.path = Some(file.clone());
-    let _ = p.notes_mut(Path::new("/x/EMPTY.EXE"), "EMPTY");
+    let _ = p.notes_mut(Path::new("/x/FRESH.EXE"), "FRESH");
     p.notes_mut(Path::new("/x/USED.EXE"), "USED")
         .set_name(1, 0, "start");
-    p.prune();
-    assert_eq!(p.binaries.len(), 1);
-    assert_eq!(p.binaries[0].module, "USED");
+    p.save(&file).unwrap();
+
+    let loaded = Project::load(&file).unwrap();
+    assert_eq!(loaded.binaries.len(), 2, "both binaries survive a save");
+    assert!(loaded
+        .binaries
+        .iter()
+        .any(|b| b.module == "FRESH" && b.is_empty()));
 }
 
 #[test]

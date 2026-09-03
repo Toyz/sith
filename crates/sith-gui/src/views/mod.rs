@@ -32,7 +32,67 @@ pub fn welcome(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                         .color(col::dim()),
                 );
             });
-            ui.add_space(28.0);
+            ui.add_space(20.0);
+
+            // A project that opened but holds nothing looks exactly like a
+            // cold start, so it gets said plainly along with the way out.
+            if app.project.path.is_some() && app.docs.is_empty() {
+                let width = 720.0_f32.min(ui.available_width() - 40.0);
+                centered(ui, width, |ui| {
+                    egui::Frame::new()
+                        .fill(col::raised())
+                        .corner_radius(egui::CornerRadius::same(8))
+                        .stroke(egui::Stroke::new(1.0, col::orange()))
+                        .inner_margin(egui::Margin::symmetric(16, 13))
+                        .show(ui, |ui| {
+                            ui.set_width(ui.available_width());
+                            ui.horizontal(|ui| {
+                                icons::inline(ui, Icon::Overview, col::orange());
+                                ui.label(
+                                    egui::RichText::new(format!(
+                                        "{} lists no binaries",
+                                        if app.project.name.is_empty() {
+                                            "This project"
+                                        } else {
+                                            &app.project.name
+                                        }
+                                    ))
+                                    .strong(),
+                                );
+                            });
+                            ui.label(dim(
+                                "The project opened, but it has nothing in it yet. Add the \
+                                 binaries you want to annotate, or start again from a folder.",
+                            ));
+                            // The path is context and can be long, so it gets
+                            // its own line rather than sharing one with the
+                            // buttons and running over them.
+                            ui.label(
+                                egui::RichText::new(
+                                    app.project
+                                        .path
+                                        .as_ref()
+                                        .map(|p| p.display().to_string())
+                                        .unwrap_or_default(),
+                                )
+                                .size(10.5)
+                                .color(col::faint()),
+                            );
+                            ui.add_space(8.0);
+                            ui.horizontal(|ui| {
+                                if ui.button("Add a binary…").clicked() {
+                                    act.push(Action::AddBinaryToProject);
+                                }
+                                if ui.button("New project from a folder…").clicked() {
+                                    act.push(Action::ShowWizard);
+                                }
+                            });
+                        });
+                });
+                ui.add_space(16.0);
+            }
+
+            ui.add_space(8.0);
 
             // The two starting moves, given equal weight: open a binary to
             // look at, or reopen the project where the work already lives.

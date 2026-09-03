@@ -341,6 +341,22 @@ fn stat(ui: &mut Ui, value: &str, label: &str, color: egui::Color32) {
         });
 }
 
+/// The end of a path, which is the part that identifies it.
+fn tail(text: &str, max: usize) -> String {
+    if text.chars().count() <= max {
+        return text.to_string();
+    }
+    let kept: String = text
+        .chars()
+        .rev()
+        .take(max - 1)
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .collect();
+    format!("\u{2026}{kept}")
+}
+
 fn human(n: u64) -> String {
     if n >= 1024 * 1024 {
         format!("{:.1} MB", n as f64 / (1024.0 * 1024.0))
@@ -721,13 +737,15 @@ fn details_step(w: &Wizard, ui: &mut Ui, act: &mut Vec<Action>) {
         ui.add_space(4.0);
         ui.horizontal(|ui| {
             ui.label(mono_c(format!("{:<13}", "file"), col::faint()));
-            ui.label(mono_c(
-                w.save_to
-                    .as_ref()
-                    .map(|p| p.display().to_string())
-                    .unwrap_or_else(|| "(choose a location)".into()),
-                col::text(),
-            ));
+            // The path can be longer than the row; the end of it is the part
+            // that identifies the file, so the front gives way.
+            let full = w
+                .save_to
+                .as_ref()
+                .map(|p| p.display().to_string())
+                .unwrap_or_else(|| "(choose a location)".into());
+            ui.label(mono_c(tail(&full, 62), col::text()))
+                .on_hover_text(&full);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if ui.small_button("Change…").clicked() {
                     let suggested = format!("{}.sith", w.name.trim());

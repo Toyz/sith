@@ -254,6 +254,8 @@ pub enum Action {
     ForgetRecent(PathBuf),
     /// Remove binaries the project refers to that are no longer on disk.
     DropMissingBinaries,
+    /// Pick a binary and add it to the open project.
+    AddBinaryToProject,
     DismissMissing,
     WizardScan(PathBuf),
     WizardNext,
@@ -769,6 +771,27 @@ impl SithApp {
                 );
             }
             Action::DismissMissing => self.missing.clear(),
+            Action::AddBinaryToProject => {
+                let Some(path) = rfd::FileDialog::new()
+                    .add_filter(
+                        "16-bit executables",
+                        &["exe", "dll", "drv", "fon", "EXE", "DLL", "DRV", "FON"],
+                    )
+                    .add_filter("All files", &["*"])
+                    .pick_file()
+                else {
+                    return;
+                };
+                self.open(&path);
+                if let Some((p, m)) = self
+                    .doc()
+                    .map(|d| (d.path.clone(), d.ne.module_name().to_string()))
+                {
+                    let _ = self.project.notes_mut(&p, &m);
+                    self.autosave();
+                    self.status = format!("added {m} to {}", self.project.name);
+                }
+            }
             Action::WizardScan(root) => {
                 if let Some(w) = &mut self.wizard {
                     w.scan(root);
@@ -1218,6 +1241,7 @@ impl SithApp {
                 self.docs.clear();
                 self.tabs.clear();
                 self.textures.borrow_mut().clear();
+                let empty = binaries.is_empty();
                 let mut opened = 0;
                 self.missing.clear();
                 for b in &binaries {
@@ -1235,17 +1259,24 @@ impl SithApp {
                 // to be opened last.
                 self.active = 0;
                 self.remember_recent(path, true);
-                self.status = format!(
-                    "{} — {} annotations across {} binaries{}",
-                    self.project.name,
-                    self.project.annotation_count(),
-                    self.project.binaries.len(),
-                    if opened < binaries.len() {
-                        format!(", {} missing", binaries.len() - opened)
-                    } else {
-                        String::new()
-                    }
-                );
+                self.status = if empty {
+                    // Loading a project that lists nothing leaves the window
+                    // looking untouched, so it has to say so rather than
+                    // dropping the user back on the start screen in silence.
+                    format!("{} lists no binaries", self.project.name)
+                } else {
+                    format!(
+                        "{} — {} annotations across {} binaries{}",
+                        self.project.name,
+                        self.project.annotation_count(),
+                        self.project.binaries.len(),
+                        if opened < binaries.len() {
+                            format!(", {} missing", binaries.len() - opened)
+                        } else {
+                            String::new()
+                        }
+                    )
+                };
             }
             Err(e) => {
                 let missing = !path.exists();
@@ -1294,7 +1325,6 @@ impl SithApp {
         for (p, m) in open {
             let _ = self.project.notes_mut(&p, &m);
         }
-        self.project.prune();
         if self.project.name.is_empty() {
             self.project.name = path
                 .file_stem()
