@@ -586,6 +586,40 @@ impl NeFile {
     /// Icons and cursors store the AND mask stacked below the color bits, so
     /// the visible height is half the header height and the mask becomes the
     /// alpha channel.
+/// The DIB header of a resource that has one.
+    ///
+    /// Gated on the resource type on purpose. A dialog template or a string
+    /// table is a run of bytes that `DibInfo::parse` will accept, and a
+    /// caller that asks every resource gets a confident answer about a
+    /// picture that does not exist.
+    pub fn resource_dib(&self, r: &Resource) -> Option<dib::DibInfo> {
+        let id = r.type_id.as_id()?;
+        if !matches!(id, resource::rt::BITMAP | resource::rt::ICON | resource::rt::CURSOR) {
+            return None;
+        }
+        dib::DibInfo::parse(self.dib_body(r))
+    }
+
+    /// The resource body with any leading hotspot removed.
+    ///
+    /// A cursor stores its hotspot as two words in front of the DIB.
+    pub fn dib_body(&self, r: &Resource) -> &[u8] {
+        let data = self.resource_data(r);
+        if r.type_id.as_id() == Some(resource::rt::CURSOR) && data.len() > 4 {
+            &data[4..]
+        } else {
+            data
+        }
+    }
+
+    /// The color table of a resource that has one.
+    pub fn resource_palette(&self, r: &Resource) -> Vec<[u8; 4]> {
+        match self.resource_dib(r) {
+            Some(info) => dib::palette(self.dib_body(r), &info),
+            None => Vec::new(),
+        }
+    }
+
     pub fn resource_image(&self, r: &Resource) -> Option<dib::Image> {
         let data = self.resource_data(r);
         match r.type_id.as_id()? {

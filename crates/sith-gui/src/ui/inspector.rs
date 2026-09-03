@@ -608,13 +608,25 @@ fn resource(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, index: usize) {
     });
 
     let data = doc.ne.resource_data(r);
-    if let Some(info) = ne_core::dib::DibInfo::parse(data) {
-        card(ui, "BITMAP", |ui| {
+    if let Some(info) = doc.ne.resource_dib(r) {
+        card(ui, "IMAGE", |ui| {
             kv(ui, "size", format!("{} x {}", info.abs_width(), info.abs_height()));
             kv(ui, "depth", format!("{} bpp", info.bit_count));
-            kv(ui, "compression", info.compression_name());
-            kv(ui, "palette", info.palette_len.to_string());
+            kv_colored(
+                ui,
+                "compression",
+                info.compression_name(),
+                if info.compression == ne_core::dib::BI_RGB {
+                    col::dim()
+                } else {
+                    col::orange()
+                },
+            );
+            kv(ui, "planes", info.planes.to_string());
+            kv(ui, "header", format!("{} bytes", info.header_size));
+            kv(ui, "bits at", format!("+{:X}", info.bits_offset));
         });
+        palette_card(ui, &doc.ne.resource_palette(r));
     }
     if let Some(font) = ne_core::fnt::parse(data) {
         card(ui, "FONT", |ui| {
@@ -660,6 +672,53 @@ fn resource(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, index: usize) {
             }
         });
     }
+}
+
+/// The color table, as swatches.
+///
+/// Index 0 is called out because that is the one a Win16 sprite normally
+/// treats as transparent, and knowing which color that is tells you what the
+/// artwork was cut against.
+fn palette_card(ui: &mut Ui, pal: &[[u8; 4]]) {
+    if pal.is_empty() {
+        return;
+    }
+    card(ui, &format!("PALETTE ({})", pal.len()), |ui| {
+        let per_row = ((ui.available_width() / 21.0) as usize).clamp(4, 16);
+        ui.spacing_mut().item_spacing = egui::vec2(3.0, 3.0);
+        for (row, chunk) in pal.chunks(per_row).enumerate() {
+            ui.horizontal(|ui| {
+                for (i, c) in chunk.iter().enumerate() {
+                    let index = row * per_row + i;
+                    let color = egui::Color32::from_rgb(c[0], c[1], c[2]);
+                    let (rect, resp) =
+                        ui.allocate_exact_size(egui::vec2(18.0, 18.0), egui::Sense::hover());
+                    ui.painter()
+                        .rect_filled(rect, egui::CornerRadius::same(3), color);
+                    ui.painter().rect_stroke(
+                        rect,
+                        egui::CornerRadius::same(3),
+                        egui::Stroke::new(
+                            1.0,
+                            if index == 0 { col::accent() } else { col::border() },
+                        ),
+                        egui::StrokeKind::Inside,
+                    );
+                    resp.on_hover_text(format!(
+                        "{index}  #{:02X}{:02X}{:02X}{}",
+                        c[0],
+                        c[1],
+                        c[2],
+                        if index == 0 {
+                            "\n\nindex 0: usually the transparent color"
+                        } else {
+                            ""
+                        }
+                    ));
+                }
+            });
+        }
+    });
 }
 
 // ------------------------------------------------------------------ module

@@ -195,7 +195,8 @@ fn segments_section(
                     }
                 },
             );
-            let flags: Vec<&str> = s.flag_names().into_iter().skip(1).collect();
+            let flags: Vec<String> =
+                s.flag_names().into_iter().skip(1).map(str::to_owned).collect();
             let resp = widgets::hover_card(
                 resp,
                 Some((if s.is_code() { Icon::Code } else { Icon::Data }, color)),
@@ -203,16 +204,15 @@ fn segments_section(
                 s.kind().as_str(),
                 |ui| {
                     widgets::hover_row(ui, "file offset", format!("{:08X}", s.file_offset), col::text());
-                    widgets::hover_row(ui, "size", format!("{} bytes", s.length), col::text());
+                    widgets::hover_row(
+                        ui,
+                        "size",
+                        format!("{} ({} bytes)", human(s.length as u64), s.length),
+                        col::text(),
+                    );
                     widgets::hover_row(ui, "alloc", format!("{} bytes", s.min_alloc), col::text());
                     widgets::hover_row(ui, "fixups", s.relocs.len().to_string(), col::text());
-                    if !flags.is_empty() {
-                        ui.horizontal_wrapped(|ui| {
-                            for f in flags {
-                                widgets::chip(ui, f, col::dim());
-                            }
-                        });
-                    }
+                    widgets::hover_chips(ui, &flags, col::dim());
                 },
             );
             if resp.clicked() {
@@ -355,8 +355,12 @@ fn function_row(
                 },
             ));
             // The count sits at the far end so a scan down the column shows
-            // which functions take work and which take none.
-            if !params.is_empty() {
+            // which functions take work and which take none. A right-aligned
+            // block does not clip -- given less room than it needs it draws
+            // over its neighbour -- so it is dropped rather than overlapped
+            // when the panel is too narrow. The disclosure still says there
+            // is something there.
+            if !params.is_empty() && ui.available_width() > 52.0 {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     ui.label(mono_c(
                         format!("{} arg{}", params.len(), if params.len() == 1 { "" } else { "s" }),

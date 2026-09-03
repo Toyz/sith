@@ -184,7 +184,12 @@ impl Image {
     }
 }
 
-fn palette(data: &[u8], info: &DibInfo) -> Vec<[u8; 4]> {
+/// The DIB's color table, as RGBA.
+///
+/// Worth having on its own: which index a bitmap treats as transparent, and
+/// whether two resources share a palette, are questions you cannot answer
+/// from the decoded picture.
+pub fn palette(data: &[u8], info: &DibInfo) -> Vec<[u8; 4]> {
     let esz = info.palette_entry_size();
     (0..info.palette_len)
         .map(|i| {

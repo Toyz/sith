@@ -5,7 +5,11 @@ use eframe::egui::{self, Color32, CornerRadius, Response, Sense, Ui};
 
 /// One row of a listing, laid out at its natural height.
 /// Space between a row's highlight and its content, at each end.
-pub const ROW_PAD: f32 = 6.0;
+///
+/// Wide enough that the outline on a selected row clears the first glyph.
+/// A disclosure arrow sitting a couple of pixels off the outline reads as
+/// clipped by it even when it is not.
+pub const ROW_PAD: f32 = 10.0;
 
 pub fn row<R>(
     ui: &mut Ui,
@@ -331,10 +335,27 @@ pub fn section(ui: &mut Ui, text: &str) {
     ui.add_space(2.0);
 }
 
-/// A styled tooltip: a title line, then facts.
+/// The width a tooltip lays itself out to.
+///
+/// Fixed, rather than shrink-to-fit. Values in a tooltip are right-aligned
+/// against this edge, and a card that resizes itself around whichever row
+/// happens to be longest makes the column jump every time the pointer moves.
+const HOVER_W: f32 = 300.0;
+
+/// A hairline across a card, separating its parts.
+fn hairline(ui: &mut Ui) {
+    ui.add_space(6.0);
+    let (r, _) = ui.allocate_exact_size(egui::vec2(ui.available_width(), 1.0), Sense::hover());
+    ui.painter().rect_filled(r, CornerRadius::ZERO, col::border());
+    ui.add_space(6.0);
+}
+
+/// A styled tooltip: a heading, then facts, then whatever is worth a sentence.
 ///
 /// egui's default is a raw block of text, which is fine for a sentence and
-/// poor for the six facts a function or a module actually has to offer.
+/// poor for the six facts a function or a module actually has to offer. This
+/// is the same card the rest of the tool is built from: a heading band, a
+/// rule, and a table whose values line up on the right.
 pub fn hover_card<R>(
     resp: Response,
     icon: Option<(crate::icons::Icon, Color32)>,
@@ -343,7 +364,8 @@ pub fn hover_card<R>(
     body: impl FnOnce(&mut Ui) -> R,
 ) -> Response {
     resp.on_hover_ui(|ui| {
-        ui.set_max_width(340.0);
+        ui.set_width(HOVER_W);
+        ui.spacing_mut().item_spacing.y = 3.0;
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 7.0;
             if let Some((icon, color)) = icon {
@@ -356,37 +378,55 @@ pub fn hover_card<R>(
                     .strong()
                     .color(col::text()),
             );
+            // The subtitle is a kind, not a sentence, so it belongs beside the
+            // name as a chip rather than orphaned on a line of its own.
+            if !subtitle.is_empty() {
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    chip(ui, subtitle, col::dim());
+                });
+            }
         });
-        if !subtitle.is_empty() {
-            ui.label(
-                egui::RichText::new(subtitle)
-                    .monospace()
-                    .size(11.0)
-                    .color(col::faint()),
-            );
-        }
-        ui.add_space(5.0);
+        hairline(ui);
         body(ui);
     })
 }
 
-/// A fact line inside a tooltip: a dim label and its value.
+/// A fact line inside a tooltip: a dim label, and its value against the edge.
 pub fn hover_row(ui: &mut Ui, key: &str, value: impl Into<String>, color: Color32) {
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 8.0;
         ui.label(
-            egui::RichText::new(format!("{key:<12}"))
+            egui::RichText::new(key)
                 .monospace()
                 .size(11.0)
                 .color(col::faint()),
         );
-        ui.label(egui::RichText::new(value).monospace().size(11.0).color(color));
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            ui.label(egui::RichText::new(value).monospace().size(11.0).color(color));
+        });
+    });
+}
+
+/// A row of flags at the foot of a tooltip.
+///
+/// Flags are a set of names, and a set of names reads as chips. Run together
+/// into one line they read as a sentence that happens to be shouting.
+pub fn hover_chips(ui: &mut Ui, chips: &[String], color: Color32) {
+    if chips.is_empty() {
+        return;
+    }
+    hairline(ui);
+    ui.horizontal_wrapped(|ui| {
+        ui.spacing_mut().item_spacing = egui::vec2(4.0, 3.0);
+        for c in chips {
+            chip(ui, c, color);
+        }
     });
 }
 
 /// A wrapped note at the foot of a tooltip.
 pub fn hover_note(ui: &mut Ui, text: &str) {
-    ui.add_space(4.0);
+    hairline(ui);
     ui.label(egui::RichText::new(text).size(11.0).color(col::dim()));
 }
 

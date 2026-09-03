@@ -317,13 +317,17 @@ fn segments_card(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                 s.kind().as_str(),
                 |ui| {
                     widgets::hover_row(ui, "file offset", format!("{:08X}", s.file_offset), col::text());
-                    widgets::hover_row(ui, "length", format!("{} bytes", s.length), col::text());
+                    widgets::hover_row(
+                        ui,
+                        "length",
+                        format!("{} ({} bytes)", human(s.length as u64), s.length),
+                        col::text(),
+                    );
                     widgets::hover_row(ui, "fixups", s.relocs.len().to_string(), col::text());
                     widgets::hover_row(ui, "functions", fns.to_string(), col::text());
-                    let flags = s.flag_names()[1..].join(" ");
-                    if !flags.is_empty() {
-                        widgets::hover_note(ui, &flags);
-                    }
+                    let flags: Vec<String> =
+                        s.flag_names().into_iter().skip(1).map(str::to_owned).collect();
+                    widgets::hover_chips(ui, &flags, col::dim());
                 },
             );
             if resp.clicked() {
