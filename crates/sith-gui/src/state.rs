@@ -196,6 +196,8 @@ pub struct GraphState {
     /// The node the user last clicked. Selecting reads it in the inspector
     /// without moving the graph, which is what a click should do.
     pub selected: Option<Addr>,
+    /// Columns the user has asked to see in full, overriding the cap.
+    pub expanded: std::collections::HashSet<i32>,
 }
 
 impl Default for GraphState {
@@ -215,6 +217,7 @@ impl Default for GraphState {
             dragging: None,
             menu_for: None,
             selected: None,
+            expanded: Default::default(),
         }
     }
 }
@@ -312,6 +315,7 @@ pub enum Action {
     GraphResetLayout,
     GraphMenuFor(Option<String>),
     GraphSelect(Option<Addr>),
+    GraphExpandLevel(i32),
     ConsumeScroll,
     SetGraphDir(GraphDir),
     ToggleGraphImports,
@@ -1005,6 +1009,7 @@ impl SithApp {
                     // next one, so a new root starts from the clean layout.
                     t.graph.moved.clear();
                     t.graph.dragging = None;
+                    t.graph.expanded.clear();
                     t.graph.selected = Some(a);
                     // A new root needs re-framing, otherwise the view stays
                     // parked wherever the previous graph happened to be.
@@ -1053,6 +1058,13 @@ impl SithApp {
                     t.graph.selected = addr;
                 }
             }
+            Action::GraphExpandLevel(level) => {
+                if let Some(t) = self.tab_mut() {
+                    t.graph.expanded.insert(level);
+                    // The column is about to get much taller, so re-frame.
+                    t.graph.framed = false;
+                }
+            }
             Action::GraphMenuFor(key) => {
                 if let Some(t) = self.tab_mut() {
                     t.graph.menu_for = key;
@@ -1062,6 +1074,7 @@ impl SithApp {
                 if let Some(t) = self.tab_mut() {
                     t.graph.moved.clear();
                     t.graph.dragging = None;
+                    t.graph.expanded.clear();
                     t.graph.framed = false;
                 }
             }

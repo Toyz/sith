@@ -75,6 +75,7 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
         g.dir,
         g.show_imports,
         &g.moved,
+        &g.expanded,
     );
     let edges = edges(app, doc, &nodes);
 
@@ -144,26 +145,39 @@ fn controls(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, g: &GraphState) {
         .inner_margin(egui::Margin::symmetric(10, 6))
         .show(ui, |ui| {
             ui.set_width(ui.available_width());
-            ui.horizontal(|ui| {
+            // A fixed strip height, then centre everything against it. egui's
+            // ordinary row centring uses the height known when each item is
+            // added, so a taller control added later leaves the earlier ones
+            // sitting a couple of pixels high.
+            ui.set_height(widgets::CONTROL_H + 4.0);
+            // Top-aligned, with every item a fixed-height box: nothing here
+            // depends on how a centring offset rounds.
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::Min), |ui| {
                 ui.spacing_mut().item_spacing.x = 10.0;
-                ui.label(
-                    egui::RichText::new("show")
-                        .size(11.0)
-                        .color(col::faint()),
-                );
+                widgets::strip_item(ui, |ui| {
+                    ui.label(egui::RichText::new("show").size(11.0).color(col::faint()));
+                });
                 let options: Vec<(GraphDir, &str)> = GraphDir::ALL
                     .iter()
                     .map(|(d, name)| (*d, *name))
                     .collect();
-                if let Some(d) = widgets::segmented(ui, g.dir, &options) {
+                let picked = widgets::strip_item(ui, |ui| widgets::segmented(ui, g.dir, &options));
+                if let Some(d) = picked {
                     act.push(Action::SetGraphDir(d));
                 }
 
-                if let Some(depth) = widgets::stepper(ui, "levels", g.depth, 1, 4) {
+                widgets::strip_item(ui, |ui| {
+                    ui.label(egui::RichText::new("levels").size(11.0).color(col::faint()));
+                });
+                let depth = widgets::strip_item(ui, |ui| widgets::stepper(ui, g.depth, 1, 4));
+                if let Some(depth) = depth {
                     act.push(Action::SetGraphDepth(depth));
                 }
 
-                if widgets::toggle_chip(ui, g.show_imports, "imports", col::comment()) {
+                let toggled = widgets::strip_item(ui, |ui| {
+                    widgets::toggle_chip(ui, g.show_imports, "imports", col::comment())
+                });
+                if toggled {
                     act.push(Action::ToggleGraphImports);
                 }
 
@@ -183,13 +197,7 @@ fn controls(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, g: &GraphState) {
                         (col::text(), "function"),
                         (col::accent(), "root"),
                     ] {
-                        // In a right-to-left row the label is added first so
-                        // that the dot ends up on its left.
-                        ui.label(
-                            egui::RichText::new(label)
-                                .size(10.5)
-                                .color(col::faint()),
-                        );
+                        ui.label(egui::RichText::new(label).size(10.5).color(col::faint()));
                         let (dot, _) =
                             ui.allocate_exact_size(egui::vec2(8.0, 8.0), egui::Sense::hover());
                         ui.painter().circle_filled(dot.center(), 4.0, color);
@@ -322,7 +330,11 @@ fn canvas(
                     .addr
                     .and_then(|a| app.user_color(a.segment, a.offset));
                 let (fill, border, text_col) = if n.is_overflow {
-                    (col::bg(), col::border(), col::faint())
+                    (
+                        egui::Color32::TRANSPARENT,
+                        col::border(),
+                        if over { col::accent() } else { col::faint() },
+                    )
                 } else if let Some(c) = tint {
                     (
                         c.gamma_multiply(if over { 0.34 } else { 0.22 }),
@@ -493,14 +505,16 @@ fn canvas(
 
             if let Some(i) = hovered {
                 let n = &nodes[i];
-                if !n.is_overflow {
-                    ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
-                }
+                ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
                 // A click reads the node; it does not move the graph or leave
                 // the view. Re-centring is the deliberate act, so it takes a
                 // double click, and opening the code is on the menu.
-                if resp.clicked() && !n.is_overflow {
-                    act.push(Action::GraphSelect(n.addr));
+                if resp.clicked() {
+                    if n.is_overflow {
+                        act.push(Action::GraphExpandLevel(n.level));
+                    } else {
+                        act.push(Action::GraphSelect(n.addr));
+                    }
                 }
                 if resp.double_clicked() && !n.is_overflow {
                     match n.addr {
@@ -534,7 +548,7 @@ fn canvas(
                     ui.add_space(4.0);
                     ui.label(
                         egui::RichText::new(if n.is_overflow {
-                            "raise the levels to see these, or make one of them the root"
+                            "the column was trimmed to stay readable; click to show the rest"
                         } else if n.is_import {
                             "double-click for its call sites"
                         } else {
@@ -567,6 +581,7 @@ fn layout(
     dir: GraphDir,
     show_imports: bool,
     moved: &HashMap<String, Vec2>,
+    expanded: &std::collections::HashSet<i32>,
 ) -> Vec<Node> {
     let mut nodes: Vec<Node> = Vec::new();
     let mut level_of: HashMap<String, i32> = HashMap::new();
@@ -685,7 +700,7 @@ fn layout(
         }
     }
 
-    trim_columns(&mut nodes);
+    trim_columns(&mut nodes, expanded);
     order_columns(&mut nodes, doc, app);
     place(&mut nodes, moved);
     nodes
@@ -708,7 +723,7 @@ fn import_key(name: &str) -> String {
 }
 
 /// Keep each column to something readable, the module's own functions first.
-fn trim_columns(nodes: &mut Vec<Node>) {
+fn trim_columns(nodes: &mut Vec<Node>, expanded: &std::collections::HashSet<i32>) {
     let mut by_level: HashMap<i32, Vec<usize>> = HashMap::new();
     for (i, n) in nodes.iter().enumerate() {
         by_level.entry(n.level).or_default().push(i);
@@ -716,7 +731,7 @@ fn trim_columns(nodes: &mut Vec<Node>) {
     let mut keep = vec![true; nodes.len()];
     let mut hidden: Vec<(i32, usize)> = Vec::new();
     for (level, mut idxs) in by_level {
-        if idxs.len() <= MAX_PER_LEVEL || level == 0 {
+        if idxs.len() <= MAX_PER_LEVEL || level == 0 || expanded.contains(&level) {
             continue;
         }
         idxs.sort_by_key(|i| (nodes[*i].is_import, nodes[*i].label.clone()));
@@ -740,7 +755,9 @@ fn trim_columns(nodes: &mut Vec<Node>) {
             key: format!("o{level}"),
             addr: None,
             label: format!("+{n} more"),
-            sub: "raise the levels to see them".into(),
+            // The cap is per column, so raising the levels adds columns rather
+            // than entries here. Showing them is a click.
+            sub: "click to show them".into(),
             level,
             is_root: false,
             is_import: false,

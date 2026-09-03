@@ -86,6 +86,20 @@ pub fn link(ui: &mut Ui, text: impl Into<String>, color: Color32) -> Response {
 /// Height shared by the small toolbar controls, so a row of them lines up.
 pub const CONTROL_H: f32 = 22.0;
 
+/// One item in a control strip.
+///
+/// A fixed-height box with its content centred inside it. Every item in a
+/// strip is the same height, so the row can be laid out top-aligned and
+/// nothing depends on how egui rounds a centring offset -- which is where the
+/// stray pixel between two controls comes from.
+pub fn strip_item<R>(ui: &mut Ui, content: impl FnOnce(&mut Ui) -> R) -> R {
+    ui.horizontal(|ui| {
+        ui.set_height(CONTROL_H + 4.0);
+        content(ui)
+    })
+    .inner
+}
+
 /// A segmented control: several exclusive choices in one strip.
 ///
 /// egui's selectable labels look like text that happens to highlight; a
@@ -99,7 +113,7 @@ pub fn segmented<T: PartialEq + Copy>(ui: &mut Ui, current: T, options: &[(T, &s
         .inner_margin(egui::Margin::same(2))
         .show(ui, |ui| {
             ui.horizontal(|ui| {
-                ui.set_min_height(CONTROL_H);
+                ui.set_height(CONTROL_H);
                 ui.spacing_mut().item_spacing.x = 2.0;
                 for (value, label) in options {
                     let active = *value == current;
@@ -126,40 +140,42 @@ pub fn segmented<T: PartialEq + Copy>(ui: &mut Ui, current: T, options: &[(T, &s
 }
 
 /// A minus / value / plus control for a small bounded number.
-pub fn stepper(ui: &mut Ui, label: &str, value: usize, min: usize, max: usize) -> Option<usize> {
+///
+/// Emits exactly one frame, built the same way [`segmented`] builds its own,
+/// and takes no label: any caption is the caller's to place. Two controls that
+/// are meant to line up have to be made the same way, or they land a pixel
+/// apart for reasons that are tedious to chase.
+pub fn stepper(ui: &mut Ui, value: usize, min: usize, max: usize) -> Option<usize> {
     let mut picked = None;
-    ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 4.0;
-        ui.label(egui::RichText::new(label).size(11.0).color(col::faint()));
-        egui::Frame::new()
-            .fill(col::bg())
-            .corner_radius(CornerRadius::same(5))
-            .inner_margin(egui::Margin::same(2))
-            .show(ui, |ui| {
-                ui.horizontal(|ui| {
-                    // The same inner height as the segmented control, so the
-                    // two sit level in a toolbar.
-                    ui.set_min_height(CONTROL_H);
-                    ui.spacing_mut().item_spacing.x = 2.0;
-                    ui.add_enabled_ui(value > min, |ui| {
-                        if ui.add(small_glyph("\u{2212}")).clicked() {
-                            picked = Some(value - 1);
-                        }
-                    });
-                    ui.label(
-                        egui::RichText::new(value.to_string())
-                            .monospace()
-                            .size(11.5)
-                            .color(col::text()),
-                    );
-                    ui.add_enabled_ui(value < max, |ui| {
-                        if ui.add(small_glyph("+")).clicked() {
-                            picked = Some(value + 1);
-                        }
-                    });
+    egui::Frame::new()
+        .fill(col::bg())
+        .corner_radius(CornerRadius::same(5))
+        .inner_margin(egui::Margin::same(2))
+        .show(ui, |ui| {
+            ui.horizontal(|ui| {
+                // Exactly the inner height of the segmented control, so the
+                // two sit level. A minimum is not enough: a button a pixel
+                // taller than the nominal height pushes the frame down.
+                ui.set_height(CONTROL_H);
+                ui.spacing_mut().item_spacing.x = 2.0;
+                ui.add_enabled_ui(value > min, |ui| {
+                    if ui.add(small_glyph("\u{2212}")).clicked() {
+                        picked = Some(value - 1);
+                    }
+                });
+                ui.label(
+                    egui::RichText::new(value.to_string())
+                        .monospace()
+                        .size(11.5)
+                        .color(col::text()),
+                );
+                ui.add_enabled_ui(value < max, |ui| {
+                    if ui.add(small_glyph("+")).clicked() {
+                        picked = Some(value + 1);
+                    }
                 });
             });
-    });
+        });
     picked
 }
 
