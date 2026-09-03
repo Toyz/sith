@@ -1,0 +1,15861 @@
+{
+"AVIFILE.100": {
+"n": "AVIFileInit",
+"cc": "pascal",
+"a": []
+},
+"AVIFILE.101": {
+"n": "AVIFileExit",
+"cc": "pascal",
+"a": []
+},
+"AVIFILE.102": {
+"n": "AVIFileOpen",
+"cc": "pascal",
+"a": [
+"ptr",
+"str",
+"word",
+"ptr"
+]
+},
+"AVIFILE.103": {
+"n": "AVIStreamOpenFromFile",
+"cc": "pascal",
+"a": [
+"ptr",
+"str",
+"long",
+"long",
+"word",
+"ptr"
+]
+},
+"AVIFILE.104": {
+"n": "AVIStreamCreate",
+"cc": "pascal",
+"a": [
+"ptr",
+"long",
+"long",
+"ptr"
+]
+},
+"AVIFILE.110": {
+"n": "AVIStreamGetFrame",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"AVIFILE.111": {
+"n": "AVIStreamGetFrameClose",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"AVIFILE.112": {
+"n": "AVIStreamGetFrameOpen",
+"cc": "pascal",
+"a": [
+"long",
+"ptr"
+]
+},
+"AVIFILE.123": {
+"n": "AVIBuildFilter",
+"cc": "pascal",
+"a": [
+"str",
+"long",
+"word"
+]
+},
+"AVIFILE.124": {
+"n": "AVISaveOptionsFree",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"AVIFILE.130": {
+"n": "AVIStreamStart",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"AVIFILE.131": {
+"n": "AVIStreamLength",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"AVIFILE.132": {
+"n": "AVIStreamTimeToSample",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"AVIFILE.133": {
+"n": "AVIStreamSampleToTime",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"AVIFILE.140": {
+"n": "AVIFileAddRef",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"AVIFILE.141": {
+"n": "AVIFileRelease",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"AVIFILE.142": {
+"n": "AVIFileInfo",
+"cc": "pascal",
+"a": [
+"long",
+"ptr",
+"long"
+]
+},
+"AVIFILE.143": {
+"n": "AVIFileGetStream",
+"cc": "pascal",
+"a": [
+"long",
+"ptr",
+"long",
+"long"
+]
+},
+"AVIFILE.144": {
+"n": "AVIFileCreateStream",
+"cc": "pascal",
+"a": [
+"long",
+"ptr",
+"ptr"
+]
+},
+"AVIFILE.146": {
+"n": "AVIFileWriteData",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"ptr",
+"long"
+]
+},
+"AVIFILE.147": {
+"n": "AVIFileReadData",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"ptr",
+"ptr"
+]
+},
+"AVIFILE.148": {
+"n": "AVIFileEndRecord",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"AVIFILE.160": {
+"n": "AVIStreamAddRef",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"AVIFILE.161": {
+"n": "AVIStreamRelease",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"AVIFILE.162": {
+"n": "AVIStreamInfo",
+"cc": "pascal",
+"a": [
+"long",
+"ptr",
+"long"
+]
+},
+"AVIFILE.163": {
+"n": "AVIStreamFindSample",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"long"
+]
+},
+"AVIFILE.164": {
+"n": "AVIStreamReadFormat",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"ptr",
+"ptr"
+]
+},
+"AVIFILE.165": {
+"n": "AVIStreamReadData",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"ptr",
+"ptr"
+]
+},
+"AVIFILE.166": {
+"n": "AVIStreamWriteData",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"ptr",
+"long"
+]
+},
+"AVIFILE.167": {
+"n": "AVIStreamRead",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"long",
+"ptr",
+"long",
+"ptr",
+"ptr"
+]
+},
+"AVIFILE.168": {
+"n": "AVIStreamWrite",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"long",
+"ptr",
+"long",
+"long",
+"ptr",
+"ptr"
+]
+},
+"AVIFILE.169": {
+"n": "AVIStreamSetFormat",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"ptr",
+"long"
+]
+},
+"COMMDLG.1": {
+"n": "GetOpenFileName",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"COMMDLG.2": {
+"n": "GetSaveFileName",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"COMMDLG.5": {
+"n": "ChooseColor",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"COMMDLG.6": {
+"n": "FileOpenDlgProc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"COMMDLG.7": {
+"n": "FileSaveDlgProc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"COMMDLG.8": {
+"n": "ColorDlgProc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"COMMDLG.11": {
+"n": "FindText",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"COMMDLG.12": {
+"n": "ReplaceText",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"COMMDLG.13": {
+"n": "FindTextDlgProc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"COMMDLG.14": {
+"n": "ReplaceTextDlgProc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"COMMDLG.15": {
+"n": "ChooseFont",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"COMMDLG.16": {
+"n": "FormatCharDlgProc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"COMMDLG.18": {
+"n": "FontStyleEnumProc",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"word",
+"long"
+]
+},
+"COMMDLG.19": {
+"n": "FontFamilyEnumProc",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"word",
+"long"
+]
+},
+"COMMDLG.20": {
+"n": "PrintDlg",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"COMMDLG.21": {
+"n": "PrintDlgProc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"COMMDLG.22": {
+"n": "PrintSetupDlgProc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"COMMDLG.26": {
+"n": "CommDlgExtendedError",
+"cc": "pascal",
+"a": []
+},
+"COMMDLG.27": {
+"n": "GetFileTitle",
+"cc": "pascal",
+"a": [
+"str",
+"ptr",
+"word"
+]
+},
+"COMPOBJ.1": {
+"n": "CoBuildVersion",
+"cc": "pascal",
+"a": []
+},
+"COMPOBJ.2": {
+"n": "CoInitialize",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"COMPOBJ.3": {
+"n": "CoUninitialize",
+"cc": "pascal",
+"a": []
+},
+"COMPOBJ.4": {
+"n": "CoGetMalloc",
+"cc": "pascal",
+"a": [
+"long",
+"ptr"
+]
+},
+"COMPOBJ.5": {
+"n": "CoRegisterClassObject",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"long",
+"long",
+"ptr"
+]
+},
+"COMPOBJ.6": {
+"n": "CoRevokeClassObject",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"COMPOBJ.7": {
+"n": "CoGetClassObject",
+"cc": "pascal",
+"a": [
+"segptr",
+"long",
+"ptr",
+"segptr",
+"segptr"
+]
+},
+"COMPOBJ.13": {
+"n": "CoCreateInstance",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"long",
+"ptr",
+"ptr"
+]
+},
+"COMPOBJ.14": {
+"n": "StringFromIID",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"COMPOBJ.15": {
+"n": "CoDisconnectObject",
+"cc": "pascal",
+"a": [
+"ptr",
+"long"
+]
+},
+"COMPOBJ.17": {
+"n": "CoFreeUnusedLibraries",
+"cc": "pascal",
+"a": []
+},
+"COMPOBJ.18": {
+"n": "IsEqualGUID",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"COMPOBJ.19": {
+"n": "StringFromCLSID",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"COMPOBJ.20": {
+"n": "CLSIDFromString",
+"cc": "pascal",
+"a": [
+"str",
+"ptr"
+]
+},
+"COMPOBJ.23": {
+"n": "IsValidInterface",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"COMPOBJ.27": {
+"n": "CoRegisterMessageFilter",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"COMPOBJ.30": {
+"n": "CoFileTimeToDosDateTime",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"COMPOBJ.31": {
+"n": "CoDosDateTimeToFileTime",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr"
+]
+},
+"COMPOBJ.34": {
+"n": "CoGetCurrentProcess",
+"cc": "pascal",
+"a": []
+},
+"COMPOBJ.61": {
+"n": "CLSIDFromProgID",
+"cc": "pascal",
+"a": [
+"str",
+"ptr"
+]
+},
+"COMPOBJ.62": {
+"n": "ProgIDFromCLSID",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"COMPOBJ.63": {
+"n": "CoLockObjectExternal",
+"cc": "pascal",
+"a": [
+"segptr",
+"word",
+"word"
+]
+},
+"COMPOBJ.71": {
+"n": "CoCreateStandardMalloc",
+"cc": "pascal",
+"a": [
+"long",
+"ptr"
+]
+},
+"COMPOBJ.73": {
+"n": "CoCreateGuid",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"COMPOBJ.76": {
+"n": "StringFromGUID2",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"word"
+]
+},
+"COMPOBJ.82": {
+"n": "CoFileTimeNow",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"COMPOBJ.94": {
+"n": "LookupETask",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"COMPOBJ.95": {
+"n": "SetETask",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"COMPOBJ.115": {
+"n": "CoGetState",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"COMPOBJ.116": {
+"n": "DllEntryPoint",
+"cc": "pascal",
+"a": [
+"long",
+"word",
+"word",
+"word",
+"long",
+"word"
+]
+},
+"COMPOBJ.151": {
+"n": "CoMemAlloc",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"long"
+]
+},
+"COMPOBJ.201": {
+"n": "CALLOBJECTINWOW",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"COMPOBJ.500": {
+"n": "IMalloc16_QueryInterface",
+"cc": "cdecl",
+"a": [
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"COMPOBJ.501": {
+"n": "IMalloc16_AddRef",
+"cc": "cdecl",
+"a": [
+"ptr"
+]
+},
+"COMPOBJ.502": {
+"n": "IMalloc16_Release",
+"cc": "cdecl",
+"a": [
+"segptr"
+]
+},
+"COMPOBJ.503": {
+"n": "IMalloc16_Alloc",
+"cc": "cdecl",
+"a": [
+"ptr",
+"long"
+]
+},
+"COMPOBJ.504": {
+"n": "IMalloc16_Realloc",
+"cc": "cdecl",
+"a": [
+"ptr",
+"segptr",
+"long"
+]
+},
+"COMPOBJ.505": {
+"n": "IMalloc16_Free",
+"cc": "cdecl",
+"a": [
+"ptr",
+"segptr"
+]
+},
+"COMPOBJ.506": {
+"n": "IMalloc16_GetSize",
+"cc": "cdecl",
+"a": [
+"ptr",
+"segptr"
+]
+},
+"COMPOBJ.507": {
+"n": "IMalloc16_DidAlloc",
+"cc": "cdecl",
+"a": [
+"ptr",
+"segptr"
+]
+},
+"COMPOBJ.508": {
+"n": "IMalloc16_HeapMinimize",
+"cc": "cdecl",
+"a": [
+"ptr"
+]
+},
+"CTL3D.1": {
+"n": "Ctl3dGetVer",
+"cc": "pascal",
+"a": []
+},
+"CTL3D.2": {
+"n": "Ctl3dSubclassDlg",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"CTL3D.3": {
+"n": "Ctl3dSubclassCtl",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"CTL3D.4": {
+"n": "Ctl3dCtlColor",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"CTL3D.5": {
+"n": "Ctl3dEnabled",
+"cc": "pascal",
+"a": []
+},
+"CTL3D.6": {
+"n": "Ctl3dColorChange",
+"cc": "pascal",
+"a": []
+},
+"CTL3D.7": {
+"n": "BtnWndProc3d",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"CTL3D.8": {
+"n": "EditWndProc3d",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"CTL3D.9": {
+"n": "ListWndProc3d",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"CTL3D.10": {
+"n": "ComboWndProc3d",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"CTL3D.11": {
+"n": "StaticWndProc3d",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"CTL3D.12": {
+"n": "Ctl3dRegister",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"CTL3D.13": {
+"n": "Ctl3dUnregister",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"CTL3D.16": {
+"n": "Ctl3dAutoSubclass",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"CTL3D.17": {
+"n": "Ctl3dDlgProc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"CTL3D.18": {
+"n": "Ctl3dCtlColorEx",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long"
+]
+},
+"CTL3D.20": {
+"n": "Ctl3dDlgFramePaint",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"CTL3D.21": {
+"n": "Ctl3dSubclassDlgEx",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"CTL3D.22": {
+"n": "Ctl3dWinIniChange",
+"cc": "pascal",
+"a": []
+},
+"CTL3D.23": {
+"n": "Ctl3dIsAutoSubclass",
+"cc": "pascal",
+"a": []
+},
+"CTL3D.24": {
+"n": "Ctl3dUnAutoSubclass",
+"cc": "pascal",
+"a": []
+},
+"CTL3D.25": {
+"n": "Ctl3dSubclassCtlEx",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"CTL3D.26": {
+"n": "Ctl3dUnsubclassCtl",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"CTL3D.27": {
+"n": "Ctl3dAutoSubclassEx",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"CTL3DV2.1": {
+"n": "Ctl3dGetVer",
+"cc": "pascal",
+"a": []
+},
+"CTL3DV2.2": {
+"n": "Ctl3dSubclassDlg",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"CTL3DV2.3": {
+"n": "Ctl3dSubclassCtl",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"CTL3DV2.4": {
+"n": "Ctl3dCtlColor",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"CTL3DV2.5": {
+"n": "Ctl3dEnabled",
+"cc": "pascal",
+"a": []
+},
+"CTL3DV2.6": {
+"n": "Ctl3dColorChange",
+"cc": "pascal",
+"a": []
+},
+"CTL3DV2.7": {
+"n": "BtnWndProc3d",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"CTL3DV2.8": {
+"n": "EditWndProc3d",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"CTL3DV2.9": {
+"n": "ListWndProc3d",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"CTL3DV2.10": {
+"n": "ComboWndProc3d",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"CTL3DV2.11": {
+"n": "StaticWndProc3d",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"CTL3DV2.12": {
+"n": "Ctl3dRegister",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"CTL3DV2.13": {
+"n": "Ctl3dUnregister",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"CTL3DV2.16": {
+"n": "Ctl3dAutoSubclass",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"CTL3DV2.17": {
+"n": "Ctl3dDlgProc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"CTL3DV2.18": {
+"n": "Ctl3dCtlColorEx",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long"
+]
+},
+"CTL3DV2.20": {
+"n": "Ctl3dDlgFramePaint",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"CTL3DV2.21": {
+"n": "Ctl3dSubclassDlgEx",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"CTL3DV2.22": {
+"n": "Ctl3dWinIniChange",
+"cc": "pascal",
+"a": []
+},
+"CTL3DV2.23": {
+"n": "Ctl3dIsAutoSubclass",
+"cc": "pascal",
+"a": []
+},
+"CTL3DV2.24": {
+"n": "Ctl3dUnAutoSubclass",
+"cc": "pascal",
+"a": []
+},
+"CTL3DV2.25": {
+"n": "Ctl3dSubclassCtlEx",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"CTL3DV2.26": {
+"n": "Ctl3dUnsubclassCtl",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"CTL3DV2.27": {
+"n": "Ctl3dAutoSubclassEx",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"DDEML.2": {
+"n": "DdeInitialize",
+"cc": "pascal",
+"a": [
+"ptr",
+"segptr",
+"long",
+"long"
+]
+},
+"DDEML.3": {
+"n": "DdeUninitialize",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"DDEML.4": {
+"n": "DdeConnectList",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"long",
+"long",
+"ptr"
+]
+},
+"DDEML.5": {
+"n": "DdeQueryNextServer",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"DDEML.6": {
+"n": "DdeDisconnectList",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"DDEML.7": {
+"n": "DdeConnect",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"long",
+"ptr"
+]
+},
+"DDEML.8": {
+"n": "DdeDisconnect",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"DDEML.9": {
+"n": "DdeQueryConvInfo",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"ptr"
+]
+},
+"DDEML.10": {
+"n": "DdeSetUserHandle",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"long"
+]
+},
+"DDEML.11": {
+"n": "DdeClientTransaction",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"long",
+"long",
+"word",
+"word",
+"long",
+"ptr"
+]
+},
+"DDEML.12": {
+"n": "DdeAbandonTransaction",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"long"
+]
+},
+"DDEML.13": {
+"n": "DdePostAdvise",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"long"
+]
+},
+"DDEML.14": {
+"n": "DdeCreateDataHandle",
+"cc": "pascal",
+"a": [
+"long",
+"ptr",
+"long",
+"long",
+"long",
+"word",
+"word"
+]
+},
+"DDEML.15": {
+"n": "DdeAddData",
+"cc": "pascal",
+"a": [
+"long",
+"ptr",
+"long",
+"long"
+]
+},
+"DDEML.16": {
+"n": "DdeGetData",
+"cc": "pascal",
+"a": [
+"long",
+"ptr",
+"long",
+"long"
+]
+},
+"DDEML.17": {
+"n": "DdeAccessData",
+"cc": "pascal",
+"a": [
+"long",
+"ptr"
+]
+},
+"DDEML.18": {
+"n": "DdeUnaccessData",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"DDEML.19": {
+"n": "DdeFreeDataHandle",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"DDEML.20": {
+"n": "DdeGetLastError",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"DDEML.21": {
+"n": "DdeCreateStringHandle",
+"cc": "pascal",
+"a": [
+"long",
+"str",
+"s_word"
+]
+},
+"DDEML.22": {
+"n": "DdeFreeStringHandle",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"DDEML.23": {
+"n": "DdeQueryString",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"ptr",
+"long",
+"s_word"
+]
+},
+"DDEML.24": {
+"n": "DdeKeepStringHandle",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"DDEML.26": {
+"n": "DdeEnableCallback",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"word"
+]
+},
+"DDEML.27": {
+"n": "DdeNameService",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"long",
+"word"
+]
+},
+"DDEML.36": {
+"n": "DdeCmpStringHandles",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"DDEML.37": {
+"n": "DdeReconnect",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"DISPDIB.1": {
+"n": "DisplayDib",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"word"
+]
+},
+"DISPLAY.101": {
+"n": "Inquire",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"DISPLAY.102": {
+"n": "SetCursor",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"DISPLAY.103": {
+"n": "MoveCursor",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"DISPLAY.104": {
+"n": "CheckCursor",
+"cc": "pascal",
+"a": []
+},
+"DISPLAY.450": {
+"n": "GetDriverResourceID",
+"cc": "pascal",
+"a": [
+"word",
+"str"
+]
+},
+"DISPLAY.500": {
+"n": "UserRepaintDisable",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.1": {
+"n": "SetBkColor",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"GDI.2": {
+"n": "SetBkMode",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.3": {
+"n": "SetMapMode",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.4": {
+"n": "SetROP2",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.5": {
+"n": "SetRelAbs",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.6": {
+"n": "SetPolyFillMode",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.7": {
+"n": "SetStretchBltMode",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.8": {
+"n": "SetTextCharacterExtra",
+"cc": "pascal",
+"a": [
+"word",
+"s_word"
+]
+},
+"GDI.9": {
+"n": "SetTextColor",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"GDI.10": {
+"n": "SetTextJustification",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word"
+]
+},
+"GDI.11": {
+"n": "SetWindowOrg",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word"
+]
+},
+"GDI.12": {
+"n": "SetWindowExt",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word"
+]
+},
+"GDI.13": {
+"n": "SetViewportOrg",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word"
+]
+},
+"GDI.14": {
+"n": "SetViewportExt",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word"
+]
+},
+"GDI.15": {
+"n": "OffsetWindowOrg",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word"
+]
+},
+"GDI.16": {
+"n": "ScaleWindowExt",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"GDI.17": {
+"n": "OffsetViewportOrg",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word"
+]
+},
+"GDI.18": {
+"n": "ScaleViewportExt",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"GDI.19": {
+"n": "LineTo",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word"
+]
+},
+"GDI.20": {
+"n": "MoveTo",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word"
+]
+},
+"GDI.21": {
+"n": "ExcludeClipRect",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"GDI.22": {
+"n": "IntersectClipRect",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"GDI.23": {
+"n": "Arc",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"GDI.24": {
+"n": "Ellipse",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"GDI.25": {
+"n": "FloodFill",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"long"
+]
+},
+"GDI.26": {
+"n": "Pie",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"GDI.27": {
+"n": "Rectangle",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"GDI.28": {
+"n": "RoundRect",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"GDI.29": {
+"n": "PatBlt",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"long"
+]
+},
+"GDI.30": {
+"n": "SaveDC",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.31": {
+"n": "SetPixel",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"long"
+]
+},
+"GDI.32": {
+"n": "OffsetClipRgn",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word"
+]
+},
+"GDI.33": {
+"n": "TextOut",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"str",
+"word"
+]
+},
+"GDI.34": {
+"n": "BitBlt",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"word",
+"s_word",
+"s_word",
+"long"
+]
+},
+"GDI.35": {
+"n": "StretchBlt",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"long"
+]
+},
+"GDI.36": {
+"n": "Polygon",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"GDI.37": {
+"n": "Polyline",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"GDI.38": {
+"n": "Escape",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"segptr",
+"ptr"
+]
+},
+"GDI.39": {
+"n": "RestoreDC",
+"cc": "pascal",
+"a": [
+"word",
+"s_word"
+]
+},
+"GDI.40": {
+"n": "FillRgn",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"GDI.41": {
+"n": "FrameRgn",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"GDI.42": {
+"n": "InvertRgn",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.43": {
+"n": "PaintRgn",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.44": {
+"n": "SelectClipRgn",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.45": {
+"n": "SelectObject",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.47": {
+"n": "CombineRgn",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"s_word"
+]
+},
+"GDI.48": {
+"n": "CreateBitmap",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"ptr"
+]
+},
+"GDI.49": {
+"n": "CreateBitmapIndirect",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"GDI.50": {
+"n": "CreateBrushIndirect",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"GDI.51": {
+"n": "CreateCompatibleBitmap",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"GDI.52": {
+"n": "CreateCompatibleDC",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.53": {
+"n": "CreateDC",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"str",
+"ptr"
+]
+},
+"GDI.54": {
+"n": "CreateEllipticRgn",
+"cc": "pascal",
+"a": [
+"s_word",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"GDI.55": {
+"n": "CreateEllipticRgnIndirect",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"GDI.56": {
+"n": "CreateFont",
+"cc": "pascal",
+"a": [
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"word",
+"word",
+"word",
+"word",
+"word",
+"word",
+"word",
+"word",
+"str"
+]
+},
+"GDI.57": {
+"n": "CreateFontIndirect",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"GDI.58": {
+"n": "CreateHatchBrush",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"GDI.60": {
+"n": "CreatePatternBrush",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.61": {
+"n": "CreatePen",
+"cc": "pascal",
+"a": [
+"s_word",
+"s_word",
+"long"
+]
+},
+"GDI.62": {
+"n": "CreatePenIndirect",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"GDI.63": {
+"n": "CreatePolygonRgn",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"word"
+]
+},
+"GDI.64": {
+"n": "CreateRectRgn",
+"cc": "pascal",
+"a": [
+"s_word",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"GDI.65": {
+"n": "CreateRectRgnIndirect",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"GDI.66": {
+"n": "CreateSolidBrush",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"GDI.67": {
+"n": "DPtoLP",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"s_word"
+]
+},
+"GDI.68": {
+"n": "DeleteDC",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.69": {
+"n": "DeleteObject",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.70": {
+"n": "EnumFonts",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"segptr",
+"long"
+]
+},
+"GDI.71": {
+"n": "EnumObjects",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"segptr",
+"long"
+]
+},
+"GDI.72": {
+"n": "EqualRgn",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.73": {
+"n": "ExcludeVisRect",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"GDI.74": {
+"n": "GetBitmapBits",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"ptr"
+]
+},
+"GDI.75": {
+"n": "GetBkColor",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.76": {
+"n": "GetBkMode",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.77": {
+"n": "GetClipBox",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.78": {
+"n": "GetCurrentPosition",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.79": {
+"n": "GetDCOrg",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.80": {
+"n": "GetDeviceCaps",
+"cc": "pascal",
+"a": [
+"word",
+"s_word"
+]
+},
+"GDI.81": {
+"n": "GetMapMode",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.82": {
+"n": "GetObject",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"ptr"
+]
+},
+"GDI.83": {
+"n": "GetPixel",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word"
+]
+},
+"GDI.84": {
+"n": "GetPolyFillMode",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.85": {
+"n": "GetROP2",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.86": {
+"n": "GetRelAbs",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.87": {
+"n": "GetStockObject",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.88": {
+"n": "GetStretchBltMode",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.89": {
+"n": "GetTextCharacterExtra",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.90": {
+"n": "GetTextColor",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.91": {
+"n": "GetTextExtent",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"s_word"
+]
+},
+"GDI.92": {
+"n": "GetTextFace",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"ptr"
+]
+},
+"GDI.93": {
+"n": "GetTextMetrics",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.94": {
+"n": "GetViewportExt",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.95": {
+"n": "GetViewportOrg",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.96": {
+"n": "GetWindowExt",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.97": {
+"n": "GetWindowOrg",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.98": {
+"n": "IntersectVisRect",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"GDI.99": {
+"n": "LPtoDP",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"s_word"
+]
+},
+"GDI.100": {
+"n": "LineDDA",
+"cc": "pascal",
+"a": [
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"segptr",
+"long"
+]
+},
+"GDI.101": {
+"n": "OffsetRgn",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word"
+]
+},
+"GDI.102": {
+"n": "OffsetVisRgn",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word"
+]
+},
+"GDI.103": {
+"n": "PtVisible",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word"
+]
+},
+"GDI.104": {
+"n": "RectVisibleOld",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.105": {
+"n": "SelectVisRgn",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.106": {
+"n": "SetBitmapBits",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"ptr"
+]
+},
+"GDI.117": {
+"n": "SetDCOrg",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word"
+]
+},
+"GDI.119": {
+"n": "AddFontResource",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"GDI.121": {
+"n": "Death",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.122": {
+"n": "Resurrection",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"GDI.123": {
+"n": "PlayMetaFile",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.124": {
+"n": "GetMetaFile",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"GDI.125": {
+"n": "CreateMetaFile",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"GDI.126": {
+"n": "CloseMetaFile",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.127": {
+"n": "DeleteMetaFile",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.128": {
+"n": "MulDiv",
+"cc": "pascal",
+"a": [
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"GDI.129": {
+"n": "SaveVisRgn",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.130": {
+"n": "RestoreVisRgn",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.131": {
+"n": "InquireVisRgn",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.132": {
+"n": "SetEnvironment",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"word"
+]
+},
+"GDI.133": {
+"n": "GetEnvironment",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"word"
+]
+},
+"GDI.134": {
+"n": "GetRgnBox",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.136": {
+"n": "RemoveFontResource",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"GDI.148": {
+"n": "SetBrushOrg",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word"
+]
+},
+"GDI.149": {
+"n": "GetBrushOrg",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.150": {
+"n": "UnrealizeObject",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.151": {
+"n": "CopyMetaFile",
+"cc": "pascal",
+"a": [
+"word",
+"str"
+]
+},
+"GDI.153": {
+"n": "CreateIC",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"str",
+"ptr"
+]
+},
+"GDI.154": {
+"n": "GetNearestColor",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"GDI.155": {
+"n": "QueryAbort",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.156": {
+"n": "CreateDiscardableBitmap",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"GDI.159": {
+"n": "GetMetaFileBits",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.160": {
+"n": "SetMetaFileBits",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.161": {
+"n": "PtInRegion",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word"
+]
+},
+"GDI.162": {
+"n": "GetBitmapDimension",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.163": {
+"n": "SetBitmapDimension",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word"
+]
+},
+"GDI.172": {
+"n": "SetRectRgn",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"GDI.173": {
+"n": "GetClipRgn",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.175": {
+"n": "EnumMetaFile",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"segptr",
+"long"
+]
+},
+"GDI.176": {
+"n": "PlayMetaFileRecord",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr",
+"word"
+]
+},
+"GDI.179": {
+"n": "GetDCState",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.180": {
+"n": "SetDCState",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.181": {
+"n": "RectInRegionOld",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.190": {
+"n": "SetDCHook",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"long"
+]
+},
+"GDI.191": {
+"n": "GetDCHook",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.192": {
+"n": "SetHookFlags",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.193": {
+"n": "SetBoundsRect",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"GDI.194": {
+"n": "GetBoundsRect",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"GDI.196": {
+"n": "SetMetaFileBitsBetter",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.230": {
+"n": "CreatePQ",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.231": {
+"n": "MinPQ",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.232": {
+"n": "ExtractPQ",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.233": {
+"n": "InsertPQ",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"GDI.234": {
+"n": "SizePQ",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.235": {
+"n": "DeletePQ",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.240": {
+"n": "OpenJob",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"word"
+]
+},
+"GDI.241": {
+"n": "WriteSpool",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"GDI.242": {
+"n": "WriteDialog",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"word"
+]
+},
+"GDI.243": {
+"n": "CloseJob",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.244": {
+"n": "DeleteJob",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.245": {
+"n": "GetSpoolJob",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.246": {
+"n": "StartSpoolPage",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.247": {
+"n": "EndSpoolPage",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.250": {
+"n": "Copy",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"word"
+]
+},
+"GDI.281": {
+"n": "DrvSetPrinterData",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"long",
+"ptr",
+"long"
+]
+},
+"GDI.282": {
+"n": "DrvGetPrinterData",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"ptr",
+"ptr",
+"long",
+"ptr"
+]
+},
+"GDI.300": {
+"n": "EngineEnumerateFont",
+"cc": "pascal",
+"a": [
+"str",
+"segptr",
+"long"
+]
+},
+"GDI.301": {
+"n": "EngineDeleteFont",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"GDI.302": {
+"n": "EngineRealizeFont",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"GDI.303": {
+"n": "EngineGetCharWidth",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"word",
+"ptr"
+]
+},
+"GDI.304": {
+"n": "EngineSetFontContext",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"GDI.305": {
+"n": "EngineGetGlyphBMP",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word",
+"word",
+"ptr",
+"long",
+"ptr"
+]
+},
+"GDI.306": {
+"n": "EngineMakeFontDir",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr"
+]
+},
+"GDI.307": {
+"n": "GetCharABCWidths",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr"
+]
+},
+"GDI.308": {
+"n": "GetOutlineTextMetrics",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr"
+]
+},
+"GDI.309": {
+"n": "GetGlyphOutline",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr",
+"long",
+"ptr",
+"ptr"
+]
+},
+"GDI.310": {
+"n": "CreateScalableFontResource",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"str",
+"str"
+]
+},
+"GDI.311": {
+"n": "GetFontData",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"long",
+"ptr",
+"long"
+]
+},
+"GDI.313": {
+"n": "GetRasterizerCaps",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"GDI.315": {
+"n": "EngineRealizeFontExt",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"long",
+"long"
+]
+},
+"GDI.330": {
+"n": "EnumFontFamilies",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"segptr",
+"long"
+]
+},
+"GDI.332": {
+"n": "GetKerningPairs",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr"
+]
+},
+"GDI.345": {
+"n": "GetTextAlign",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.346": {
+"n": "SetTextAlign",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.348": {
+"n": "Chord",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"GDI.349": {
+"n": "SetMapperFlags",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"GDI.350": {
+"n": "GetCharWidth",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr"
+]
+},
+"GDI.351": {
+"n": "ExtTextOut",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"word",
+"ptr",
+"str",
+"word",
+"ptr"
+]
+},
+"GDI.360": {
+"n": "CreatePalette",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"GDI.361": {
+"n": "GDISelectPalette",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"GDI.362": {
+"n": "GDIRealizePalette",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.363": {
+"n": "GetPaletteEntries",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr"
+]
+},
+"GDI.364": {
+"n": "SetPaletteEntries",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr"
+]
+},
+"GDI.365": {
+"n": "RealizeDefaultPalette",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.366": {
+"n": "UpdateColors",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.367": {
+"n": "AnimatePalette",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr"
+]
+},
+"GDI.368": {
+"n": "ResizePalette",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.370": {
+"n": "GetNearestPaletteIndex",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"GDI.372": {
+"n": "ExtFloodFill",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"long",
+"word"
+]
+},
+"GDI.373": {
+"n": "SetSystemPaletteUse",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.374": {
+"n": "GetSystemPaletteUse",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.375": {
+"n": "GetSystemPaletteEntries",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr"
+]
+},
+"GDI.376": {
+"n": "ResetDC",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.377": {
+"n": "StartDoc",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.378": {
+"n": "EndDoc",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.379": {
+"n": "StartPage",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.380": {
+"n": "EndPage",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.381": {
+"n": "SetAbortProc",
+"cc": "pascal",
+"a": [
+"word",
+"segptr"
+]
+},
+"GDI.382": {
+"n": "AbortDoc",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.400": {
+"n": "FastWindowFrame",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"s_word",
+"s_word",
+"long"
+]
+},
+"GDI.403": {
+"n": "GdiInit2",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.405": {
+"n": "FinalGdiInit",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.407": {
+"n": "CreateUserBitmap",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"ptr"
+]
+},
+"GDI.409": {
+"n": "CreateUserDiscardableBitmap",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"GDI.410": {
+"n": "IsValidMetaFile",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.411": {
+"n": "GetCurLogFont",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.412": {
+"n": "IsDCCurrentPalette",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.439": {
+"n": "StretchDIBits",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"ptr",
+"ptr",
+"word",
+"long"
+]
+},
+"GDI.440": {
+"n": "SetDIBits",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"ptr",
+"ptr",
+"word"
+]
+},
+"GDI.441": {
+"n": "GetDIBits",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"ptr",
+"ptr",
+"word"
+]
+},
+"GDI.442": {
+"n": "CreateDIBitmap",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long",
+"ptr",
+"ptr",
+"word"
+]
+},
+"GDI.443": {
+"n": "SetDIBitsToDevice",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"word",
+"word",
+"ptr",
+"ptr",
+"word"
+]
+},
+"GDI.444": {
+"n": "CreateRoundRectRgn",
+"cc": "pascal",
+"a": [
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"GDI.445": {
+"n": "CreateDIBPatternBrush",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.450": {
+"n": "PolyPolygon",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr",
+"word"
+]
+},
+"GDI.451": {
+"n": "CreatePolyPolygonRgn",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"word",
+"word"
+]
+},
+"GDI.452": {
+"n": "GdiSeeGdiDo",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word"
+]
+},
+"GDI.461": {
+"n": "SetObjectOwner",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.462": {
+"n": "IsGDIObject",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.463": {
+"n": "MakeObjectPrivate",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.465": {
+"n": "RectVisible",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.466": {
+"n": "RectInRegion",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.468": {
+"n": "GetBitmapDimensionEx",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.469": {
+"n": "GetBrushOrgEx",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.470": {
+"n": "GetCurrentPositionEx",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.471": {
+"n": "GetTextExtentPoint",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"s_word",
+"ptr"
+]
+},
+"GDI.472": {
+"n": "GetViewportExtEx",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.473": {
+"n": "GetViewportOrgEx",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.474": {
+"n": "GetWindowExtEx",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.475": {
+"n": "GetWindowOrgEx",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.476": {
+"n": "OffsetViewportOrgEx",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"ptr"
+]
+},
+"GDI.477": {
+"n": "OffsetWindowOrgEx",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"ptr"
+]
+},
+"GDI.478": {
+"n": "SetBitmapDimensionEx",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"ptr"
+]
+},
+"GDI.479": {
+"n": "SetViewportExtEx",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"ptr"
+]
+},
+"GDI.480": {
+"n": "SetViewportOrgEx",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"ptr"
+]
+},
+"GDI.481": {
+"n": "SetWindowExtEx",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"ptr"
+]
+},
+"GDI.482": {
+"n": "SetWindowOrgEx",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"ptr"
+]
+},
+"GDI.483": {
+"n": "MoveToEx",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"ptr"
+]
+},
+"GDI.484": {
+"n": "ScaleViewportExtEx",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"ptr"
+]
+},
+"GDI.485": {
+"n": "ScaleWindowExtEx",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"ptr"
+]
+},
+"GDI.486": {
+"n": "GetAspectRatioFilterEx",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"GDI.489": {
+"n": "CreateDIBSection",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word",
+"ptr",
+"long",
+"long"
+]
+},
+"GDI.502": {
+"n": "PolyBezier",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"GDI.503": {
+"n": "PolyBezierTo",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"GDI.508": {
+"n": "ExtSelectClipRgn",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"GDI.511": {
+"n": "AbortPath",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.512": {
+"n": "BeginPath",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.513": {
+"n": "CloseFigure",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.514": {
+"n": "EndPath",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.515": {
+"n": "FillPath",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.516": {
+"n": "FlattenPath",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.517": {
+"n": "GetPath",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr",
+"word"
+]
+},
+"GDI.518": {
+"n": "PathToRegion",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.519": {
+"n": "SelectClipPath",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.520": {
+"n": "StrokeAndFillPath",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.521": {
+"n": "StrokePath",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.522": {
+"n": "WidenPath",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.524": {
+"n": "GetArcDirection",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.525": {
+"n": "SetArcDirection",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"GDI.529": {
+"n": "CreateHalftonePalette",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.530": {
+"n": "RawTextOut",
+"cc": "pascal",
+"a": []
+},
+"GDI.531": {
+"n": "RawExtTextOut",
+"cc": "pascal",
+"a": []
+},
+"GDI.532": {
+"n": "RawGetTextExtent",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"word"
+]
+},
+"GDI.536": {
+"n": "BiDiLayout",
+"cc": "pascal",
+"a": []
+},
+"GDI.538": {
+"n": "BiDiCreateTabString",
+"cc": "pascal",
+"a": []
+},
+"GDI.540": {
+"n": "BiDiGlyphOut",
+"cc": "pascal",
+"a": []
+},
+"GDI.543": {
+"n": "BiDiGetStringExtent",
+"cc": "pascal",
+"a": []
+},
+"GDI.555": {
+"n": "BiDiDeleteString",
+"cc": "pascal",
+"a": []
+},
+"GDI.556": {
+"n": "BiDiSetDefaults",
+"cc": "pascal",
+"a": []
+},
+"GDI.558": {
+"n": "BiDiGetDefaults",
+"cc": "pascal",
+"a": []
+},
+"GDI.560": {
+"n": "BiDiShape",
+"cc": "pascal",
+"a": []
+},
+"GDI.561": {
+"n": "BiDiFontComplement",
+"cc": "pascal",
+"a": []
+},
+"GDI.564": {
+"n": "BiDiSetKashida",
+"cc": "pascal",
+"a": []
+},
+"GDI.565": {
+"n": "BiDiKExtTextOut",
+"cc": "pascal",
+"a": []
+},
+"GDI.566": {
+"n": "BiDiShapeEx",
+"cc": "pascal",
+"a": []
+},
+"GDI.569": {
+"n": "BiDiCreateStringEx",
+"cc": "pascal",
+"a": []
+},
+"GDI.571": {
+"n": "GetTextExtentRtoL",
+"cc": "pascal",
+"a": []
+},
+"GDI.572": {
+"n": "GetHDCCharSet",
+"cc": "pascal",
+"a": []
+},
+"GDI.573": {
+"n": "BiDiLayoutEx",
+"cc": "pascal",
+"a": []
+},
+"GDI.602": {
+"n": "SetDIBColorTable",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr"
+]
+},
+"GDI.603": {
+"n": "GetDIBColorTable",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr"
+]
+},
+"GDI.604": {
+"n": "SetSolidBrush",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"GDI.605": {
+"n": "SysDeleteObject",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.606": {
+"n": "SetMagicColors",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"word"
+]
+},
+"GDI.607": {
+"n": "GetRegionData",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"ptr"
+]
+},
+"GDI.609": {
+"n": "GdiFreeResources",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"GDI.610": {
+"n": "GdiSignalProc32",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"long",
+"word"
+]
+},
+"GDI.612": {
+"n": "GetTextCharset",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.613": {
+"n": "EnumFontFamiliesEx",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"segptr",
+"long",
+"long"
+]
+},
+"GDI.616": {
+"n": "GetFontLanguageInfo",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"GDI.1000": {
+"n": "SetLayout",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"KERNEL.2": {
+"n": "ExitKernel",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.3": {
+"n": "GetVersion",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.4": {
+"n": "LocalInit",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"KERNEL.5": {
+"n": "LocalAlloc",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"KERNEL.6": {
+"n": "LocalReAlloc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"KERNEL.7": {
+"n": "LocalFree",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.8": {
+"n": "LocalLock",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.9": {
+"n": "LocalUnlock",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.10": {
+"n": "LocalSize",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.11": {
+"n": "LocalHandle",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.12": {
+"n": "LocalFlags",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.13": {
+"n": "LocalCompact",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.14": {
+"n": "LocalNotify",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.15": {
+"n": "GlobalAlloc",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"KERNEL.16": {
+"n": "GlobalReAlloc",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"word"
+]
+},
+"KERNEL.17": {
+"n": "GlobalFree",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.18": {
+"n": "GlobalLock",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.19": {
+"n": "GlobalUnlock",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.20": {
+"n": "GlobalSize",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.21": {
+"n": "GlobalHandle",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.22": {
+"n": "GlobalFlags",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.23": {
+"n": "LockSegment",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.24": {
+"n": "UnlockSegment",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.25": {
+"n": "GlobalCompact",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.26": {
+"n": "GlobalFreeAll",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.27": {
+"n": "GetModuleName",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"KERNEL.28": {
+"n": "GlobalMasterHandle",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.29": {
+"n": "Yield",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.30": {
+"n": "WaitEvent",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.31": {
+"n": "PostEvent",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.32": {
+"n": "SetPriority",
+"cc": "pascal",
+"a": [
+"word",
+"s_word"
+]
+},
+"KERNEL.33": {
+"n": "LockCurrentTask",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.34": {
+"n": "SetTaskQueue",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"KERNEL.35": {
+"n": "GetTaskQueue",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.36": {
+"n": "GetCurrentTask",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.37": {
+"n": "GetCurrentPDB",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.38": {
+"n": "SetTaskSignalProc",
+"cc": "pascal",
+"a": [
+"word",
+"segptr"
+]
+},
+"KERNEL.41": {
+"n": "EnableDos",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.42": {
+"n": "DisableDos",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.45": {
+"n": "LoadModule",
+"cc": "pascal",
+"a": [
+"str",
+"ptr"
+]
+},
+"KERNEL.46": {
+"n": "FreeModule",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.47": {
+"n": "GetModuleHandle",
+"cc": "pascal",
+"a": [
+"segstr"
+]
+},
+"KERNEL.48": {
+"n": "GetModuleUsage",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.49": {
+"n": "GetModuleFileName",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"s_word"
+]
+},
+"KERNEL.50": {
+"n": "GetProcAddress",
+"cc": "pascal",
+"a": [
+"word",
+"str"
+]
+},
+"KERNEL.51": {
+"n": "MakeProcInstance",
+"cc": "pascal",
+"a": [
+"segptr",
+"word"
+]
+},
+"KERNEL.52": {
+"n": "FreeProcInstance",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"KERNEL.54": {
+"n": "GetInstanceData",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"KERNEL.55": {
+"n": "Catch",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KERNEL.56": {
+"n": "Throw",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"KERNEL.57": {
+"n": "GetProfileInt",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"s_word"
+]
+},
+"KERNEL.58": {
+"n": "GetProfileString",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"str",
+"ptr",
+"word"
+]
+},
+"KERNEL.59": {
+"n": "WriteProfileString",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"str"
+]
+},
+"KERNEL.60": {
+"n": "FindResource",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"str"
+]
+},
+"KERNEL.61": {
+"n": "LoadResource",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"KERNEL.62": {
+"n": "LockResource",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.63": {
+"n": "FreeResource",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.64": {
+"n": "AccessResource",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"KERNEL.65": {
+"n": "SizeofResource",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"KERNEL.66": {
+"n": "AllocResource",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long"
+]
+},
+"KERNEL.67": {
+"n": "SetResourceHandler",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"segptr"
+]
+},
+"KERNEL.68": {
+"n": "InitAtomTable",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.69": {
+"n": "FindAtom",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"KERNEL.70": {
+"n": "AddAtom",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"KERNEL.71": {
+"n": "DeleteAtom",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.72": {
+"n": "GetAtomName",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"KERNEL.73": {
+"n": "GetAtomHandle",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.74": {
+"n": "OpenFile",
+"cc": "pascal",
+"a": [
+"str",
+"ptr",
+"word"
+]
+},
+"KERNEL.77": {
+"n": "Reserved1",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"KERNEL.78": {
+"n": "Reserved2",
+"cc": "pascal",
+"a": [
+"segptr",
+"segptr"
+]
+},
+"KERNEL.79": {
+"n": "Reserved3",
+"cc": "pascal",
+"a": [
+"segstr"
+]
+},
+"KERNEL.80": {
+"n": "Reserved4",
+"cc": "pascal",
+"a": [
+"segstr"
+]
+},
+"KERNEL.81": {
+"n": "_lclose",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.82": {
+"n": "_lread",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"word"
+]
+},
+"KERNEL.83": {
+"n": "_lcreat",
+"cc": "pascal",
+"a": [
+"str",
+"word"
+]
+},
+"KERNEL.84": {
+"n": "_llseek",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"word"
+]
+},
+"KERNEL.85": {
+"n": "_lopen",
+"cc": "pascal",
+"a": [
+"str",
+"word"
+]
+},
+"KERNEL.86": {
+"n": "_lwrite",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"KERNEL.87": {
+"n": "Reserved5",
+"cc": "pascal",
+"a": [
+"str",
+"str"
+]
+},
+"KERNEL.88": {
+"n": "lstrcpy",
+"cc": "pascal",
+"a": [
+"segptr",
+"str"
+]
+},
+"KERNEL.89": {
+"n": "lstrcat",
+"cc": "pascal",
+"a": [
+"segstr",
+"str"
+]
+},
+"KERNEL.90": {
+"n": "lstrlen",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"KERNEL.91": {
+"n": "InitTask",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.92": {
+"n": "GetTempDrive",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.93": {
+"n": "GetCodeHandle",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"KERNEL.94": {
+"n": "DefineHandleTable",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.95": {
+"n": "LoadLibrary",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"KERNEL.96": {
+"n": "FreeLibrary",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.97": {
+"n": "GetTempFileName",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"word",
+"ptr"
+]
+},
+"KERNEL.98": {
+"n": "GetLastDiskChange",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.99": {
+"n": "GetLPErrMode",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.100": {
+"n": "ValidateCodeSegments",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.102": {
+"n": "DOS3Call",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.103": {
+"n": "NetBIOSCall",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.104": {
+"n": "GetCodeInfo",
+"cc": "pascal",
+"a": [
+"segptr",
+"ptr"
+]
+},
+"KERNEL.105": {
+"n": "GetExeVersion",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.106": {
+"n": "SetSwapAreaSize",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.107": {
+"n": "SetErrorMode",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.108": {
+"n": "SwitchStackTo",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"KERNEL.109": {
+"n": "SwitchStackBack",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.110": {
+"n": "PatchCodeHandle",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.111": {
+"n": "GlobalWire",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.112": {
+"n": "GlobalUnWire",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.115": {
+"n": "OutputDebugString",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"KERNEL.117": {
+"n": "OldYield",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.118": {
+"n": "GetTaskQueueDS",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.119": {
+"n": "GetTaskQueueES",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.121": {
+"n": "LocalShrink",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"KERNEL.122": {
+"n": "IsTaskLocked",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.123": {
+"n": "KbdRst",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.124": {
+"n": "EnableKernel",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.125": {
+"n": "DisableKernel",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.127": {
+"n": "GetPrivateProfileInt",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"s_word",
+"str"
+]
+},
+"KERNEL.128": {
+"n": "GetPrivateProfileString",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"str",
+"ptr",
+"word",
+"str"
+]
+},
+"KERNEL.129": {
+"n": "WritePrivateProfileString",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"str",
+"str"
+]
+},
+"KERNEL.130": {
+"n": "FileCDR",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KERNEL.131": {
+"n": "GetDOSEnvironment",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.132": {
+"n": "GetWinFlags",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.133": {
+"n": "GetExePtr",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.134": {
+"n": "GetWindowsDirectory",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"KERNEL.135": {
+"n": "GetSystemDirectory",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"KERNEL.136": {
+"n": "GetDriveType",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.137": {
+"n": "FatalAppExit",
+"cc": "pascal",
+"a": [
+"word",
+"str"
+]
+},
+"KERNEL.138": {
+"n": "GetHeapSpaces",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.140": {
+"n": "SetSigHandler",
+"cc": "pascal",
+"a": [
+"segptr",
+"ptr",
+"ptr",
+"word",
+"word"
+]
+},
+"KERNEL.142": {
+"n": "GetProfileSectionNames",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"KERNEL.143": {
+"n": "GetPrivateProfileSectionNames",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"str"
+]
+},
+"KERNEL.144": {
+"n": "CreateDirectory",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"KERNEL.145": {
+"n": "RemoveDirectory",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KERNEL.146": {
+"n": "DeleteFile",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KERNEL.147": {
+"n": "SetLastError",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.148": {
+"n": "GetLastError",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.149": {
+"n": "GetVersionEx",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KERNEL.150": {
+"n": "DirectedYield",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.152": {
+"n": "GetNumTasks",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.154": {
+"n": "GlobalNotify",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"KERNEL.155": {
+"n": "GetTaskDS",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.156": {
+"n": "LimitEMSPages",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.157": {
+"n": "GetCurPID",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.158": {
+"n": "IsWinOldApTask",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.159": {
+"n": "GlobalHandleNoRIP",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.161": {
+"n": "LocalCountFree",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.162": {
+"n": "LocalHeapSize",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.163": {
+"n": "GlobalLRUOldest",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.164": {
+"n": "GlobalLRUNewest",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.165": {
+"n": "A20Proc",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.166": {
+"n": "WinExec",
+"cc": "pascal",
+"a": [
+"str",
+"word"
+]
+},
+"KERNEL.167": {
+"n": "GetExpWinVer",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.168": {
+"n": "DirectResAlloc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"KERNEL.169": {
+"n": "GetFreeSpace",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.170": {
+"n": "AllocCStoDSAlias",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.171": {
+"n": "AllocDStoCSAlias",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.172": {
+"n": "AllocAlias",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.175": {
+"n": "AllocSelector",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.176": {
+"n": "FreeSelector",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.177": {
+"n": "PrestoChangoSelector",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"KERNEL.180": {
+"n": "LongPtrAdd",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"KERNEL.184": {
+"n": "GlobalDOSAlloc",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.185": {
+"n": "GlobalDOSFree",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.186": {
+"n": "GetSelectorBase",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.187": {
+"n": "SetSelectorBase",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"KERNEL.188": {
+"n": "GetSelectorLimit",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.189": {
+"n": "SetSelectorLimit",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"KERNEL.191": {
+"n": "GlobalPageLock",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.192": {
+"n": "GlobalPageUnlock",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.196": {
+"n": "SelectorAccessRights",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"KERNEL.197": {
+"n": "GlobalFix",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.198": {
+"n": "GlobalUnfix",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.199": {
+"n": "SetHandleCount",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.200": {
+"n": "ValidateFreeSpaces",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.203": {
+"n": "DebugBreak",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.206": {
+"n": "AllocSelectorArray",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.207": {
+"n": "IsDBCSLeadByte",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.208": {
+"n": "K208",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"long",
+"long"
+]
+},
+"KERNEL.209": {
+"n": "K209",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"word",
+"long"
+]
+},
+"KERNEL.210": {
+"n": "K210",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"word",
+"long",
+"long"
+]
+},
+"KERNEL.211": {
+"n": "K211",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"word"
+]
+},
+"KERNEL.213": {
+"n": "K213",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"word",
+"word"
+]
+},
+"KERNEL.214": {
+"n": "K214",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"word"
+]
+},
+"KERNEL.215": {
+"n": "K215",
+"cc": "pascal",
+"a": [
+"long",
+"word"
+]
+},
+"KERNEL.216": {
+"n": "RegEnumKey",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"ptr",
+"long"
+]
+},
+"KERNEL.217": {
+"n": "RegOpenKey",
+"cc": "pascal",
+"a": [
+"long",
+"str",
+"ptr"
+]
+},
+"KERNEL.218": {
+"n": "RegCreateKey",
+"cc": "pascal",
+"a": [
+"long",
+"str",
+"ptr"
+]
+},
+"KERNEL.219": {
+"n": "RegDeleteKey",
+"cc": "pascal",
+"a": [
+"long",
+"str"
+]
+},
+"KERNEL.220": {
+"n": "RegCloseKey",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.221": {
+"n": "RegSetValue",
+"cc": "pascal",
+"a": [
+"long",
+"str",
+"long",
+"ptr",
+"long"
+]
+},
+"KERNEL.222": {
+"n": "RegDeleteValue",
+"cc": "pascal",
+"a": [
+"long",
+"str"
+]
+},
+"KERNEL.223": {
+"n": "RegEnumValue",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"ptr",
+"ptr",
+"ptr",
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"KERNEL.224": {
+"n": "RegQueryValue",
+"cc": "pascal",
+"a": [
+"long",
+"str",
+"ptr",
+"ptr"
+]
+},
+"KERNEL.225": {
+"n": "RegQueryValueEx",
+"cc": "pascal",
+"a": [
+"long",
+"str",
+"ptr",
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"KERNEL.226": {
+"n": "RegSetValueEx",
+"cc": "pascal",
+"a": [
+"long",
+"str",
+"long",
+"long",
+"ptr",
+"long"
+]
+},
+"KERNEL.227": {
+"n": "RegFlushKey",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.228": {
+"n": "K228",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.229": {
+"n": "K229",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.230": {
+"n": "GlobalSmartPageLock",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.231": {
+"n": "GlobalSmartPageUnlock",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.237": {
+"n": "K237",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.274": {
+"n": "GetShortPathName",
+"cc": "pascal",
+"a": [
+"str",
+"ptr",
+"word"
+]
+},
+"KERNEL.310": {
+"n": "LocalHandleDelta",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.311": {
+"n": "GetSetKernelDOSProc",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KERNEL.315": {
+"n": "WriteOutProfiles",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.316": {
+"n": "GetFreeMemInfo",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.320": {
+"n": "IsTask",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.323": {
+"n": "IsRomModule",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.324": {
+"n": "LogError",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"KERNEL.325": {
+"n": "LogParamError",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr"
+]
+},
+"KERNEL.326": {
+"n": "IsRomFile",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.327": {
+"n": "K327",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.328": {
+"n": "_DebugOutput",
+"cc": "varargs",
+"a": [
+"word",
+"str"
+]
+},
+"KERNEL.329": {
+"n": "K329",
+"cc": "pascal",
+"a": [
+"str",
+"word"
+]
+},
+"KERNEL.334": {
+"n": "IsBadReadPtr",
+"cc": "pascal",
+"a": [
+"segptr",
+"word"
+]
+},
+"KERNEL.335": {
+"n": "IsBadWritePtr",
+"cc": "pascal",
+"a": [
+"segptr",
+"word"
+]
+},
+"KERNEL.336": {
+"n": "IsBadCodePtr",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"KERNEL.337": {
+"n": "IsBadStringPtr",
+"cc": "pascal",
+"a": [
+"segptr",
+"word"
+]
+},
+"KERNEL.338": {
+"n": "HasGPHandler",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"KERNEL.339": {
+"n": "DiagQuery",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.340": {
+"n": "DiagOutput",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"KERNEL.341": {
+"n": "ToolHelpHook",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KERNEL.345": {
+"n": "IsSharedSelector",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.346": {
+"n": "IsBadHugeReadPtr",
+"cc": "pascal",
+"a": [
+"segptr",
+"long"
+]
+},
+"KERNEL.347": {
+"n": "IsBadHugeWritePtr",
+"cc": "pascal",
+"a": [
+"segptr",
+"long"
+]
+},
+"KERNEL.348": {
+"n": "hmemcpy",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"long"
+]
+},
+"KERNEL.349": {
+"n": "_hread",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"long"
+]
+},
+"KERNEL.350": {
+"n": "_hwrite",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"KERNEL.351": {
+"n": "BUNNY_351",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.352": {
+"n": "lstrcatn",
+"cc": "pascal",
+"a": [
+"segstr",
+"str",
+"word"
+]
+},
+"KERNEL.353": {
+"n": "lstrcpyn",
+"cc": "pascal",
+"a": [
+"segptr",
+"str",
+"word"
+]
+},
+"KERNEL.354": {
+"n": "GetAppCompatFlags",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.355": {
+"n": "GetWinDebugInfo",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"KERNEL.356": {
+"n": "SetWinDebugInfo",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KERNEL.357": {
+"n": "MapSL",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"KERNEL.358": {
+"n": "MapLS",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.359": {
+"n": "UnMapLS",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"KERNEL.360": {
+"n": "OpenFileEx",
+"cc": "pascal",
+"a": [
+"str",
+"ptr",
+"word"
+]
+},
+"KERNEL.361": {
+"n": "PIGLET_361",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.365": {
+"n": "GlobalChangeLockCount",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"KERNEL.403": {
+"n": "FarSetOwner",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"KERNEL.404": {
+"n": "FarGetOwner",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.406": {
+"n": "WritePrivateProfileStruct",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"ptr",
+"word",
+"str"
+]
+},
+"KERNEL.407": {
+"n": "GetPrivateProfileStruct",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"ptr",
+"word",
+"str"
+]
+},
+"KERNEL.411": {
+"n": "GetCurrentDirectory",
+"cc": "pascal",
+"a": [
+"long",
+"ptr"
+]
+},
+"KERNEL.412": {
+"n": "SetCurrentDirectory",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KERNEL.413": {
+"n": "FindFirstFile",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"KERNEL.414": {
+"n": "FindNextFile",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"KERNEL.415": {
+"n": "FindClose",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.416": {
+"n": "WritePrivateProfileSection",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"str"
+]
+},
+"KERNEL.417": {
+"n": "WriteProfileSection",
+"cc": "pascal",
+"a": [
+"str",
+"str"
+]
+},
+"KERNEL.418": {
+"n": "GetPrivateProfileSection",
+"cc": "pascal",
+"a": [
+"str",
+"ptr",
+"word",
+"str"
+]
+},
+"KERNEL.419": {
+"n": "GetProfileSection",
+"cc": "pascal",
+"a": [
+"str",
+"ptr",
+"word"
+]
+},
+"KERNEL.420": {
+"n": "GetFileAttributes",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KERNEL.421": {
+"n": "SetFileAttributes",
+"cc": "pascal",
+"a": [
+"ptr",
+"long"
+]
+},
+"KERNEL.422": {
+"n": "GetDiskFreeSpace",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"KERNEL.423": {
+"n": "LogApiThk",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"KERNEL.431": {
+"n": "IsPeFormat",
+"cc": "pascal",
+"a": [
+"str",
+"word"
+]
+},
+"KERNEL.434": {
+"n": "UnicodeToAnsi",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"word"
+]
+},
+"KERNEL.436": {
+"n": "_ConfirmSysLevel",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KERNEL.437": {
+"n": "_CheckNotSysLevel",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KERNEL.438": {
+"n": "_CreateSysLevel",
+"cc": "pascal",
+"a": [
+"ptr",
+"long"
+]
+},
+"KERNEL.439": {
+"n": "_EnterSysLevel",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KERNEL.440": {
+"n": "_LeaveSysLevel",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KERNEL.441": {
+"n": "CreateThread16",
+"cc": "pascal",
+"a": [
+"ptr",
+"long",
+"segptr",
+"segptr",
+"long",
+"ptr"
+]
+},
+"KERNEL.442": {
+"n": "VWin32_EventCreate",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.443": {
+"n": "VWin32_EventDestroy",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.444": {
+"n": "Local32Info",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"KERNEL.445": {
+"n": "Local32First",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"KERNEL.446": {
+"n": "Local32Next",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KERNEL.447": {
+"n": "WIN32_OldYield",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.449": {
+"n": "GetpWin16Lock",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.450": {
+"n": "VWin32_EventWait",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.451": {
+"n": "VWin32_EventSet",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.452": {
+"n": "LoadLibrary32",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"KERNEL.453": {
+"n": "GetProcAddress32",
+"cc": "pascal",
+"a": [
+"long",
+"str"
+]
+},
+"KERNEL.456": {
+"n": "DefResourceHandler",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"KERNEL.457": {
+"n": "CreateW32Event",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"KERNEL.458": {
+"n": "SetW32Event",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.459": {
+"n": "ResetW32Event",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.460": {
+"n": "WaitForSingleObject",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"KERNEL.461": {
+"n": "WaitForMultipleObjects",
+"cc": "pascal",
+"a": [
+"long",
+"ptr",
+"long",
+"long"
+]
+},
+"KERNEL.462": {
+"n": "GetCurrentThreadId",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.463": {
+"n": "SetThreadQueue",
+"cc": "pascal",
+"a": [
+"long",
+"word"
+]
+},
+"KERNEL.464": {
+"n": "GetThreadQueue",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.466": {
+"n": "ExitProcess",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.471": {
+"n": "GetCurrentProcessId",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.472": {
+"n": "MapHInstLS",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.473": {
+"n": "MapHInstSL",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.474": {
+"n": "CloseW32Handle",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.475": {
+"n": "GetTEBSelectorFS",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.476": {
+"n": "ConvertToGlobalHandle",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.479": {
+"n": "KERNEL_479",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.480": {
+"n": "_EnterWin16Lock",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.481": {
+"n": "_LeaveWin16Lock",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.482": {
+"n": "LoadSystemLibrary32",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"KERNEL.483": {
+"n": "MapProcessHandle",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.484": {
+"n": "SetProcessDword",
+"cc": "pascal",
+"a": [
+"long",
+"s_word",
+"long"
+]
+},
+"KERNEL.485": {
+"n": "GetProcessDword",
+"cc": "pascal",
+"a": [
+"long",
+"s_word"
+]
+},
+"KERNEL.486": {
+"n": "FreeLibrary32",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.487": {
+"n": "GetModuleFileName32",
+"cc": "pascal",
+"a": [
+"long",
+"str",
+"word"
+]
+},
+"KERNEL.488": {
+"n": "GetModuleHandle32",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"KERNEL.490": {
+"n": "KERNEL_490",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KERNEL.491": {
+"n": "RegisterServiceProcess",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"KERNEL.493": {
+"n": "UTInit",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"long",
+"long"
+]
+},
+"KERNEL.495": {
+"n": "WaitForMultipleObjectsEx",
+"cc": "pascal",
+"a": [
+"long",
+"ptr",
+"long",
+"long",
+"long"
+]
+},
+"KERNEL.500": {
+"n": "WOW16Call",
+"cc": "varargs",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"KERNEL.513": {
+"n": "LoadLibraryEx32W",
+"cc": "pascal",
+"a": [
+"ptr",
+"long",
+"long"
+]
+},
+"KERNEL.514": {
+"n": "FreeLibrary32W",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.515": {
+"n": "GetProcAddress32W",
+"cc": "pascal",
+"a": [
+"long",
+"str"
+]
+},
+"KERNEL.516": {
+"n": "GetVDMPointer32W",
+"cc": "pascal",
+"a": [
+"segptr",
+"word"
+]
+},
+"KERNEL.517": {
+"n": "CallProc32W",
+"cc": "varargs",
+"a": [
+"long",
+"long",
+"long"
+]
+},
+"KERNEL.518": {
+"n": "_CallProcEx32W",
+"cc": "varargs",
+"a": [
+"long",
+"long",
+"long"
+]
+},
+"KERNEL.535": {
+"n": "VWin32_BoostThreadGroup",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"KERNEL.536": {
+"n": "VWin32_BoostThreadStatic",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"KERNEL.560": {
+"n": "SetThunkletCallbackGlue",
+"cc": "pascal",
+"a": [
+"long",
+"segptr"
+]
+},
+"KERNEL.561": {
+"n": "AllocLSThunkletCallback",
+"cc": "pascal",
+"a": [
+"segptr",
+"long"
+]
+},
+"KERNEL.562": {
+"n": "AllocSLThunkletCallback",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"KERNEL.563": {
+"n": "FindLSThunkletCallback",
+"cc": "pascal",
+"a": [
+"segptr",
+"long"
+]
+},
+"KERNEL.564": {
+"n": "FindSLThunkletCallback",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"KERNEL.567": {
+"n": "AllocLSThunkletCallbackEx",
+"cc": "pascal",
+"a": [
+"segptr",
+"long",
+"word"
+]
+},
+"KERNEL.568": {
+"n": "AllocSLThunkletCallbackEx",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"word"
+]
+},
+"KERNEL.602": {
+"n": "GetDummyModuleHandleDS",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.604": {
+"n": "CBClientGlueSL",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.605": {
+"n": "AllocSLThunkletCallback_dup",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"KERNEL.606": {
+"n": "AllocLSThunkletCallback_dup",
+"cc": "pascal",
+"a": [
+"segptr",
+"long"
+]
+},
+"KERNEL.607": {
+"n": "AllocLSThunkletSysthunk",
+"cc": "pascal",
+"a": [
+"segptr",
+"long",
+"long"
+]
+},
+"KERNEL.608": {
+"n": "AllocSLThunkletSysthunk",
+"cc": "pascal",
+"a": [
+"long",
+"segptr",
+"long"
+]
+},
+"KERNEL.609": {
+"n": "FindLSThunkletCallback_dup",
+"cc": "pascal",
+"a": [
+"segptr",
+"long"
+]
+},
+"KERNEL.610": {
+"n": "FindSLThunkletCallback_dup",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"KERNEL.611": {
+"n": "FreeThunklet",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"KERNEL.612": {
+"n": "IsSLThunklet",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KERNEL.615": {
+"n": "ConvertDialog32To16",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"long"
+]
+},
+"KERNEL.616": {
+"n": "ConvertMenu32To16",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"long"
+]
+},
+"KERNEL.617": {
+"n": "GetMenu32Size",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KERNEL.618": {
+"n": "GetDialog32Size",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KERNEL.619": {
+"n": "RegisterCBClient",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"long"
+]
+},
+"KERNEL.620": {
+"n": "CBClientThunkSL",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.621": {
+"n": "CBClientThunkSLEx",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.622": {
+"n": "UnRegisterCBClient",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"long"
+]
+},
+"KERNEL.623": {
+"n": "InitCBClient",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"KERNEL.624": {
+"n": "SetFastQueue",
+"cc": "pascal",
+"a": [
+"long",
+"long"
+]
+},
+"KERNEL.625": {
+"n": "GetFastQueue",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.627": {
+"n": "IsBadFlatReadWritePtr",
+"cc": "pascal",
+"a": [
+"segptr",
+"long",
+"word"
+]
+},
+"KERNEL.630": {
+"n": "C16ThkSL",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.631": {
+"n": "C16ThkSL01",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.651": {
+"n": "ThunkConnect16",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"word",
+"long",
+"ptr",
+"str",
+"word"
+]
+},
+"KERNEL.666": {
+"n": "UTGlue16",
+"cc": "pascal",
+"a": [
+"ptr",
+"long",
+"ptr",
+"long"
+]
+},
+"KERNEL.667": {
+"n": "EntryAddrProc",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"KERNEL.668": {
+"n": "MyAlloc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"KERNEL.669": {
+"n": "DllEntryPoint",
+"cc": "pascal",
+"a": [
+"long",
+"word",
+"word",
+"word",
+"long",
+"word"
+]
+},
+"KERNEL.700": {
+"n": "SSInit",
+"cc": "pascal",
+"a": []
+},
+"KERNEL.704": {
+"n": "SSConfirmSmallStack",
+"cc": "pascal",
+"a": []
+},
+"KEYBOARD.1": {
+"n": "Inquire",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"KEYBOARD.2": {
+"n": "Enable",
+"cc": "pascal",
+"a": [
+"segptr",
+"ptr"
+]
+},
+"KEYBOARD.3": {
+"n": "Disable",
+"cc": "pascal",
+"a": []
+},
+"KEYBOARD.4": {
+"n": "ToAscii",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"ptr",
+"word"
+]
+},
+"KEYBOARD.5": {
+"n": "AnsiToOem",
+"cc": "pascal",
+"a": [
+"str",
+"ptr"
+]
+},
+"KEYBOARD.6": {
+"n": "OemToAnsi",
+"cc": "pascal",
+"a": [
+"str",
+"ptr"
+]
+},
+"KEYBOARD.7": {
+"n": "SetSpeed",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KEYBOARD.100": {
+"n": "ScreenSwitchEnable",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KEYBOARD.128": {
+"n": "OemKeyScan",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KEYBOARD.129": {
+"n": "VkKeyScan",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KEYBOARD.130": {
+"n": "GetKeyboardType",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"KEYBOARD.131": {
+"n": "MapVirtualKey",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"KEYBOARD.132": {
+"n": "GetKBCodePage",
+"cc": "pascal",
+"a": []
+},
+"KEYBOARD.133": {
+"n": "GetKeyNameText",
+"cc": "pascal",
+"a": [
+"long",
+"ptr",
+"word"
+]
+},
+"KEYBOARD.134": {
+"n": "AnsiToOemBuff",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"word"
+]
+},
+"KEYBOARD.135": {
+"n": "OemToAnsiBuff",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"word"
+]
+},
+"LZEXPAND.1": {
+"n": "LZCopy",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"LZEXPAND.2": {
+"n": "LZOpenFile",
+"cc": "pascal",
+"a": [
+"str",
+"ptr",
+"word"
+]
+},
+"LZEXPAND.3": {
+"n": "LZInit",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"LZEXPAND.4": {
+"n": "LZSeek",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"word"
+]
+},
+"LZEXPAND.5": {
+"n": "LZRead",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"LZEXPAND.6": {
+"n": "LZClose",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"LZEXPAND.7": {
+"n": "LZStart",
+"cc": "pascal",
+"a": []
+},
+"LZEXPAND.8": {
+"n": "CopyLZFile",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"LZEXPAND.9": {
+"n": "LZDone",
+"cc": "pascal",
+"a": []
+},
+"LZEXPAND.10": {
+"n": "GetExpandedName",
+"cc": "pascal",
+"a": [
+"str",
+"ptr"
+]
+},
+"MMSYSTEM.1": {
+"n": "WEP",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr"
+]
+},
+"MMSYSTEM.2": {
+"n": "sndPlaySound",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.3": {
+"n": "PlaySound",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"long"
+]
+},
+"MMSYSTEM.4": {
+"n": "DllEntryPoint",
+"cc": "pascal",
+"a": [
+"long",
+"word",
+"word",
+"word",
+"long",
+"word"
+]
+},
+"MMSYSTEM.5": {
+"n": "mmsystemGetVersion",
+"cc": "pascal",
+"a": []
+},
+"MMSYSTEM.6": {
+"n": "DriverProc",
+"cc": "pascal",
+"a": [
+"long",
+"word",
+"word",
+"long",
+"long"
+]
+},
+"MMSYSTEM.8": {
+"n": "WMMMidiRunOnce",
+"cc": "pascal",
+"a": []
+},
+"MMSYSTEM.30": {
+"n": "OutputDebugStr",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"MMSYSTEM.31": {
+"n": "DriverCallback",
+"cc": "pascal",
+"a": [
+"long",
+"word",
+"word",
+"word",
+"long",
+"long",
+"long"
+]
+},
+"MMSYSTEM.32": {
+"n": "StackEnter",
+"cc": "pascal",
+"a": []
+},
+"MMSYSTEM.33": {
+"n": "StackLeave",
+"cc": "pascal",
+"a": []
+},
+"MMSYSTEM.101": {
+"n": "joyGetNumDevs",
+"cc": "pascal",
+"a": []
+},
+"MMSYSTEM.102": {
+"n": "joyGetDevCaps",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.103": {
+"n": "joyGetPos",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"MMSYSTEM.104": {
+"n": "joyGetThreshold",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"MMSYSTEM.105": {
+"n": "joyReleaseCapture",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.106": {
+"n": "joySetCapture",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word"
+]
+},
+"MMSYSTEM.107": {
+"n": "joySetThreshold",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"MMSYSTEM.109": {
+"n": "joySetCalibration",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.110": {
+"n": "joyGetPosEx",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"MMSYSTEM.201": {
+"n": "midiOutGetNumDevs",
+"cc": "pascal",
+"a": []
+},
+"MMSYSTEM.202": {
+"n": "midiOutGetDevCaps",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.203": {
+"n": "midiOutGetErrorText",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.204": {
+"n": "midiOutOpen",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"long",
+"long",
+"long"
+]
+},
+"MMSYSTEM.205": {
+"n": "midiOutClose",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.206": {
+"n": "midiOutPrepareHeader",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"word"
+]
+},
+"MMSYSTEM.207": {
+"n": "midiOutUnprepareHeader",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"word"
+]
+},
+"MMSYSTEM.208": {
+"n": "midiOutShortMsg",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"MMSYSTEM.209": {
+"n": "midiOutLongMsg",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"word"
+]
+},
+"MMSYSTEM.210": {
+"n": "midiOutReset",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.211": {
+"n": "midiOutGetVolume",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"MMSYSTEM.212": {
+"n": "midiOutSetVolume",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"MMSYSTEM.213": {
+"n": "midiOutCachePatches",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.214": {
+"n": "midiOutCacheDrumPatches",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.215": {
+"n": "midiOutGetID",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"MMSYSTEM.216": {
+"n": "midiOutMessage",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long",
+"long"
+]
+},
+"MMSYSTEM.250": {
+"n": "midiStreamProperty",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"MMSYSTEM.251": {
+"n": "midiStreamOpen",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"long",
+"long",
+"long",
+"long"
+]
+},
+"MMSYSTEM.252": {
+"n": "midiStreamClose",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.253": {
+"n": "midiStreamPosition",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.254": {
+"n": "midiStreamOut",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.255": {
+"n": "midiStreamPause",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.256": {
+"n": "midiStreamRestart",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.257": {
+"n": "midiStreamStop",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.301": {
+"n": "midiInGetNumDevs",
+"cc": "pascal",
+"a": []
+},
+"MMSYSTEM.302": {
+"n": "midiInGetDevCaps",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.303": {
+"n": "midiInGetErrorText",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.304": {
+"n": "midiInOpen",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"long",
+"long",
+"long"
+]
+},
+"MMSYSTEM.305": {
+"n": "midiInClose",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.306": {
+"n": "midiInPrepareHeader",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"word"
+]
+},
+"MMSYSTEM.307": {
+"n": "midiInUnprepareHeader",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"word"
+]
+},
+"MMSYSTEM.308": {
+"n": "midiInAddBuffer",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"word"
+]
+},
+"MMSYSTEM.309": {
+"n": "midiInStart",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.310": {
+"n": "midiInStop",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.311": {
+"n": "midiInReset",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.312": {
+"n": "midiInGetID",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"MMSYSTEM.313": {
+"n": "midiInMessage",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long",
+"long"
+]
+},
+"MMSYSTEM.350": {
+"n": "auxGetNumDevs",
+"cc": "pascal",
+"a": []
+},
+"MMSYSTEM.351": {
+"n": "auxGetDevCaps",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.352": {
+"n": "auxGetVolume",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"MMSYSTEM.353": {
+"n": "auxSetVolume",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"MMSYSTEM.354": {
+"n": "auxOutMessage",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long",
+"long"
+]
+},
+"MMSYSTEM.401": {
+"n": "waveOutGetNumDevs",
+"cc": "pascal",
+"a": []
+},
+"MMSYSTEM.402": {
+"n": "waveOutGetDevCaps",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.403": {
+"n": "waveOutGetErrorText",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.404": {
+"n": "waveOutOpen",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"ptr",
+"long",
+"long",
+"long"
+]
+},
+"MMSYSTEM.405": {
+"n": "waveOutClose",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.406": {
+"n": "waveOutPrepareHeader",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"word"
+]
+},
+"MMSYSTEM.407": {
+"n": "waveOutUnprepareHeader",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"word"
+]
+},
+"MMSYSTEM.408": {
+"n": "waveOutWrite",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"word"
+]
+},
+"MMSYSTEM.409": {
+"n": "waveOutPause",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.410": {
+"n": "waveOutRestart",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.411": {
+"n": "waveOutReset",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.412": {
+"n": "waveOutGetPosition",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.413": {
+"n": "waveOutGetPitch",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"MMSYSTEM.414": {
+"n": "waveOutSetPitch",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"MMSYSTEM.415": {
+"n": "waveOutGetVolume",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"MMSYSTEM.416": {
+"n": "waveOutSetVolume",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"MMSYSTEM.417": {
+"n": "waveOutGetPlaybackRate",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"MMSYSTEM.418": {
+"n": "waveOutSetPlaybackRate",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"MMSYSTEM.419": {
+"n": "waveOutBreakLoop",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.420": {
+"n": "waveOutGetID",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"MMSYSTEM.421": {
+"n": "waveOutMessage",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long",
+"long"
+]
+},
+"MMSYSTEM.501": {
+"n": "waveInGetNumDevs",
+"cc": "pascal",
+"a": []
+},
+"MMSYSTEM.502": {
+"n": "waveInGetDevCaps",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.503": {
+"n": "waveInGetErrorText",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.504": {
+"n": "waveInOpen",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"ptr",
+"long",
+"long",
+"long"
+]
+},
+"MMSYSTEM.505": {
+"n": "waveInClose",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.506": {
+"n": "waveInPrepareHeader",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"word"
+]
+},
+"MMSYSTEM.507": {
+"n": "waveInUnprepareHeader",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"word"
+]
+},
+"MMSYSTEM.508": {
+"n": "waveInAddBuffer",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"word"
+]
+},
+"MMSYSTEM.509": {
+"n": "waveInStart",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.510": {
+"n": "waveInStop",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.511": {
+"n": "waveInReset",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.512": {
+"n": "waveInGetPosition",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.513": {
+"n": "waveInGetID",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"MMSYSTEM.514": {
+"n": "waveInMessage",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long",
+"long"
+]
+},
+"MMSYSTEM.601": {
+"n": "timeGetSystemTime",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.602": {
+"n": "timeSetEvent",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"segptr",
+"long",
+"word"
+]
+},
+"MMSYSTEM.603": {
+"n": "timeKillEvent",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.604": {
+"n": "timeGetDevCaps",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.605": {
+"n": "timeBeginPeriod",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.606": {
+"n": "timeEndPeriod",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.607": {
+"n": "timeGetTime",
+"cc": "pascal",
+"a": []
+},
+"MMSYSTEM.701": {
+"n": "mciSendCommand",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long",
+"long"
+]
+},
+"MMSYSTEM.702": {
+"n": "mciSendString",
+"cc": "pascal",
+"a": [
+"str",
+"ptr",
+"word",
+"word"
+]
+},
+"MMSYSTEM.703": {
+"n": "mciGetDeviceID",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"MMSYSTEM.705": {
+"n": "mciLoadCommandResource",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"word"
+]
+},
+"MMSYSTEM.706": {
+"n": "mciGetErrorString",
+"cc": "pascal",
+"a": [
+"long",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.707": {
+"n": "mciSetDriverData",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"MMSYSTEM.708": {
+"n": "mciGetDriverData",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.710": {
+"n": "mciDriverYield",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.711": {
+"n": "mciDriverNotify",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"MMSYSTEM.712": {
+"n": "mciExecute",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"MMSYSTEM.713": {
+"n": "mciFreeCommandResource",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.714": {
+"n": "mciSetYieldProc",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"MMSYSTEM.715": {
+"n": "mciGetDeviceIDFromElementID",
+"cc": "pascal",
+"a": [
+"long",
+"ptr"
+]
+},
+"MMSYSTEM.716": {
+"n": "mciGetYieldProc",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"MMSYSTEM.717": {
+"n": "mciGetCreatorTask",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.800": {
+"n": "mixerGetNumDevs",
+"cc": "pascal",
+"a": []
+},
+"MMSYSTEM.801": {
+"n": "mixerGetDevCaps",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.802": {
+"n": "mixerOpen",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"long",
+"long",
+"long"
+]
+},
+"MMSYSTEM.803": {
+"n": "mixerClose",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.804": {
+"n": "mixerMessage",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long",
+"long"
+]
+},
+"MMSYSTEM.805": {
+"n": "mixerGetLineInfo",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"MMSYSTEM.806": {
+"n": "mixerGetID",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"MMSYSTEM.807": {
+"n": "mixerGetLineControls",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"MMSYSTEM.808": {
+"n": "mixerGetControlDetails",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"MMSYSTEM.809": {
+"n": "mixerSetControlDetails",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"MMSYSTEM.900": {
+"n": "mmTaskCreate",
+"cc": "pascal",
+"a": [
+"long",
+"ptr",
+"long"
+]
+},
+"MMSYSTEM.902": {
+"n": "mmTaskBlock",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.903": {
+"n": "mmTaskSignal",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.904": {
+"n": "mmGetCurrentTask",
+"cc": "pascal",
+"a": []
+},
+"MMSYSTEM.905": {
+"n": "mmTaskYield",
+"cc": "pascal",
+"a": []
+},
+"MMSYSTEM.1100": {
+"n": "DrvOpen",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"long"
+]
+},
+"MMSYSTEM.1101": {
+"n": "DrvClose",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"long"
+]
+},
+"MMSYSTEM.1102": {
+"n": "DrvSendMessage",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long",
+"long"
+]
+},
+"MMSYSTEM.1103": {
+"n": "DrvGetModuleHandle",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.1104": {
+"n": "DrvDefDriverProc",
+"cc": "pascal",
+"a": [
+"long",
+"word",
+"word",
+"long",
+"long"
+]
+},
+"MMSYSTEM.1120": {
+"n": "mmThreadCreate",
+"cc": "pascal",
+"a": [
+"segptr",
+"ptr",
+"long",
+"long"
+]
+},
+"MMSYSTEM.1121": {
+"n": "mmThreadSignal",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.1122": {
+"n": "mmThreadBlock",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.1123": {
+"n": "mmThreadIsCurrent",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.1124": {
+"n": "mmThreadIsValid",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.1125": {
+"n": "mmThreadGetTask",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MMSYSTEM.1150": {
+"n": "mmShowMMCPLPropertySheet",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"str",
+"str"
+]
+},
+"MMSYSTEM.1210": {
+"n": "mmioOpen",
+"cc": "pascal",
+"a": [
+"str",
+"ptr",
+"long"
+]
+},
+"MMSYSTEM.1211": {
+"n": "mmioClose",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"MMSYSTEM.1212": {
+"n": "mmioRead",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"MMSYSTEM.1213": {
+"n": "mmioWrite",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"MMSYSTEM.1214": {
+"n": "mmioSeek",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"word"
+]
+},
+"MMSYSTEM.1215": {
+"n": "mmioGetInfo",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.1216": {
+"n": "mmioSetInfo",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.1217": {
+"n": "mmioSetBuffer",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"long",
+"word"
+]
+},
+"MMSYSTEM.1218": {
+"n": "mmioFlush",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"MMSYSTEM.1219": {
+"n": "mmioAdvance",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.1220": {
+"n": "mmioStringToFOURCC",
+"cc": "pascal",
+"a": [
+"str",
+"word"
+]
+},
+"MMSYSTEM.1221": {
+"n": "mmioInstallIOProc",
+"cc": "pascal",
+"a": [
+"long",
+"ptr",
+"long"
+]
+},
+"MMSYSTEM.1222": {
+"n": "mmioSendMessage",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long",
+"long"
+]
+},
+"MMSYSTEM.1223": {
+"n": "mmioDescend",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.1224": {
+"n": "mmioAscend",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.1225": {
+"n": "mmioCreateChunk",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"MMSYSTEM.1226": {
+"n": "mmioRename",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"ptr",
+"long"
+]
+},
+"MOUSE.1": {
+"n": "Inquire",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"MOUSE.2": {
+"n": "Enable",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"MOUSE.3": {
+"n": "Disable",
+"cc": "pascal",
+"a": []
+},
+"MSACM.3": {
+"n": "DllEntryPoint",
+"cc": "pascal",
+"a": [
+"long",
+"word",
+"word",
+"word",
+"long",
+"word"
+]
+},
+"MSACM.7": {
+"n": "acmGetVersion",
+"cc": "pascal",
+"a": []
+},
+"MSACM.8": {
+"n": "acmMetrics",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr"
+]
+},
+"MSACM.10": {
+"n": "acmDriverEnum",
+"cc": "pascal",
+"a": [
+"ptr",
+"long",
+"long"
+]
+},
+"MSACM.11": {
+"n": "acmDriverDetails",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"MSACM.12": {
+"n": "acmDriverAdd",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"long",
+"long",
+"long"
+]
+},
+"MSACM.13": {
+"n": "acmDriverRemove",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"MSACM.14": {
+"n": "acmDriverOpen",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"long"
+]
+},
+"MSACM.15": {
+"n": "acmDriverClose",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"MSACM.16": {
+"n": "acmDriverMessage",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long",
+"long"
+]
+},
+"MSACM.17": {
+"n": "acmDriverID",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"MSACM.18": {
+"n": "acmDriverPriority",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"long"
+]
+},
+"MSACM.30": {
+"n": "acmFormatTagDetails",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"MSACM.31": {
+"n": "acmFormatTagEnum",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr",
+"long",
+"long"
+]
+},
+"MSACM.40": {
+"n": "acmFormatChoose",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"MSACM.41": {
+"n": "acmFormatDetails",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"MSACM.42": {
+"n": "acmFormatEnum",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr",
+"long",
+"long"
+]
+},
+"MSACM.45": {
+"n": "acmFormatSuggest",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr",
+"long",
+"long"
+]
+},
+"MSACM.50": {
+"n": "acmFilterTagDetails",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"MSACM.51": {
+"n": "acmFilterTagEnum",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr",
+"long",
+"long"
+]
+},
+"MSACM.60": {
+"n": "acmFilterChoose",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"MSACM.61": {
+"n": "acmFilterDetails",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"MSACM.62": {
+"n": "acmFilterEnum",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr",
+"long",
+"long"
+]
+},
+"MSACM.70": {
+"n": "acmStreamOpen",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"ptr",
+"ptr",
+"ptr",
+"long",
+"long",
+"long"
+]
+},
+"MSACM.71": {
+"n": "acmStreamClose",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"MSACM.72": {
+"n": "acmStreamSize",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"ptr",
+"long"
+]
+},
+"MSACM.75": {
+"n": "acmStreamConvert",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"MSACM.76": {
+"n": "acmStreamReset",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"MSACM.77": {
+"n": "acmStreamPrepareHeader",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"MSACM.78": {
+"n": "acmStreamUnprepareHeader",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"MSVIDEO.2": {
+"n": "VideoForWindowsVersion",
+"cc": "pascal",
+"a": []
+},
+"MSVIDEO.3": {
+"n": "DllEntryPoint",
+"cc": "pascal",
+"a": [
+"long",
+"word",
+"word",
+"word",
+"long",
+"word"
+]
+},
+"MSVIDEO.22": {
+"n": "VideoCapDriverDescAndVer",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word",
+"ptr",
+"word"
+]
+},
+"MSVIDEO.102": {
+"n": "DrawDibOpen",
+"cc": "pascal",
+"a": []
+},
+"MSVIDEO.103": {
+"n": "DrawDibClose",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MSVIDEO.104": {
+"n": "DrawDibBegin",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"s_word",
+"s_word",
+"ptr",
+"s_word",
+"s_word",
+"word"
+]
+},
+"MSVIDEO.105": {
+"n": "DrawDibEnd",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MSVIDEO.106": {
+"n": "DrawDibDraw",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"ptr",
+"ptr",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"word"
+]
+},
+"MSVIDEO.108": {
+"n": "DrawDibGetPalette",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MSVIDEO.110": {
+"n": "DrawDibSetPalette",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"MSVIDEO.112": {
+"n": "DrawDibRealize",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"MSVIDEO.114": {
+"n": "DrawDibProfileDisplay",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"MSVIDEO.118": {
+"n": "DrawDibStart",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"MSVIDEO.119": {
+"n": "DrawDibStop",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MSVIDEO.200": {
+"n": "ICInfo",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"segptr"
+]
+},
+"MSVIDEO.203": {
+"n": "ICOpen",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"word"
+]
+},
+"MSVIDEO.204": {
+"n": "ICClose",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"MSVIDEO.205": {
+"n": "ICSendMessage",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long",
+"long"
+]
+},
+"MSVIDEO.206": {
+"n": "ICOpenFunction",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"word",
+"segptr"
+]
+},
+"MSVIDEO.207": {
+"n": "_ICMessage",
+"cc": "varargs",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"MSVIDEO.212": {
+"n": "ICGetInfo",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"long"
+]
+},
+"MSVIDEO.213": {
+"n": "ICLocate",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"ptr",
+"ptr",
+"word"
+]
+},
+"MSVIDEO.224": {
+"n": "_ICCompress",
+"cc": "cdecl",
+"a": [
+"word",
+"long",
+"segptr",
+"segptr",
+"segptr",
+"segptr",
+"segptr",
+"segptr",
+"long",
+"long",
+"long",
+"segptr",
+"segptr"
+]
+},
+"MSVIDEO.230": {
+"n": "_ICDecompress",
+"cc": "cdecl",
+"a": [
+"word",
+"long",
+"segptr",
+"segptr",
+"segptr",
+"segptr"
+]
+},
+"MSVIDEO.232": {
+"n": "_ICDrawBegin",
+"cc": "cdecl",
+"a": [
+"word",
+"long",
+"word",
+"word",
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"segptr",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"long",
+"long"
+]
+},
+"MSVIDEO.234": {
+"n": "_ICDraw",
+"cc": "cdecl",
+"a": [
+"word",
+"long",
+"segptr",
+"segptr",
+"long",
+"long"
+]
+},
+"MSVIDEO.239": {
+"n": "ICGetDisplayFormat",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"MSVIDEO.250": {
+"n": "_MCIWndCreate",
+"cc": "cdecl",
+"a": [
+"word",
+"word",
+"long",
+"str"
+]
+},
+"MSVIDEO.251": {
+"n": "_MCIWndRegisterClass",
+"cc": "cdecl",
+"a": []
+},
+"OLE2.1": {
+"n": "OleBuildVersion",
+"cc": "pascal",
+"a": []
+},
+"OLE2.2": {
+"n": "OleInitialize",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"OLE2.3": {
+"n": "OleUninitialize",
+"cc": "pascal",
+"a": []
+},
+"OLE2.4": {
+"n": "DllGetClassObject",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"OLE2.12": {
+"n": "OleLoad",
+"cc": "pascal",
+"a": [
+"segptr",
+"ptr",
+"segptr",
+"ptr"
+]
+},
+"OLE2.18": {
+"n": "ReadClassStg",
+"cc": "pascal",
+"a": [
+"segptr",
+"ptr"
+]
+},
+"OLE2.19": {
+"n": "WriteClassStg",
+"cc": "pascal",
+"a": [
+"segptr",
+"ptr"
+]
+},
+"OLE2.20": {
+"n": "ReadClassStm",
+"cc": "pascal",
+"a": [
+"segptr",
+"ptr"
+]
+},
+"OLE2.27": {
+"n": "CreateItemMoniker",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"ptr"
+]
+},
+"OLE2.28": {
+"n": "CreateFileMoniker",
+"cc": "pascal",
+"a": [
+"str",
+"ptr"
+]
+},
+"OLE2.30": {
+"n": "GetRunningObjectTable",
+"cc": "pascal",
+"a": [
+"long",
+"ptr"
+]
+},
+"OLE2.32": {
+"n": "ReleaseStgMedium",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"OLE2.35": {
+"n": "RegisterDragDrop",
+"cc": "pascal",
+"a": [
+"word",
+"segptr"
+]
+},
+"OLE2.36": {
+"n": "RevokeDragDrop",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"OLE2.41": {
+"n": "OleSetMenuDescriptor",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr",
+"ptr"
+]
+},
+"OLE2.49": {
+"n": "OleSetClipboard",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"OLE2.50": {
+"n": "OleGetClipboard",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"OLE2.54": {
+"n": "CreateILockBytesOnHGlobal",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr"
+]
+},
+"OLE2.56": {
+"n": "OleMetafilePictFromIconAndLabel",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"str",
+"word"
+]
+},
+"OLE2.76": {
+"n": "OleFlushClipboard",
+"cc": "pascal",
+"a": []
+},
+"OLE2.77": {
+"n": "OleIsCurrentClipboard",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"OLE2.79": {
+"n": "OleDoAutoConvert",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"OLE2.82": {
+"n": "GetConvertStg",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"OLE2.500": {
+"n": "HGLOBALLockBytesImpl16_QueryInterface",
+"cc": "cdecl",
+"a": [
+"segptr",
+"ptr",
+"ptr"
+]
+},
+"OLE2.501": {
+"n": "HGLOBALLockBytesImpl16_AddRef",
+"cc": "cdecl",
+"a": [
+"ptr"
+]
+},
+"OLE2.502": {
+"n": "HGLOBALLockBytesImpl16_Release",
+"cc": "cdecl",
+"a": [
+"ptr"
+]
+},
+"OLE2.503": {
+"n": "HGLOBALLockBytesImpl16_ReadAt",
+"cc": "cdecl",
+"a": [
+"ptr",
+"int64",
+"ptr",
+"long",
+"ptr"
+]
+},
+"OLE2.504": {
+"n": "HGLOBALLockBytesImpl16_WriteAt",
+"cc": "cdecl",
+"a": [
+"ptr",
+"int64",
+"ptr",
+"long",
+"ptr"
+]
+},
+"OLE2.505": {
+"n": "HGLOBALLockBytesImpl16_Flush",
+"cc": "cdecl",
+"a": [
+"ptr"
+]
+},
+"OLE2.506": {
+"n": "HGLOBALLockBytesImpl16_SetSize",
+"cc": "cdecl",
+"a": [
+"ptr",
+"int64"
+]
+},
+"OLE2.507": {
+"n": "HGLOBALLockBytesImpl16_LockRegion",
+"cc": "cdecl",
+"a": [
+"ptr",
+"int64",
+"int64",
+"long"
+]
+},
+"OLE2.508": {
+"n": "HGLOBALLockBytesImpl16_UnlockRegion",
+"cc": "cdecl",
+"a": [
+"ptr",
+"int64",
+"int64",
+"long"
+]
+},
+"OLE2.509": {
+"n": "HGLOBALLockBytesImpl16_Stat",
+"cc": "cdecl",
+"a": [
+"ptr",
+"ptr",
+"long"
+]
+},
+"OLE2DISP.2": {
+"n": "SysAllocString",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"OLE2DISP.3": {
+"n": "SysReallocString",
+"cc": "pascal",
+"a": [
+"ptr",
+"str"
+]
+},
+"OLE2DISP.4": {
+"n": "SysAllocStringLen",
+"cc": "pascal",
+"a": [
+"str",
+"word"
+]
+},
+"OLE2DISP.5": {
+"n": "SysReAllocStringLen",
+"cc": "pascal",
+"a": [
+"ptr",
+"str",
+"word"
+]
+},
+"OLE2DISP.6": {
+"n": "SysFreeString",
+"cc": "pascal",
+"a": [
+"segstr"
+]
+},
+"OLE2DISP.7": {
+"n": "SysStringLen",
+"cc": "pascal",
+"a": [
+"segstr"
+]
+},
+"OLE2DISP.8": {
+"n": "VariantInit",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"OLE2DISP.12": {
+"n": "VariantChangeType",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"word",
+"word"
+]
+},
+"OLE2DISP.17": {
+"n": "SafeArrayGetDim",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"OLE2DISP.18": {
+"n": "SafeArrayGetElemsize",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"OLE2DISP.19": {
+"n": "SafeArrayGetUBound",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"ptr"
+]
+},
+"OLE2DISP.20": {
+"n": "SafeArrayGetLBound",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"ptr"
+]
+},
+"OLE2DISP.21": {
+"n": "SafeArrayLock",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"OLE2DISP.22": {
+"n": "SafeArrayUnlock",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"OLE2DISP.23": {
+"n": "SafeArrayAccessData",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"OLE2DISP.24": {
+"n": "SafeArrayUnaccessData",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"OLE2DISP.31": {
+"n": "CreateDispTypeInfo",
+"cc": "pascal",
+"a": [
+"ptr",
+"long",
+"ptr"
+]
+},
+"OLE2DISP.32": {
+"n": "CreateStdDispatch",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"OLE2DISP.35": {
+"n": "RegisterActiveObject",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"long",
+"ptr"
+]
+},
+"OLE2DISP.38": {
+"n": "SafeArrayAllocDescriptor",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"OLE2DISP.39": {
+"n": "SafeArrayAllocData",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"OLE2DISP.40": {
+"n": "SafeArrayDestroyDescriptor",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"OLE2DISP.41": {
+"n": "SafeArrayDestroyData",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"OLE2DISP.108": {
+"n": "VariantChangeTypeEx",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"long",
+"word",
+"word"
+]
+},
+"OLE2DISP.110": {
+"n": "SetErrorInfo",
+"cc": "pascal",
+"a": [
+"long",
+"ptr"
+]
+},
+"OLE2NLS.1": {
+"n": "GetUserDefaultLCID",
+"cc": "pascal",
+"a": []
+},
+"OLE2NLS.2": {
+"n": "GetSystemDefaultLCID",
+"cc": "pascal",
+"a": []
+},
+"OLE2NLS.3": {
+"n": "GetUserDefaultLangID",
+"cc": "pascal",
+"a": []
+},
+"OLE2NLS.4": {
+"n": "GetSystemDefaultLangID",
+"cc": "pascal",
+"a": []
+},
+"OLE2NLS.5": {
+"n": "GetLocaleInfoA",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"ptr",
+"word"
+]
+},
+"OLE2NLS.6": {
+"n": "LCMapStringA",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"ptr",
+"word",
+"ptr",
+"word"
+]
+},
+"OLE2NLS.7": {
+"n": "GetStringTypeA",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"str",
+"word",
+"ptr"
+]
+},
+"OLE2NLS.8": {
+"n": "CompareStringA",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"str",
+"word",
+"str",
+"word"
+]
+},
+"OLE2NLS.9": {
+"n": "RegisterNLSInfoChanged",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"OLECLI.9": {
+"n": "OleQueryLinkFromClip",
+"cc": "pascal",
+"a": [
+"str",
+"word",
+"word"
+]
+},
+"OLECLI.10": {
+"n": "OleQueryCreateFromClip",
+"cc": "pascal",
+"a": [
+"str",
+"word",
+"word"
+]
+},
+"OLECLI.11": {
+"n": "OleCreateLinkFromClip",
+"cc": "pascal",
+"a": [
+"str",
+"segptr",
+"long",
+"str",
+"segptr",
+"word",
+"word"
+]
+},
+"OLECLI.12": {
+"n": "OleCreateFromClip",
+"cc": "pascal",
+"a": [
+"str",
+"segptr",
+"long",
+"str",
+"long",
+"word",
+"word"
+]
+},
+"OLECLI.14": {
+"n": "OleQueryType",
+"cc": "pascal",
+"a": [
+"ptr",
+"segptr"
+]
+},
+"OLECLI.41": {
+"n": "OleRegisterClientDoc",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"long",
+"ptr"
+]
+},
+"OLECLI.42": {
+"n": "OleRevokeClientDoc",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"OLECLI.43": {
+"n": "OleRenameClientDoc",
+"cc": "pascal",
+"a": [
+"long",
+"ptr"
+]
+},
+"OLECLI.44": {
+"n": "OleRevertClientDoc",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"OLECLI.45": {
+"n": "OleSavedClientDoc",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"OLECLI.47": {
+"n": "OleEnumObjects",
+"cc": "pascal",
+"a": [
+"long",
+"segptr"
+]
+},
+"OLECLI.60": {
+"n": "OleIsDcMeta",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"OLESVR.2": {
+"n": "OleRegisterServer",
+"cc": "pascal",
+"a": [
+"str",
+"ptr",
+"ptr",
+"word",
+"word"
+]
+},
+"OLESVR.3": {
+"n": "OleRevokeServer",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"OLESVR.4": {
+"n": "OleBlockServer",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"OLESVR.5": {
+"n": "OleUnblockServer",
+"cc": "pascal",
+"a": [
+"long",
+"ptr"
+]
+},
+"OLESVR.6": {
+"n": "OleRegisterServerDoc",
+"cc": "pascal",
+"a": [
+"long",
+"str",
+"ptr",
+"ptr"
+]
+},
+"OLESVR.7": {
+"n": "OleRevokeServerDoc",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"OLESVR.8": {
+"n": "OleRenameServerDoc",
+"cc": "pascal",
+"a": [
+"long",
+"str"
+]
+},
+"OLESVR.9": {
+"n": "OleRevertServerDoc",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"OLESVR.10": {
+"n": "OleSavedServerDoc",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"SETUPX.2": {
+"n": "IpOpen",
+"cc": "pascal",
+"a": [
+"str",
+"ptr"
+]
+},
+"SETUPX.4": {
+"n": "IpClose",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"SETUPX.13": {
+"n": "VcpQueueCopy",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"str",
+"str",
+"word",
+"word",
+"ptr",
+"word",
+"long"
+]
+},
+"SETUPX.17": {
+"n": "VcpQueueDelete",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"word",
+"long"
+]
+},
+"SETUPX.33": {
+"n": "CtlSetLdd",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"SETUPX.34": {
+"n": "CtlGetLdd",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"SETUPX.35": {
+"n": "CtlFindLdd",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"SETUPX.36": {
+"n": "CtlAddLdd",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"SETUPX.37": {
+"n": "CtlDelLdd",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"SETUPX.38": {
+"n": "CtlGetLddPath",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"SETUPX.47": {
+"n": "SURegOpenKey",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"ptr"
+]
+},
+"SETUPX.50": {
+"n": "SURegQueryValueEx",
+"cc": "pascal",
+"a": [
+"long",
+"str",
+"ptr",
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"SETUPX.61": {
+"n": "suErrorToIds",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"SETUPX.62": {
+"n": "TPWriteProfileString",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"str"
+]
+},
+"SETUPX.101": {
+"n": "GenInstall",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"word"
+]
+},
+"SETUPX.103": {
+"n": "GenFormStrWithoutPlaceHolders",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"word"
+]
+},
+"SETUPX.200": {
+"n": "VcpOpen",
+"cc": "pascal",
+"a": [
+"segptr",
+"ptr"
+]
+},
+"SETUPX.201": {
+"n": "VcpClose",
+"cc": "pascal",
+"a": [
+"word",
+"str"
+]
+},
+"SETUPX.202": {
+"n": "vcpDefCallbackProc",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"word",
+"long",
+"long"
+]
+},
+"SETUPX.203": {
+"n": "VcpEnumFiles",
+"cc": "pascal",
+"a": [
+"ptr",
+"long"
+]
+},
+"SETUPX.204": {
+"n": "VcpQueueRename",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"str",
+"str",
+"word",
+"word",
+"long"
+]
+},
+"SETUPX.205": {
+"n": "vsmGetStringName",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"SETUPX.206": {
+"n": "vsmStringDelete",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"SETUPX.207": {
+"n": "vsmStringAdd",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"SETUPX.208": {
+"n": "vsmGetStringRawName",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"SETUPX.210": {
+"n": "IpGetProfileString",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"str",
+"ptr",
+"word"
+]
+},
+"SETUPX.213": {
+"n": "vcpUICallbackProc",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"word",
+"long",
+"long"
+]
+},
+"SETUPX.300": {
+"n": "DiBuildCompatDrvList",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"SETUPX.301": {
+"n": "DiBuildClassDrvList",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"SETUPX.303": {
+"n": "DiCreateDeviceInfo",
+"cc": "pascal",
+"a": [
+"ptr",
+"str",
+"long",
+"long",
+"str",
+"str",
+"word"
+]
+},
+"SETUPX.304": {
+"n": "DiGetClassDevs",
+"cc": "pascal",
+"a": [
+"ptr",
+"str",
+"word",
+"word"
+]
+},
+"SETUPX.305": {
+"n": "DiDestroyDeviceInfoList",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"SETUPX.308": {
+"n": "DiCallClassInstaller",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"SETUPX.318": {
+"n": "DiCreateDevRegKey",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"word",
+"str",
+"word"
+]
+},
+"SETUPX.319": {
+"n": "DiOpenDevRegKey",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"word"
+]
+},
+"SETUPX.321": {
+"n": "DiInstallClass",
+"cc": "pascal",
+"a": [
+"str",
+"long"
+]
+},
+"SETUPX.322": {
+"n": "DiOpenClassRegKey",
+"cc": "pascal",
+"a": [
+"ptr",
+"str"
+]
+},
+"SETUPX.344": {
+"n": "DiDeleteDevRegKey",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"SETUPX.411": {
+"n": "VcpExplain",
+"cc": "pascal",
+"a": [
+"ptr",
+"long"
+]
+},
+"SETUPX.412": {
+"n": "DiBuildDriverIndex",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"SETUPX.508": {
+"n": "CtlSetLddPath",
+"cc": "pascal",
+"a": [
+"word",
+"str"
+]
+},
+"SETUPX.527": {
+"n": "InstallHinfSection",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"str",
+"word"
+]
+},
+"SHELL.1": {
+"n": "RegOpenKey",
+"cc": "pascal",
+"a": [
+"long",
+"str",
+"ptr"
+]
+},
+"SHELL.2": {
+"n": "RegCreateKey",
+"cc": "pascal",
+"a": [
+"long",
+"str",
+"ptr"
+]
+},
+"SHELL.3": {
+"n": "RegCloseKey",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"SHELL.4": {
+"n": "RegDeleteKey",
+"cc": "pascal",
+"a": [
+"long",
+"str"
+]
+},
+"SHELL.5": {
+"n": "RegSetValue",
+"cc": "pascal",
+"a": [
+"long",
+"str",
+"long",
+"str",
+"long"
+]
+},
+"SHELL.6": {
+"n": "RegQueryValue",
+"cc": "pascal",
+"a": [
+"long",
+"str",
+"ptr",
+"ptr"
+]
+},
+"SHELL.7": {
+"n": "RegEnumKey",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"ptr",
+"long"
+]
+},
+"SHELL.9": {
+"n": "DragAcceptFiles",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"SHELL.11": {
+"n": "DragQueryFile",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"ptr",
+"s_word"
+]
+},
+"SHELL.12": {
+"n": "DragFinish",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"SHELL.13": {
+"n": "DragQueryPoint",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"SHELL.20": {
+"n": "ShellExecute",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"str",
+"str",
+"str",
+"s_word"
+]
+},
+"SHELL.21": {
+"n": "FindExecutable",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"ptr"
+]
+},
+"SHELL.22": {
+"n": "ShellAbout",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr",
+"word"
+]
+},
+"SHELL.33": {
+"n": "AboutDlgProc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"SHELL.34": {
+"n": "ExtractIcon",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"s_word"
+]
+},
+"SHELL.36": {
+"n": "ExtractAssociatedIcon",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr"
+]
+},
+"SHELL.37": {
+"n": "DoEnvironmentSubst",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"SHELL.38": {
+"n": "FindEnvironmentString",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"SHELL.39": {
+"n": "InternalExtractIcon",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"s_word",
+"word"
+]
+},
+"SHELL.40": {
+"n": "ExtractIconEx",
+"cc": "pascal",
+"a": [
+"str",
+"word",
+"ptr",
+"ptr",
+"word"
+]
+},
+"SHELL.101": {
+"n": "DllEntryPoint",
+"cc": "pascal",
+"a": [
+"long",
+"word",
+"word",
+"word",
+"long",
+"word"
+]
+},
+"SHELL.102": {
+"n": "RegisterShellHook",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"SHELL.103": {
+"n": "ShellHookProc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long"
+]
+},
+"SHELL.262": {
+"n": "DriveType",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"SOUND.1": {
+"n": "OpenSound",
+"cc": "pascal",
+"a": []
+},
+"SOUND.2": {
+"n": "CloseSound",
+"cc": "pascal",
+"a": []
+},
+"SOUND.3": {
+"n": "SetVoiceQueueSize",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"SOUND.4": {
+"n": "SetVoiceNote",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word"
+]
+},
+"SOUND.5": {
+"n": "SetVoiceAccent",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"SOUND.6": {
+"n": "SetVoiceEnvelope",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"SOUND.7": {
+"n": "SetSoundNoise",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"SOUND.8": {
+"n": "SetVoiceSound",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"word"
+]
+},
+"SOUND.9": {
+"n": "StartSound",
+"cc": "pascal",
+"a": []
+},
+"SOUND.10": {
+"n": "StopSound",
+"cc": "pascal",
+"a": []
+},
+"SOUND.11": {
+"n": "WaitSoundState",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"SOUND.12": {
+"n": "SyncAllVoices",
+"cc": "pascal",
+"a": []
+},
+"SOUND.13": {
+"n": "CountVoiceNotes",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"SOUND.14": {
+"n": "GetThresholdEvent",
+"cc": "pascal",
+"a": []
+},
+"SOUND.15": {
+"n": "GetThresholdStatus",
+"cc": "pascal",
+"a": []
+},
+"SOUND.16": {
+"n": "SetVoiceThreshold",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"SOUND.17": {
+"n": "DoBeep",
+"cc": "pascal",
+"a": []
+},
+"STORAGE.1": {
+"n": "StgCreateDocFileA",
+"cc": "pascal",
+"a": [
+"str",
+"long",
+"long",
+"ptr"
+]
+},
+"STORAGE.3": {
+"n": "StgOpenStorage",
+"cc": "pascal",
+"a": [
+"str",
+"ptr",
+"long",
+"ptr",
+"long",
+"ptr"
+]
+},
+"STORAGE.4": {
+"n": "StgOpenStorageOnILockBytes",
+"cc": "pascal",
+"a": [
+"segptr",
+"ptr",
+"long",
+"long",
+"long",
+"ptr"
+]
+},
+"STORAGE.5": {
+"n": "StgIsStorageFile",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"STORAGE.6": {
+"n": "StgIsStorageILockBytes",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"STORAGE.500": {
+"n": "IStorage16_QueryInterface",
+"cc": "cdecl",
+"a": [
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"STORAGE.501": {
+"n": "IStorage16_AddRef",
+"cc": "cdecl",
+"a": [
+"ptr"
+]
+},
+"STORAGE.502": {
+"n": "IStorage16_Release",
+"cc": "cdecl",
+"a": [
+"ptr"
+]
+},
+"STORAGE.503": {
+"n": "IStorage16_CreateStream",
+"cc": "cdecl",
+"a": [
+"ptr",
+"str",
+"long",
+"long",
+"long",
+"ptr"
+]
+},
+"STORAGE.504": {
+"n": "IStorage16_OpenStream",
+"cc": "cdecl",
+"a": [
+"ptr",
+"str",
+"ptr",
+"long",
+"long",
+"ptr"
+]
+},
+"STORAGE.505": {
+"n": "IStorage16_CreateStorage",
+"cc": "cdecl",
+"a": [
+"ptr",
+"str",
+"long",
+"long",
+"long",
+"ptr"
+]
+},
+"STORAGE.506": {
+"n": "IStorage16_OpenStorage",
+"cc": "cdecl",
+"a": [
+"ptr",
+"str",
+"ptr",
+"long",
+"ptr",
+"long",
+"ptr"
+]
+},
+"STORAGE.507": {
+"n": "IStorage16_CopyTo",
+"cc": "cdecl",
+"a": [
+"ptr",
+"long",
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"STORAGE.509": {
+"n": "IStorage16_Commit",
+"cc": "cdecl",
+"a": [
+"ptr",
+"long"
+]
+},
+"STORAGE.517": {
+"n": "IStorage16_Stat",
+"cc": "cdecl",
+"a": [
+"ptr",
+"ptr",
+"long"
+]
+},
+"STORAGE.518": {
+"n": "IStream16_QueryInterface",
+"cc": "cdecl",
+"a": [
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"STORAGE.519": {
+"n": "IStream16_AddRef",
+"cc": "cdecl",
+"a": [
+"ptr"
+]
+},
+"STORAGE.520": {
+"n": "IStream16_Release",
+"cc": "cdecl",
+"a": [
+"ptr"
+]
+},
+"STORAGE.521": {
+"n": "IStream16_Read",
+"cc": "cdecl",
+"a": [
+"ptr",
+"ptr",
+"long",
+"ptr"
+]
+},
+"STORAGE.522": {
+"n": "IStream16_Write",
+"cc": "cdecl",
+"a": [
+"ptr",
+"ptr",
+"long",
+"ptr"
+]
+},
+"STORAGE.523": {
+"n": "IStream16_Seek",
+"cc": "cdecl",
+"a": [
+"ptr",
+"int64",
+"long",
+"ptr"
+]
+},
+"STRESS.2": {
+"n": "AllocMem",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"STRESS.3": {
+"n": "FreeAllMem",
+"cc": "pascal",
+"a": []
+},
+"STRESS.6": {
+"n": "AllocFileHandles",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"STRESS.7": {
+"n": "UnAllocFileHandles",
+"cc": "pascal",
+"a": []
+},
+"STRESS.8": {
+"n": "GetFreeFileHandles",
+"cc": "pascal",
+"a": []
+},
+"STRESS.10": {
+"n": "AllocDiskSpace",
+"cc": "pascal",
+"a": [
+"long",
+"word"
+]
+},
+"STRESS.11": {
+"n": "UnAllocDiskSpace",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"STRESS.12": {
+"n": "AllocUserMem",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"STRESS.13": {
+"n": "FreeAllUserMem",
+"cc": "pascal",
+"a": []
+},
+"STRESS.14": {
+"n": "AllocGDIMem",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"STRESS.15": {
+"n": "FreeAllGDIMem",
+"cc": "pascal",
+"a": []
+},
+"SYSTEM.1": {
+"n": "InquireSystem",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"SYSTEM.2": {
+"n": "CreateSystemTimer",
+"cc": "pascal",
+"a": [
+"word",
+"segptr"
+]
+},
+"SYSTEM.3": {
+"n": "KillSystemTimer",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"SYSTEM.4": {
+"n": "EnableSystemTimers",
+"cc": "pascal",
+"a": []
+},
+"SYSTEM.5": {
+"n": "DisableSystemTimers",
+"cc": "pascal",
+"a": []
+},
+"SYSTEM.6": {
+"n": "GetSystemMSecCount",
+"cc": "pascal",
+"a": []
+},
+"SYSTEM.7": {
+"n": "Get80x87SaveSize",
+"cc": "pascal",
+"a": []
+},
+"SYSTEM.8": {
+"n": "Save80x87State",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"SYSTEM.9": {
+"n": "Restore80x87State",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"SYSTEM.20": {
+"n": "A20_Proc",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"TOOLHELP.50": {
+"n": "GlobalHandleToSel",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"TOOLHELP.51": {
+"n": "GlobalFirst",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"TOOLHELP.52": {
+"n": "GlobalNext",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"TOOLHELP.53": {
+"n": "GlobalInfo",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"TOOLHELP.54": {
+"n": "GlobalEntryHandle",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"TOOLHELP.55": {
+"n": "GlobalEntryModule",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"word"
+]
+},
+"TOOLHELP.56": {
+"n": "LocalInfo",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"TOOLHELP.57": {
+"n": "LocalFirst",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"TOOLHELP.58": {
+"n": "LocalNext",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"TOOLHELP.59": {
+"n": "ModuleFirst",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"TOOLHELP.60": {
+"n": "ModuleNext",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"TOOLHELP.61": {
+"n": "ModuleFindName",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"TOOLHELP.62": {
+"n": "ModuleFindHandle",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"TOOLHELP.63": {
+"n": "TaskFirst",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"TOOLHELP.64": {
+"n": "TaskNext",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"TOOLHELP.65": {
+"n": "TaskFindHandle",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"TOOLHELP.66": {
+"n": "StackTraceFirst",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"TOOLHELP.67": {
+"n": "StackTraceCSIPFirst",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"TOOLHELP.68": {
+"n": "StackTraceNext",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"TOOLHELP.71": {
+"n": "SystemHeapInfo",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"TOOLHELP.72": {
+"n": "MemManInfo",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"TOOLHELP.73": {
+"n": "NotifyRegister",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"word"
+]
+},
+"TOOLHELP.74": {
+"n": "NotifyUnregister",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"TOOLHELP.75": {
+"n": "InterruptRegister",
+"cc": "pascal",
+"a": [
+"word",
+"segptr"
+]
+},
+"TOOLHELP.76": {
+"n": "InterruptUnRegister",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"TOOLHELP.77": {
+"n": "TerminateApp",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"TOOLHELP.78": {
+"n": "MemoryRead",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"ptr",
+"long"
+]
+},
+"TOOLHELP.79": {
+"n": "MemoryWrite",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"ptr",
+"long"
+]
+},
+"TOOLHELP.80": {
+"n": "TimerCount",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"TOOLHELP.84": {
+"n": "Local32Info",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"TOOLHELP.85": {
+"n": "Local32First",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"TOOLHELP.86": {
+"n": "Local32Next",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"TWAIN.1": {
+"n": "DSM_Entry",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"long",
+"word",
+"word",
+"long"
+]
+},
+"TYPELIB.3": {
+"n": "LoadTypeLib",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"TYPELIB.4": {
+"n": "LHashValOfNameSys",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"str"
+]
+},
+"TYPELIB.14": {
+"n": "QueryPathOfRegTypeLib",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"word",
+"word",
+"ptr"
+]
+},
+"TYPELIB.15": {
+"n": "OaBuildVersion",
+"cc": "pascal",
+"a": []
+},
+"USER.1": {
+"n": "MessageBox",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"str",
+"word"
+]
+},
+"USER.2": {
+"n": "OldExitWindows",
+"cc": "pascal",
+"a": []
+},
+"USER.5": {
+"n": "InitApp",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.6": {
+"n": "PostQuitMessage",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.7": {
+"n": "ExitWindows",
+"cc": "pascal",
+"a": [
+"long",
+"word"
+]
+},
+"USER.10": {
+"n": "SetTimer",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"segptr"
+]
+},
+"USER.11": {
+"n": "SetSystemTimer",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"segptr"
+]
+},
+"USER.12": {
+"n": "KillTimer",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.13": {
+"n": "GetTickCount",
+"cc": "pascal",
+"a": []
+},
+"USER.14": {
+"n": "GetTimerResolution",
+"cc": "pascal",
+"a": []
+},
+"USER.15": {
+"n": "GetCurrentTime",
+"cc": "pascal",
+"a": []
+},
+"USER.16": {
+"n": "ClipCursor",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.17": {
+"n": "GetCursorPos",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.18": {
+"n": "SetCapture",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.19": {
+"n": "ReleaseCapture",
+"cc": "pascal",
+"a": []
+},
+"USER.20": {
+"n": "SetDoubleClickTime",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.21": {
+"n": "GetDoubleClickTime",
+"cc": "pascal",
+"a": []
+},
+"USER.22": {
+"n": "SetFocus",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.23": {
+"n": "GetFocus",
+"cc": "pascal",
+"a": []
+},
+"USER.24": {
+"n": "RemoveProp",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.25": {
+"n": "GetProp",
+"cc": "pascal",
+"a": [
+"word",
+"str"
+]
+},
+"USER.26": {
+"n": "SetProp",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"word"
+]
+},
+"USER.27": {
+"n": "EnumProps",
+"cc": "pascal",
+"a": [
+"word",
+"segptr"
+]
+},
+"USER.28": {
+"n": "ClientToScreen",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.29": {
+"n": "ScreenToClient",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.30": {
+"n": "WindowFromPoint",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"USER.31": {
+"n": "IsIconic",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.32": {
+"n": "GetWindowRect",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.33": {
+"n": "GetClientRect",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.34": {
+"n": "EnableWindow",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.35": {
+"n": "IsWindowEnabled",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.36": {
+"n": "GetWindowText",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"word"
+]
+},
+"USER.37": {
+"n": "SetWindowText",
+"cc": "pascal",
+"a": [
+"word",
+"segstr"
+]
+},
+"USER.38": {
+"n": "GetWindowTextLength",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.39": {
+"n": "BeginPaint",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.40": {
+"n": "EndPaint",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.41": {
+"n": "CreateWindow",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"long",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"word",
+"word",
+"word",
+"segptr"
+]
+},
+"USER.42": {
+"n": "ShowWindow",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.43": {
+"n": "CloseWindow",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.44": {
+"n": "OpenIcon",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.45": {
+"n": "BringWindowToTop",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.46": {
+"n": "GetParent",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.47": {
+"n": "IsWindow",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.48": {
+"n": "IsChild",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.49": {
+"n": "IsWindowVisible",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.50": {
+"n": "FindWindow",
+"cc": "pascal",
+"a": [
+"str",
+"str"
+]
+},
+"USER.52": {
+"n": "AnyPopup",
+"cc": "pascal",
+"a": []
+},
+"USER.53": {
+"n": "DestroyWindow",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.54": {
+"n": "EnumWindows",
+"cc": "pascal",
+"a": [
+"segptr",
+"long"
+]
+},
+"USER.55": {
+"n": "EnumChildWindows",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"long"
+]
+},
+"USER.56": {
+"n": "MoveWindow",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.57": {
+"n": "RegisterClass",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.58": {
+"n": "GetClassName",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"USER.59": {
+"n": "SetActiveWindow",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.60": {
+"n": "GetActiveWindow",
+"cc": "pascal",
+"a": []
+},
+"USER.61": {
+"n": "ScrollWindow",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"ptr",
+"ptr"
+]
+},
+"USER.62": {
+"n": "SetScrollPos",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"s_word",
+"word"
+]
+},
+"USER.63": {
+"n": "GetScrollPos",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.64": {
+"n": "SetScrollRange",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"s_word",
+"s_word",
+"word"
+]
+},
+"USER.65": {
+"n": "GetScrollRange",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"ptr"
+]
+},
+"USER.66": {
+"n": "GetDC",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.67": {
+"n": "GetWindowDC",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.68": {
+"n": "ReleaseDC",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.69": {
+"n": "SetCursor",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.70": {
+"n": "SetCursorPos",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.71": {
+"n": "ShowCursor",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.72": {
+"n": "SetRect",
+"cc": "pascal",
+"a": [
+"ptr",
+"s_word",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"USER.73": {
+"n": "SetRectEmpty",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.74": {
+"n": "CopyRect",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"USER.75": {
+"n": "IsRectEmpty",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.76": {
+"n": "PtInRect",
+"cc": "pascal",
+"a": [
+"ptr",
+"long"
+]
+},
+"USER.77": {
+"n": "OffsetRect",
+"cc": "pascal",
+"a": [
+"ptr",
+"s_word",
+"s_word"
+]
+},
+"USER.78": {
+"n": "InflateRect",
+"cc": "pascal",
+"a": [
+"ptr",
+"s_word",
+"s_word"
+]
+},
+"USER.79": {
+"n": "IntersectRect",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"USER.80": {
+"n": "UnionRect",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"USER.81": {
+"n": "FillRect",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"USER.82": {
+"n": "InvertRect",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.83": {
+"n": "FrameRect",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"USER.84": {
+"n": "DrawIcon",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"word"
+]
+},
+"USER.85": {
+"n": "DrawText",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"s_word",
+"ptr",
+"word"
+]
+},
+"USER.86": {
+"n": "IconSize",
+"cc": "pascal",
+"a": []
+},
+"USER.87": {
+"n": "DialogBox",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"word",
+"segptr"
+]
+},
+"USER.88": {
+"n": "EndDialog",
+"cc": "pascal",
+"a": [
+"word",
+"s_word"
+]
+},
+"USER.89": {
+"n": "CreateDialog",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"word",
+"segptr"
+]
+},
+"USER.90": {
+"n": "IsDialogMessage",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.91": {
+"n": "GetDlgItem",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.92": {
+"n": "SetDlgItemText",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"segstr"
+]
+},
+"USER.93": {
+"n": "GetDlgItemText",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"segptr",
+"word"
+]
+},
+"USER.94": {
+"n": "SetDlgItemInt",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.95": {
+"n": "GetDlgItemInt",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"ptr",
+"word"
+]
+},
+"USER.96": {
+"n": "CheckRadioButton",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.97": {
+"n": "CheckDlgButton",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"USER.98": {
+"n": "IsDlgButtonChecked",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.99": {
+"n": "DlgDirSelect",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"USER.100": {
+"n": "DlgDirList",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"word",
+"word",
+"word"
+]
+},
+"USER.101": {
+"n": "SendDlgItemMessage",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"long"
+]
+},
+"USER.102": {
+"n": "AdjustWindowRect",
+"cc": "pascal",
+"a": [
+"ptr",
+"long",
+"word"
+]
+},
+"USER.103": {
+"n": "MapDialogRect",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.104": {
+"n": "MessageBeep",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.105": {
+"n": "FlashWindow",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.106": {
+"n": "GetKeyState",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.107": {
+"n": "DefWindowProc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"USER.108": {
+"n": "GetMessage",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"word",
+"word"
+]
+},
+"USER.109": {
+"n": "PeekMessage",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.110": {
+"n": "PostMessage",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"USER.111": {
+"n": "SendMessage",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"USER.112": {
+"n": "WaitMessage",
+"cc": "pascal",
+"a": []
+},
+"USER.113": {
+"n": "TranslateMessage",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.114": {
+"n": "DispatchMessage",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.115": {
+"n": "ReplyMessage",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"USER.116": {
+"n": "PostAppMessage",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"USER.117": {
+"n": "WindowFromDC",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.118": {
+"n": "RegisterWindowMessage",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"USER.119": {
+"n": "GetMessagePos",
+"cc": "pascal",
+"a": []
+},
+"USER.120": {
+"n": "GetMessageTime",
+"cc": "pascal",
+"a": []
+},
+"USER.121": {
+"n": "SetWindowsHook",
+"cc": "pascal",
+"a": [
+"s_word",
+"segptr"
+]
+},
+"USER.122": {
+"n": "CallWindowProc",
+"cc": "pascal",
+"a": [
+"segptr",
+"word",
+"word",
+"word",
+"long"
+]
+},
+"USER.123": {
+"n": "CallMsgFilter",
+"cc": "pascal",
+"a": [
+"ptr",
+"s_word"
+]
+},
+"USER.124": {
+"n": "UpdateWindow",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.125": {
+"n": "InvalidateRect",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"USER.126": {
+"n": "InvalidateRgn",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"USER.127": {
+"n": "ValidateRect",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.128": {
+"n": "ValidateRgn",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.129": {
+"n": "GetClassWord",
+"cc": "pascal",
+"a": [
+"word",
+"s_word"
+]
+},
+"USER.130": {
+"n": "SetClassWord",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"word"
+]
+},
+"USER.131": {
+"n": "GetClassLong",
+"cc": "pascal",
+"a": [
+"word",
+"s_word"
+]
+},
+"USER.132": {
+"n": "SetClassLong",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"long"
+]
+},
+"USER.133": {
+"n": "GetWindowWord",
+"cc": "pascal",
+"a": [
+"word",
+"s_word"
+]
+},
+"USER.134": {
+"n": "SetWindowWord",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"word"
+]
+},
+"USER.135": {
+"n": "GetWindowLong",
+"cc": "pascal",
+"a": [
+"word",
+"s_word"
+]
+},
+"USER.136": {
+"n": "SetWindowLong",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"long"
+]
+},
+"USER.137": {
+"n": "OpenClipboard",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.138": {
+"n": "CloseClipboard",
+"cc": "pascal",
+"a": []
+},
+"USER.139": {
+"n": "EmptyClipboard",
+"cc": "pascal",
+"a": []
+},
+"USER.140": {
+"n": "GetClipboardOwner",
+"cc": "pascal",
+"a": []
+},
+"USER.141": {
+"n": "SetClipboardData",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.142": {
+"n": "GetClipboardData",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.143": {
+"n": "CountClipboardFormats",
+"cc": "pascal",
+"a": []
+},
+"USER.144": {
+"n": "EnumClipboardFormats",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.145": {
+"n": "RegisterClipboardFormat",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.146": {
+"n": "GetClipboardFormatName",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"s_word"
+]
+},
+"USER.147": {
+"n": "SetClipboardViewer",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.148": {
+"n": "GetClipboardViewer",
+"cc": "pascal",
+"a": []
+},
+"USER.149": {
+"n": "ChangeClipboardChain",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.150": {
+"n": "LoadMenu",
+"cc": "pascal",
+"a": [
+"word",
+"str"
+]
+},
+"USER.151": {
+"n": "CreateMenu",
+"cc": "pascal",
+"a": []
+},
+"USER.152": {
+"n": "DestroyMenu",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.153": {
+"n": "ChangeMenu",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"segstr",
+"word",
+"word"
+]
+},
+"USER.154": {
+"n": "CheckMenuItem",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"USER.155": {
+"n": "EnableMenuItem",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"USER.156": {
+"n": "GetSystemMenu",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.157": {
+"n": "GetMenu",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.158": {
+"n": "SetMenu",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.159": {
+"n": "GetSubMenu",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.160": {
+"n": "DrawMenuBar",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.161": {
+"n": "GetMenuString",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"s_word",
+"word"
+]
+},
+"USER.162": {
+"n": "HiliteMenuItem",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.163": {
+"n": "CreateCaret",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.164": {
+"n": "DestroyCaret",
+"cc": "pascal",
+"a": []
+},
+"USER.165": {
+"n": "SetCaretPos",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.166": {
+"n": "HideCaret",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.167": {
+"n": "ShowCaret",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.168": {
+"n": "SetCaretBlinkTime",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.169": {
+"n": "GetCaretBlinkTime",
+"cc": "pascal",
+"a": []
+},
+"USER.170": {
+"n": "ArrangeIconicWindows",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.171": {
+"n": "WinHelp",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"word",
+"long"
+]
+},
+"USER.172": {
+"n": "SwitchToThisWindow",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.173": {
+"n": "LoadCursor",
+"cc": "pascal",
+"a": [
+"word",
+"str"
+]
+},
+"USER.174": {
+"n": "LoadIcon",
+"cc": "pascal",
+"a": [
+"word",
+"str"
+]
+},
+"USER.175": {
+"n": "LoadBitmap",
+"cc": "pascal",
+"a": [
+"word",
+"str"
+]
+},
+"USER.176": {
+"n": "LoadString",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"s_word"
+]
+},
+"USER.177": {
+"n": "LoadAccelerators",
+"cc": "pascal",
+"a": [
+"word",
+"str"
+]
+},
+"USER.178": {
+"n": "TranslateAccelerator",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr"
+]
+},
+"USER.179": {
+"n": "GetSystemMetrics",
+"cc": "pascal",
+"a": [
+"s_word"
+]
+},
+"USER.180": {
+"n": "GetSysColor",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.181": {
+"n": "SetSysColors",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr"
+]
+},
+"USER.182": {
+"n": "KillSystemTimer",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.183": {
+"n": "GetCaretPos",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.185": {
+"n": "GrayString",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"segptr",
+"segptr",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"s_word"
+]
+},
+"USER.186": {
+"n": "SwapMouseButton",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.187": {
+"n": "EndMenu",
+"cc": "pascal",
+"a": []
+},
+"USER.188": {
+"n": "SetSysModalWindow",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.189": {
+"n": "GetSysModalWindow",
+"cc": "pascal",
+"a": []
+},
+"USER.190": {
+"n": "GetUpdateRect",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"USER.191": {
+"n": "ChildWindowFromPoint",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"USER.192": {
+"n": "InSendMessage",
+"cc": "pascal",
+"a": []
+},
+"USER.193": {
+"n": "IsClipboardFormatAvailable",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.194": {
+"n": "DlgDirSelectComboBox",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"USER.195": {
+"n": "DlgDirListComboBox",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word",
+"word",
+"word"
+]
+},
+"USER.196": {
+"n": "TabbedTextOut",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"ptr",
+"s_word",
+"s_word",
+"ptr",
+"s_word"
+]
+},
+"USER.197": {
+"n": "GetTabbedTextExtent",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word",
+"word",
+"ptr"
+]
+},
+"USER.198": {
+"n": "CascadeChildWindows",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.199": {
+"n": "TileChildWindows",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.200": {
+"n": "OpenComm",
+"cc": "pascal",
+"a": [
+"str",
+"word",
+"word"
+]
+},
+"USER.201": {
+"n": "SetCommState",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.202": {
+"n": "GetCommState",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.203": {
+"n": "GetCommError",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.204": {
+"n": "ReadComm",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"USER.205": {
+"n": "WriteComm",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"USER.206": {
+"n": "TransmitCommChar",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.207": {
+"n": "CloseComm",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.208": {
+"n": "SetCommEventMask",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.209": {
+"n": "GetCommEventMask",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.210": {
+"n": "SetCommBreak",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.211": {
+"n": "ClearCommBreak",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.212": {
+"n": "UngetCommChar",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.213": {
+"n": "BuildCommDCB",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"USER.214": {
+"n": "EscapeCommFunction",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.215": {
+"n": "FlushComm",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.216": {
+"n": "UserSeeUserDo",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.217": {
+"n": "LookupMenuHandle",
+"cc": "pascal",
+"a": [
+"word",
+"s_word"
+]
+},
+"USER.218": {
+"n": "DialogBoxIndirect",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"segptr"
+]
+},
+"USER.219": {
+"n": "CreateDialogIndirect",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word",
+"segptr"
+]
+},
+"USER.220": {
+"n": "LoadMenuIndirect",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.221": {
+"n": "ScrollDC",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"ptr",
+"ptr",
+"word",
+"ptr"
+]
+},
+"USER.222": {
+"n": "GetKeyboardState",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.223": {
+"n": "SetKeyboardState",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.224": {
+"n": "GetWindowTask",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.225": {
+"n": "EnumTaskWindows",
+"cc": "pascal",
+"a": [
+"word",
+"segptr",
+"long"
+]
+},
+"USER.227": {
+"n": "GetNextDlgGroupItem",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"USER.228": {
+"n": "GetNextDlgTabItem",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"USER.229": {
+"n": "GetTopWindow",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.230": {
+"n": "GetNextWindow",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.231": {
+"n": "GetSystemDebugState",
+"cc": "pascal",
+"a": []
+},
+"USER.232": {
+"n": "SetWindowPos",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.233": {
+"n": "SetParent",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.234": {
+"n": "UnhookWindowsHook",
+"cc": "pascal",
+"a": [
+"s_word",
+"segptr"
+]
+},
+"USER.235": {
+"n": "DefHookProc",
+"cc": "pascal",
+"a": [
+"s_word",
+"word",
+"long",
+"ptr"
+]
+},
+"USER.236": {
+"n": "GetCapture",
+"cc": "pascal",
+"a": []
+},
+"USER.237": {
+"n": "GetUpdateRgn",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"USER.238": {
+"n": "ExcludeUpdateRgn",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.239": {
+"n": "DialogBoxParam",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"word",
+"segptr",
+"long"
+]
+},
+"USER.240": {
+"n": "DialogBoxIndirectParam",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"segptr",
+"long"
+]
+},
+"USER.241": {
+"n": "CreateDialogParam",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"word",
+"segptr",
+"long"
+]
+},
+"USER.242": {
+"n": "CreateDialogIndirectParam",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word",
+"segptr",
+"long"
+]
+},
+"USER.243": {
+"n": "GetDialogBaseUnits",
+"cc": "pascal",
+"a": []
+},
+"USER.244": {
+"n": "EqualRect",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"USER.245": {
+"n": "EnableCommNotification",
+"cc": "pascal",
+"a": [
+"s_word",
+"word",
+"s_word",
+"s_word"
+]
+},
+"USER.246": {
+"n": "ExitWindowsExec",
+"cc": "pascal",
+"a": [
+"str",
+"str"
+]
+},
+"USER.247": {
+"n": "GetCursor",
+"cc": "pascal",
+"a": []
+},
+"USER.248": {
+"n": "GetOpenClipboardWindow",
+"cc": "pascal",
+"a": []
+},
+"USER.249": {
+"n": "GetAsyncKeyState",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.250": {
+"n": "GetMenuState",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"USER.251": {
+"n": "SendDriverMessage",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long",
+"long"
+]
+},
+"USER.252": {
+"n": "OpenDriver",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"long"
+]
+},
+"USER.253": {
+"n": "CloseDriver",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"long"
+]
+},
+"USER.254": {
+"n": "GetDriverModuleHandle",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.255": {
+"n": "DefDriverProc",
+"cc": "pascal",
+"a": [
+"long",
+"word",
+"word",
+"long",
+"long"
+]
+},
+"USER.256": {
+"n": "GetDriverInfo",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.257": {
+"n": "GetNextDriver",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"USER.258": {
+"n": "MapWindowPoints",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"word"
+]
+},
+"USER.259": {
+"n": "BeginDeferWindowPos",
+"cc": "pascal",
+"a": [
+"s_word"
+]
+},
+"USER.260": {
+"n": "DeferWindowPos",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"word"
+]
+},
+"USER.261": {
+"n": "EndDeferWindowPos",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.262": {
+"n": "GetWindow",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.263": {
+"n": "GetMenuItemCount",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.264": {
+"n": "GetMenuItemID",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.265": {
+"n": "ShowOwnedPopups",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.266": {
+"n": "SetMessageQueue",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.267": {
+"n": "ShowScrollBar",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"USER.268": {
+"n": "GlobalAddAtom",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"USER.269": {
+"n": "GlobalDeleteAtom",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.270": {
+"n": "GlobalFindAtom",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"USER.271": {
+"n": "GlobalGetAtomName",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"s_word"
+]
+},
+"USER.272": {
+"n": "IsZoomed",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.273": {
+"n": "ControlPanelInfo",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"str"
+]
+},
+"USER.277": {
+"n": "GetDlgCtrlID",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.278": {
+"n": "GetDesktopHwnd",
+"cc": "pascal",
+"a": []
+},
+"USER.279": {
+"n": "OldSetDeskPattern",
+"cc": "pascal",
+"a": []
+},
+"USER.280": {
+"n": "SetSystemMenu",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.281": {
+"n": "GetSysColorBrush",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.282": {
+"n": "SelectPalette",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"USER.283": {
+"n": "RealizePalette",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.284": {
+"n": "GetFreeSystemResources",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.285": {
+"n": "SetDeskWallpaper",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"USER.286": {
+"n": "GetDesktopWindow",
+"cc": "pascal",
+"a": []
+},
+"USER.287": {
+"n": "GetLastActivePopup",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.288": {
+"n": "GetMessageExtraInfo",
+"cc": "pascal",
+"a": []
+},
+"USER.289": {
+"n": "keybd_event",
+"cc": "pascal",
+"a": []
+},
+"USER.290": {
+"n": "RedrawWindow",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word",
+"word"
+]
+},
+"USER.291": {
+"n": "SetWindowsHookEx",
+"cc": "pascal",
+"a": [
+"s_word",
+"segptr",
+"word",
+"word"
+]
+},
+"USER.292": {
+"n": "UnhookWindowsHookEx",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"USER.293": {
+"n": "CallNextHookEx",
+"cc": "pascal",
+"a": [
+"segptr",
+"s_word",
+"word",
+"long"
+]
+},
+"USER.294": {
+"n": "LockWindowUpdate",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.299": {
+"n": "mouse_event",
+"cc": "pascal",
+"a": []
+},
+"USER.308": {
+"n": "DefDlgProc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"USER.309": {
+"n": "GetClipCursor",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.314": {
+"n": "SignalProc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.319": {
+"n": "ScrollWindowEx",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"s_word",
+"ptr",
+"ptr",
+"word",
+"ptr",
+"word"
+]
+},
+"USER.321": {
+"n": "SetEventHook",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"USER.324": {
+"n": "FillWindow",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.325": {
+"n": "PaintRect",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"ptr"
+]
+},
+"USER.326": {
+"n": "GetControlBrush",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"USER.331": {
+"n": "EnableHardwareInput",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.332": {
+"n": "UserYield",
+"cc": "pascal",
+"a": []
+},
+"USER.333": {
+"n": "IsUserIdle",
+"cc": "pascal",
+"a": []
+},
+"USER.334": {
+"n": "GetQueueStatus",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.335": {
+"n": "GetInputState",
+"cc": "pascal",
+"a": []
+},
+"USER.336": {
+"n": "LoadCursorIconHandler",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"USER.337": {
+"n": "GetMouseEventProc",
+"cc": "pascal",
+"a": []
+},
+"USER.356": {
+"n": "LoadDIBCursorHandler",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"USER.357": {
+"n": "LoadDIBIconHandler",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"USER.358": {
+"n": "IsMenu",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.359": {
+"n": "GetDCEx",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long"
+]
+},
+"USER.362": {
+"n": "DCHook",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long",
+"long"
+]
+},
+"USER.364": {
+"n": "LookupIconIdFromDirectoryEx",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.368": {
+"n": "CopyIcon",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.369": {
+"n": "CopyCursor",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.370": {
+"n": "GetWindowPlacement",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.371": {
+"n": "SetWindowPlacement",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.373": {
+"n": "SubtractRect",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"USER.374": {
+"n": "DllEntryPoint",
+"cc": "pascal",
+"a": [
+"long",
+"word",
+"word",
+"word",
+"long",
+"word"
+]
+},
+"USER.384": {
+"n": "SetMenuContextHelpId",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.385": {
+"n": "GetMenuContextHelpId",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.389": {
+"n": "LoadImage",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.390": {
+"n": "CopyImage",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.391": {
+"n": "SignalProc32",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"long",
+"word"
+]
+},
+"USER.394": {
+"n": "DrawIconEx",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"word",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.395": {
+"n": "GetIconInfo",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.397": {
+"n": "RegisterClassEx",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.398": {
+"n": "GetClassInfoEx",
+"cc": "pascal",
+"a": [
+"word",
+"segstr",
+"ptr"
+]
+},
+"USER.399": {
+"n": "ChildWindowFromPointEx",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"word"
+]
+},
+"USER.400": {
+"n": "FinalUserInit",
+"cc": "pascal",
+"a": []
+},
+"USER.402": {
+"n": "GetPriorityClipboardFormat",
+"cc": "pascal",
+"a": [
+"ptr",
+"s_word"
+]
+},
+"USER.403": {
+"n": "UnregisterClass",
+"cc": "pascal",
+"a": [
+"str",
+"word"
+]
+},
+"USER.404": {
+"n": "GetClassInfo",
+"cc": "pascal",
+"a": [
+"word",
+"segstr",
+"ptr"
+]
+},
+"USER.406": {
+"n": "CreateCursor",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"word",
+"ptr",
+"ptr"
+]
+},
+"USER.407": {
+"n": "CreateIcon",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"word",
+"ptr",
+"ptr"
+]
+},
+"USER.408": {
+"n": "CreateCursorIconIndirect",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"USER.409": {
+"n": "InitThreadInput",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.410": {
+"n": "InsertMenu",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"segptr"
+]
+},
+"USER.411": {
+"n": "AppendMenu",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"segptr"
+]
+},
+"USER.412": {
+"n": "RemoveMenu",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"USER.413": {
+"n": "DeleteMenu",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"USER.414": {
+"n": "ModifyMenu",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"segptr"
+]
+},
+"USER.415": {
+"n": "CreatePopupMenu",
+"cc": "pascal",
+"a": []
+},
+"USER.416": {
+"n": "TrackPopupMenu",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"s_word",
+"s_word",
+"s_word",
+"word",
+"ptr"
+]
+},
+"USER.417": {
+"n": "GetMenuCheckMarkDimensions",
+"cc": "pascal",
+"a": []
+},
+"USER.418": {
+"n": "SetMenuItemBitmaps",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.420": {
+"n": "_wsprintf",
+"cc": "varargs",
+"a": [
+"ptr",
+"str"
+]
+},
+"USER.421": {
+"n": "wvsprintf",
+"cc": "pascal",
+"a": [
+"ptr",
+"str",
+"ptr"
+]
+},
+"USER.422": {
+"n": "DlgDirSelectEx",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word",
+"word"
+]
+},
+"USER.423": {
+"n": "DlgDirSelectComboBoxEx",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word",
+"word"
+]
+},
+"USER.427": {
+"n": "FindWindowEx",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"str",
+"str"
+]
+},
+"USER.430": {
+"n": "lstrcmp",
+"cc": "pascal",
+"a": [
+"str",
+"str"
+]
+},
+"USER.431": {
+"n": "AnsiUpper",
+"cc": "pascal",
+"a": [
+"segstr"
+]
+},
+"USER.432": {
+"n": "AnsiLower",
+"cc": "pascal",
+"a": [
+"segstr"
+]
+},
+"USER.433": {
+"n": "IsCharAlpha",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.434": {
+"n": "IsCharAlphaNumeric",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.435": {
+"n": "IsCharUpper",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.436": {
+"n": "IsCharLower",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.437": {
+"n": "AnsiUpperBuff",
+"cc": "pascal",
+"a": [
+"str",
+"word"
+]
+},
+"USER.438": {
+"n": "AnsiLowerBuff",
+"cc": "pascal",
+"a": [
+"str",
+"word"
+]
+},
+"USER.441": {
+"n": "InsertMenuItem",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr"
+]
+},
+"USER.445": {
+"n": "DefFrameProc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"long"
+]
+},
+"USER.447": {
+"n": "DefMDIChildProc",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"USER.448": {
+"n": "DrawAnimatedRects",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"ptr"
+]
+},
+"USER.449": {
+"n": "DrawState",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"segptr",
+"long",
+"word",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"word"
+]
+},
+"USER.450": {
+"n": "CreateIconFromResourceEx",
+"cc": "pascal",
+"a": [
+"ptr",
+"long",
+"word",
+"long",
+"word",
+"word",
+"word"
+]
+},
+"USER.451": {
+"n": "TranslateMDISysAccel",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.452": {
+"n": "CreateWindowEx",
+"cc": "pascal",
+"a": [
+"long",
+"str",
+"str",
+"long",
+"s_word",
+"s_word",
+"s_word",
+"s_word",
+"word",
+"word",
+"word",
+"segptr"
+]
+},
+"USER.454": {
+"n": "AdjustWindowRectEx",
+"cc": "pascal",
+"a": [
+"ptr",
+"long",
+"word",
+"long"
+]
+},
+"USER.455": {
+"n": "GetIconID",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"USER.456": {
+"n": "LoadIconHandler",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.457": {
+"n": "DestroyIcon",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.458": {
+"n": "DestroyCursor",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.459": {
+"n": "DumpIcon",
+"cc": "pascal",
+"a": [
+"segptr",
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"USER.460": {
+"n": "GetInternalWindowPos",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr"
+]
+},
+"USER.461": {
+"n": "SetInternalWindowPos",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"ptr"
+]
+},
+"USER.462": {
+"n": "CalcChildScroll",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.463": {
+"n": "ScrollChildren",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"USER.464": {
+"n": "DragObject",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.465": {
+"n": "DragDetect",
+"cc": "pascal",
+"a": [
+"word",
+"long"
+]
+},
+"USER.466": {
+"n": "DrawFocusRect",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.471": {
+"n": "lstrcmpi",
+"cc": "pascal",
+"a": [
+"str",
+"str"
+]
+},
+"USER.472": {
+"n": "AnsiNext",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"USER.473": {
+"n": "AnsiPrev",
+"cc": "pascal",
+"a": [
+"str",
+"segptr"
+]
+},
+"USER.475": {
+"n": "SetScrollInfo",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"ptr",
+"word"
+]
+},
+"USER.476": {
+"n": "GetScrollInfo",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"ptr"
+]
+},
+"USER.477": {
+"n": "GetKeyboardLayoutName",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.482": {
+"n": "EnableScrollBar",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"USER.483": {
+"n": "SystemParametersInfo",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"word"
+]
+},
+"USER.489": {
+"n": "USER_489",
+"cc": "pascal",
+"a": []
+},
+"USER.490": {
+"n": "USER_490",
+"cc": "pascal",
+"a": []
+},
+"USER.492": {
+"n": "USER_492",
+"cc": "pascal",
+"a": []
+},
+"USER.496": {
+"n": "USER_496",
+"cc": "pascal",
+"a": []
+},
+"USER.499": {
+"n": "WNetErrorText",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"USER.501": {
+"n": "WNetOpenJob",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"word",
+"ptr"
+]
+},
+"USER.502": {
+"n": "WNetCloseJob",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr"
+]
+},
+"USER.503": {
+"n": "WNetAbortJob",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"USER.504": {
+"n": "WNetHoldJob",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"USER.505": {
+"n": "WNetReleaseJob",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"USER.506": {
+"n": "WNetCancelJob",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"USER.507": {
+"n": "WNetSetJobCopies",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"word"
+]
+},
+"USER.508": {
+"n": "WNetWatchQueue",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr",
+"word"
+]
+},
+"USER.509": {
+"n": "WNetUnwatchQueue",
+"cc": "pascal",
+"a": [
+"str"
+]
+},
+"USER.510": {
+"n": "WNetLockQueueData",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"USER.511": {
+"n": "WNetUnlockQueueData",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.512": {
+"n": "WNetGetConnection",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"USER.513": {
+"n": "WNetGetCaps",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.514": {
+"n": "WNetDeviceMode",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.515": {
+"n": "WNetBrowseDialog",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr"
+]
+},
+"USER.516": {
+"n": "WNetGetUser",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"USER.517": {
+"n": "WNetAddConnection",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"str"
+]
+},
+"USER.518": {
+"n": "WNetCancelConnection",
+"cc": "pascal",
+"a": [
+"str",
+"word"
+]
+},
+"USER.519": {
+"n": "WNetGetError",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.520": {
+"n": "WNetGetErrorText",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr"
+]
+},
+"USER.523": {
+"n": "WNetRestoreConnection",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.524": {
+"n": "WNetWriteJob",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr"
+]
+},
+"USER.525": {
+"n": "WNetConnectDialog",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.526": {
+"n": "WNetDisconnectDialog",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.527": {
+"n": "WNetConnectionDialog",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.528": {
+"n": "WNetViewQueueDialog",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"USER.529": {
+"n": "WNetPropertyDialog",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"str",
+"word"
+]
+},
+"USER.530": {
+"n": "WNetGetDirectoryType",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"USER.531": {
+"n": "WNetDirectoryNotify",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"USER.532": {
+"n": "WNetGetPropertyText",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"str",
+"str",
+"word",
+"word"
+]
+},
+"USER.600": {
+"n": "GetShellWindow",
+"cc": "pascal",
+"a": []
+},
+"USER.606": {
+"n": "FormatMessage",
+"cc": "pascal",
+"a": [
+"long",
+"segptr",
+"word",
+"word",
+"ptr",
+"word",
+"ptr"
+]
+},
+"USER.608": {
+"n": "GetForegroundWindow",
+"cc": "pascal",
+"a": []
+},
+"USER.609": {
+"n": "SetForegroundWindow",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.610": {
+"n": "DestroyIcon32",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.620": {
+"n": "ChangeDisplaySettings",
+"cc": "pascal",
+"a": [
+"ptr",
+"long"
+]
+},
+"USER.621": {
+"n": "EnumDisplaySettings",
+"cc": "pascal",
+"a": [
+"str",
+"long",
+"ptr"
+]
+},
+"USER.640": {
+"n": "MsgWaitForMultipleObjects",
+"cc": "pascal",
+"a": [
+"long",
+"ptr",
+"long",
+"long",
+"long"
+]
+},
+"USER.656": {
+"n": "DrawFrameControl",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word",
+"word"
+]
+},
+"USER.657": {
+"n": "DrawCaptionTemp",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"word",
+"word",
+"ptr",
+"word"
+]
+},
+"USER.659": {
+"n": "DrawEdge",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word",
+"word"
+]
+},
+"USER.660": {
+"n": "DrawCaption",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"word"
+]
+},
+"USER.665": {
+"n": "GetMenuItemRect",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr"
+]
+},
+"USER.666": {
+"n": "CheckMenuRadioItem",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.668": {
+"n": "SetWindowRgn",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"USER.819": {
+"n": "PeekMessage32",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.820": {
+"n": "GetMessage32",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.821": {
+"n": "TranslateMessage32",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"USER.822": {
+"n": "DispatchMessage32",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"USER.823": {
+"n": "CallMsgFilter32",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"word"
+]
+},
+"USER.827": {
+"n": "MessageBoxIndirect",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"USER.902": {
+"n": "LoadSystemLanguageString",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"word",
+"word"
+]
+},
+"USER.905": {
+"n": "ChangeDialogTemplate",
+"cc": "pascal",
+"a": []
+},
+"USER.906": {
+"n": "GetNumLanguages",
+"cc": "pascal",
+"a": []
+},
+"USER.907": {
+"n": "GetLanguageName",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"word"
+]
+},
+"USER.909": {
+"n": "SetWindowTextEx",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"word"
+]
+},
+"USER.910": {
+"n": "BiDiMessageBoxEx",
+"cc": "pascal",
+"a": []
+},
+"USER.911": {
+"n": "SetDlgItemTextEx",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"str",
+"word"
+]
+},
+"USER.912": {
+"n": "ChangeKeyboardLanguage",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.913": {
+"n": "GetCodePageSystemFont",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.914": {
+"n": "QueryCodePage",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"USER.915": {
+"n": "GetAppCodePage",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"USER.916": {
+"n": "CreateDialogIndirectParamML",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word",
+"ptr",
+"long",
+"word",
+"word",
+"str",
+"word"
+]
+},
+"USER.918": {
+"n": "DialogBoxIndirectParamML",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr",
+"long",
+"word",
+"word",
+"str",
+"word"
+]
+},
+"USER.919": {
+"n": "LoadLanguageString",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr",
+"word"
+]
+},
+"USER.920": {
+"n": "SetAppCodePage",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word"
+]
+},
+"USER.922": {
+"n": "GetBaseCodePage",
+"cc": "pascal",
+"a": []
+},
+"USER.923": {
+"n": "FindLanguageResource",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"str",
+"word"
+]
+},
+"USER.924": {
+"n": "ChangeKeyboardCodePage",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"USER.930": {
+"n": "MessageBoxEx",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"str",
+"word",
+"word"
+]
+},
+"USER.1000": {
+"n": "SetProcessDefaultLayout",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"USER.1001": {
+"n": "GetProcessDefaultLayout",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"VER.2": {
+"n": "GetFileResourceSize",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"str",
+"ptr"
+]
+},
+"VER.3": {
+"n": "GetFileResource",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"str",
+"long",
+"long",
+"ptr"
+]
+},
+"VER.6": {
+"n": "GetFileVersionInfoSize",
+"cc": "pascal",
+"a": [
+"str",
+"ptr"
+]
+},
+"VER.7": {
+"n": "GetFileVersionInfo",
+"cc": "pascal",
+"a": [
+"str",
+"long",
+"long",
+"ptr"
+]
+},
+"VER.8": {
+"n": "VerFindFile",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"str",
+"str",
+"ptr",
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"VER.9": {
+"n": "VerInstallFile",
+"cc": "pascal",
+"a": [
+"word",
+"str",
+"str",
+"str",
+"str",
+"str",
+"ptr",
+"ptr"
+]
+},
+"VER.10": {
+"n": "VerLanguageName",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"VER.11": {
+"n": "VerQueryValue",
+"cc": "pascal",
+"a": [
+"segptr",
+"str",
+"ptr",
+"ptr"
+]
+},
+"W32SYS.2": {
+"n": "IsPeFormat",
+"cc": "pascal",
+"a": [
+"str",
+"word"
+]
+},
+"W32SYS.5": {
+"n": "GetW32SysVersion",
+"cc": "pascal",
+"a": []
+},
+"W32SYS.7": {
+"n": "GetPEResourceTable",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"W32SYS.11": {
+"n": "LoadPeResource",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"W32SYS.12": {
+"n": "GetWin32sInfo",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"WIN32S16.2": {
+"n": "BootTask",
+"cc": "pascal",
+"a": []
+},
+"WIN32S16.5": {
+"n": "ContinueDebugEvent",
+"cc": "pascal",
+"a": [
+"long",
+"long",
+"long"
+]
+},
+"WIN32S16.6": {
+"n": "ReadProcessMemory",
+"cc": "pascal",
+"a": [
+"long",
+"ptr",
+"ptr",
+"long",
+"ptr"
+]
+},
+"WIN32S16.10": {
+"n": "GetLastError",
+"cc": "pascal",
+"a": []
+},
+"WIN32S16.11": {
+"n": "CloseHandle",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"WIN32S16.13": {
+"n": "GetExitCodeThread",
+"cc": "pascal",
+"a": [
+"long",
+"ptr"
+]
+},
+"WIN32S16.18": {
+"n": "VirtualQueryEx",
+"cc": "pascal",
+"a": [
+"long",
+"ptr",
+"ptr",
+"long"
+]
+},
+"WIN32S16.19": {
+"n": "VirtualProtectEx",
+"cc": "pascal",
+"a": [
+"long",
+"ptr",
+"long",
+"long",
+"ptr"
+]
+},
+"WIN32S16.43": {
+"n": "StackLinearToSegmented",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"WIN32S16.48": {
+"n": "UTSelectorOffsetToLinear",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"WIN32S16.49": {
+"n": "UTLinearToSelectorOffset",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"WIN87EM.1": {
+"n": "__fpMath",
+"cc": "pascal",
+"a": []
+},
+"WIN87EM.3": {
+"n": "__WinEm87Info",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"WIN87EM.4": {
+"n": "__WinEm87Restore",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"WIN87EM.5": {
+"n": "__WinEm87Save",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"WINASPI.1": {
+"n": "GetASPISupportInfo",
+"cc": "pascal",
+"a": []
+},
+"WINASPI.2": {
+"n": "SendASPICommand",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"WINASPI.3": {
+"n": "InsertInASPIChain",
+"cc": "pascal",
+"a": [
+"word",
+"segptr"
+]
+},
+"WINASPI.4": {
+"n": "GETASPIDLLVERSION",
+"cc": "pascal",
+"a": []
+},
+"WINDEBUG.3": {
+"n": "WinNotify",
+"cc": "pascal",
+"a": []
+},
+"WINEPS16.13": {
+"n": "DeviceMode",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"str",
+"str"
+]
+},
+"WINEPS16.90": {
+"n": "ExtDeviceMode",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"str",
+"str",
+"ptr",
+"str",
+"word"
+]
+},
+"WINEPS16.91": {
+"n": "DeviceCapabilities",
+"cc": "pascal",
+"a": [
+"str",
+"str",
+"word",
+"ptr",
+"ptr"
+]
+},
+"WINEPS16.93": {
+"n": "AdvancedSetupDialog",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"ptr"
+]
+},
+"WING.1001": {
+"n": "WinGCreateDC",
+"cc": "pascal",
+"a": []
+},
+"WING.1002": {
+"n": "WinGRecommendDIBFormat",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"WING.1003": {
+"n": "WinGCreateBitmap",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr"
+]
+},
+"WING.1004": {
+"n": "WinGGetDIBPointer",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"WING.1005": {
+"n": "WinGGetDIBColorTable",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr"
+]
+},
+"WING.1006": {
+"n": "WinGSetDIBColorTable",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr"
+]
+},
+"WING.1007": {
+"n": "WinGCreateHalfTonePalette",
+"cc": "pascal",
+"a": []
+},
+"WING.1008": {
+"n": "WinGCreateHalfToneBrush",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"WING.1009": {
+"n": "WinGStretchBlt",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"word",
+"word",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"WING.1010": {
+"n": "WinGBitBlt",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"word",
+"word",
+"word",
+"word",
+"word"
+]
+},
+"WINNLS.16": {
+"n": "WINNLSEnableIME",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"WINNLS.18": {
+"n": "WINNLSGetEnableStatus",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"WINSOCK.1": {
+"n": "accept",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr"
+]
+},
+"WINSOCK.2": {
+"n": "bind",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"WINSOCK.3": {
+"n": "closesocket",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"WINSOCK.4": {
+"n": "connect",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"WINSOCK.5": {
+"n": "getpeername",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr"
+]
+},
+"WINSOCK.6": {
+"n": "getsockname",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr"
+]
+},
+"WINSOCK.7": {
+"n": "getsockopt",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr",
+"ptr"
+]
+},
+"WINSOCK.8": {
+"n": "htonl",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"WINSOCK.9": {
+"n": "htons",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"WINSOCK.10": {
+"n": "inet_addr",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"WINSOCK.11": {
+"n": "inet_ntoa",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"WINSOCK.12": {
+"n": "ioctlsocket",
+"cc": "pascal",
+"a": [
+"word",
+"long",
+"ptr"
+]
+},
+"WINSOCK.13": {
+"n": "listen",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"WINSOCK.14": {
+"n": "ntohl",
+"cc": "pascal",
+"a": [
+"long"
+]
+},
+"WINSOCK.15": {
+"n": "ntohs",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"WINSOCK.16": {
+"n": "recv",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word",
+"word"
+]
+},
+"WINSOCK.17": {
+"n": "recvfrom",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word",
+"word",
+"ptr",
+"ptr"
+]
+},
+"WINSOCK.18": {
+"n": "select",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr",
+"ptr",
+"ptr"
+]
+},
+"WINSOCK.19": {
+"n": "send",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word",
+"word"
+]
+},
+"WINSOCK.20": {
+"n": "sendto",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word",
+"word",
+"ptr",
+"word"
+]
+},
+"WINSOCK.21": {
+"n": "setsockopt",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr",
+"word"
+]
+},
+"WINSOCK.22": {
+"n": "shutdown",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"WINSOCK.23": {
+"n": "socket",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"WINSOCK.51": {
+"n": "gethostbyaddr",
+"cc": "pascal",
+"a": [
+"ptr",
+"word",
+"word"
+]
+},
+"WINSOCK.52": {
+"n": "gethostbyname",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"WINSOCK.53": {
+"n": "getprotobyname",
+"cc": "pascal",
+"a": [
+"ptr"
+]
+},
+"WINSOCK.54": {
+"n": "getprotobynumber",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"WINSOCK.55": {
+"n": "getservbyname",
+"cc": "pascal",
+"a": [
+"ptr",
+"ptr"
+]
+},
+"WINSOCK.56": {
+"n": "getservbyport",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"WINSOCK.57": {
+"n": "gethostname",
+"cc": "pascal",
+"a": [
+"ptr",
+"word"
+]
+},
+"WINSOCK.101": {
+"n": "WSAAsyncSelect",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"long"
+]
+},
+"WINSOCK.102": {
+"n": "WSAAsyncGetHostByAddr",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"word",
+"word",
+"segptr",
+"word"
+]
+},
+"WINSOCK.103": {
+"n": "WSAAsyncGetHostByName",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"str",
+"segptr",
+"word"
+]
+},
+"WINSOCK.104": {
+"n": "WSAAsyncGetProtoByNumber",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"segptr",
+"word"
+]
+},
+"WINSOCK.105": {
+"n": "WSAAsyncGetProtoByName",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"str",
+"segptr",
+"word"
+]
+},
+"WINSOCK.106": {
+"n": "WSAAsyncGetServByPort",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"str",
+"segptr",
+"word"
+]
+},
+"WINSOCK.107": {
+"n": "WSAAsyncGetServByName",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"str",
+"str",
+"segptr",
+"word"
+]
+},
+"WINSOCK.108": {
+"n": "WSACancelAsyncRequest",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"WINSOCK.109": {
+"n": "WSASetBlockingHook",
+"cc": "pascal",
+"a": [
+"segptr"
+]
+},
+"WINSOCK.110": {
+"n": "WSAUnhookBlockingHook",
+"cc": "pascal",
+"a": []
+},
+"WINSOCK.111": {
+"n": "WSAGetLastError",
+"cc": "pascal",
+"a": []
+},
+"WINSOCK.112": {
+"n": "WSASetLastError",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"WINSOCK.113": {
+"n": "WSACancelBlockingCall",
+"cc": "pascal",
+"a": []
+},
+"WINSOCK.114": {
+"n": "WSAIsBlocking",
+"cc": "pascal",
+"a": []
+},
+"WINSOCK.115": {
+"n": "WSAStartup",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"WINSOCK.116": {
+"n": "WSACleanup",
+"cc": "pascal",
+"a": []
+},
+"WINSOCK.151": {
+"n": "__WSAFDIsSet",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"WINSOCK.1107": {
+"n": "WSARecvEx",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word",
+"ptr"
+]
+},
+"WINTAB.20": {
+"n": "WTInfo",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr"
+]
+},
+"WINTAB.21": {
+"n": "WTOpen",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"WINTAB.22": {
+"n": "WTClose",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"WINTAB.23": {
+"n": "WTPacketsGet",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"ptr"
+]
+},
+"WINTAB.24": {
+"n": "WTPacket",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr"
+]
+},
+"WINTAB.40": {
+"n": "WTEnable",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"WINTAB.41": {
+"n": "WTOverlap",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"WINTAB.60": {
+"n": "WTConfig",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"WINTAB.61": {
+"n": "WTGet",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"WINTAB.62": {
+"n": "WTSet",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"WINTAB.63": {
+"n": "WTExtGet",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr"
+]
+},
+"WINTAB.64": {
+"n": "WTExtSet",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr"
+]
+},
+"WINTAB.65": {
+"n": "WTSave",
+"cc": "pascal",
+"a": [
+"word",
+"ptr"
+]
+},
+"WINTAB.66": {
+"n": "WTRestore",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"word"
+]
+},
+"WINTAB.80": {
+"n": "WTPacketsPeek",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"ptr"
+]
+},
+"WINTAB.81": {
+"n": "WTDataGet",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"s_word",
+"ptr",
+"ptr"
+]
+},
+"WINTAB.82": {
+"n": "WTDataPeek",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"s_word",
+"ptr",
+"ptr"
+]
+},
+"WINTAB.83": {
+"n": "WTQueuePackets",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"WINTAB.84": {
+"n": "WTQueueSizeGet",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"WINTAB.85": {
+"n": "WTQueueSizeSet",
+"cc": "pascal",
+"a": [
+"word",
+"s_word"
+]
+},
+"WINTAB.100": {
+"n": "WTMgrOpen",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"WINTAB.101": {
+"n": "WTMgrClose",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"WINTAB.120": {
+"n": "WTMgrContextEnum",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"long"
+]
+},
+"WINTAB.121": {
+"n": "WTMgrContextOwner",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"WINTAB.122": {
+"n": "WTMgrDefContext",
+"cc": "pascal",
+"a": [
+"word",
+"word"
+]
+},
+"WINTAB.140": {
+"n": "WTMgrDeviceConfig",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"WINTAB.141": {
+"n": "WTMgrConfigReplace",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr"
+]
+},
+"WINTAB.160": {
+"n": "WTMgrPacketHook",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"s_word",
+"ptr"
+]
+},
+"WINTAB.161": {
+"n": "WTMgrPacketHookDefProc",
+"cc": "pascal",
+"a": [
+"s_word",
+"word",
+"long",
+"ptr"
+]
+},
+"WINTAB.180": {
+"n": "WTMgrExt",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr"
+]
+},
+"WINTAB.181": {
+"n": "WTMgrCsrEnable",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+},
+"WINTAB.182": {
+"n": "WTMgrCsrButtonMap",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"ptr"
+]
+},
+"WINTAB.183": {
+"n": "WTMgrCsrPressureBtnMarks",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"long",
+"long"
+]
+},
+"WINTAB.184": {
+"n": "WTMgrCsrPressureResponse",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"ptr"
+]
+},
+"WINTAB.185": {
+"n": "WTMgrCsrExt",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word",
+"ptr"
+]
+},
+"WINTAB.200": {
+"n": "WTQueuePacketsEx",
+"cc": "pascal",
+"a": [
+"word",
+"ptr",
+"ptr"
+]
+},
+"WINTAB.201": {
+"n": "WTMgrCsrPressureBtnMarksEx",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"ptr",
+"ptr"
+]
+},
+"WINTAB.202": {
+"n": "WTMgrConfigReplaceEx",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"str",
+"str"
+]
+},
+"WINTAB.203": {
+"n": "WTMgrPacketHookEx",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"str",
+"str"
+]
+},
+"WINTAB.204": {
+"n": "WTMgrPacketUnhook",
+"cc": "pascal",
+"a": [
+"word"
+]
+},
+"WINTAB.205": {
+"n": "WTMgrPacketHookNext",
+"cc": "pascal",
+"a": [
+"word",
+"s_word",
+"word",
+"long"
+]
+},
+"WINTAB.206": {
+"n": "WTMgrDefContextEx",
+"cc": "pascal",
+"a": [
+"word",
+"word",
+"word"
+]
+}
+}

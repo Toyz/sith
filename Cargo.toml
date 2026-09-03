@@ -1,0 +1,30 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/ne-core",
+    "crates/ne-disasm",
+    "crates/ne-analysis",
+    "crates/sith",
+    "crates/sith-gui",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.78"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/toyz/sith"
+
+[workspace.dependencies]
+ne-core = { path = "crates/ne-core" }
+ne-disasm = { path = "crates/ne-disasm" }
+ne-analysis = { path = "crates/ne-analysis" }
+anyhow = "1"
+thiserror = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+iced-x86 = { version = "1.21", default-features = false, features = ["std", "decoder", "intel", "nasm", "masm", "instr_info"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"

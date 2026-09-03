@@ -1,0 +1,18 @@
+[package]
+name = "ne-core"
+description = "Parser for 16-bit Windows NE (New Executable) binaries"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror.workspace = true
+
+[features]
+default = ["serde"]
+# The crate always needs serde for the JSON databases; the feature only
+# controls whether the public types derive Serialize.
+serde = []

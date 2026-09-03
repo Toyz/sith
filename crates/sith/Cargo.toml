@@ -1,0 +1,19 @@
+[package]
+name = "sith"
+description = "Command-line toolkit for reverse engineering 16-bit Windows NE binaries"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "sith"
+path = "src/main.rs"
+
+[dependencies]
+ne-core.workspace = true
+ne-disasm.workspace = true
+ne-analysis.workspace = true
+anyhow.workspace = true
+serde_json.workspace = true
+clap = { version = "4", features = ["derive", "wrap_help"] }

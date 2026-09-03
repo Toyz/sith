@@ -1,0 +1,12 @@
+[package]
+name = "ne-analysis"
+description = "Function discovery, call graphs and cross-references over NE binaries"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+ne-core.workspace = true
+ne-disasm.workspace = true
+iced-x86.workspace = true

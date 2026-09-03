@@ -1,0 +1,11 @@
+[package]
+name = "ne-disasm"
+description = "Fixup-aware disassembly of NE segments"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+ne-core.workspace = true
+iced-x86.workspace = true
