@@ -102,3 +102,49 @@ pub fn section(ui: &mut Ui, text: &str) {
     ui.label(egui::RichText::new(text).color(col::dim()).size(11.0).strong());
     ui.add_space(2.0);
 }
+
+/// A framed group with a small-caps heading.
+///
+/// Panels made of bare label rows read as one undifferentiated wall; a frame
+/// per topic is what lets the eye jump to the one it wants.
+pub fn card<R>(ui: &mut Ui, title: &str, content: impl FnOnce(&mut Ui) -> R) -> R {
+    if !title.is_empty() {
+        ui.label(
+            egui::RichText::new(title)
+                .size(10.0)
+                .strong()
+                .color(col::faint()),
+        );
+        ui.add_space(3.0);
+    }
+    let r = egui::Frame::new()
+        .fill(col::raised())
+        .corner_radius(CornerRadius::same(5))
+        .inner_margin(egui::Margin::symmetric(10, 8))
+        .show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            content(ui)
+        });
+    ui.add_space(10.0);
+    r.inner
+}
+
+/// A label/value line with a fixed label column, so a card reads as a table.
+pub fn kv(ui: &mut Ui, key: &str, value: impl Into<String>) {
+    kv_colored(ui, key, value, col::text());
+}
+
+pub fn kv_colored(ui: &mut Ui, key: &str, value: impl Into<String>, color: Color32) {
+    ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = 8.0;
+        ui.label(
+            egui::RichText::new(key)
+                .size(11.0)
+                .color(col::faint())
+                .monospace(),
+        );
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            ui.label(mono_c(value.into(), color));
+        });
+    });
+}

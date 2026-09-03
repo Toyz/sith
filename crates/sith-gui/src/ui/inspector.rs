@@ -1,264 +1,617 @@
-//! Context panel for whatever is selected.
+//! The context panel.
 //!
-//! The point of this panel is that reading a listing is mostly asking "what is
-//! this and who else touches it"; having the answer beside the line means not
-//! losing your place to go and find out.
+//! Reading a disassembly is mostly asking two questions about the line under
+//! the cursor: what is this, and who else touches it. The panel answers them in
+//! that order -- identity first, then the things that act on it, then the
+//! context it sits in -- so the eye lands on the answer rather than scanning a
+//! wall of label/value pairs for it.
 
+use crate::icons::{self, Icon};
 use crate::state::{Action, Nav, SegTab, SithApp};
-use crate::theme::{col, *};
-use crate::widgets;
+use crate::theme::{col, dim, flow_color, mono_c};
+use crate::widgets::{self, card, kv, kv_colored};
 use eframe::egui::{self, Ui};
-use ne_analysis::Addr;
-
+use ne_analysis::{resrefs::Confidence, Addr};
 
 pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
-    let Some(doc) = app.doc() else { return };
-    ui.add_space(4.0);
+    if app.doc().is_none() {
+        return;
+    }
+    ui.add_space(6.0);
     egui::ScrollArea::vertical()
         .auto_shrink([false, false])
         .show(ui, |ui| {
+            ui.set_width(ui.available_width());
             match app.nav() {
-                Nav::Segment(segno) => segment_context(app, ui, act, segno),
-                Nav::Resource(i) => resource_context(app, ui, i),
-                _ => {
-                    widgets::section(ui, "MODULE");
-                    kv(ui, "module", doc.ne.module_name());
-                    kv(ui, "segments", &doc.ne.segments.len().to_string());
-                    kv(ui, "functions", &doc.program.functions.len().to_string());
-                    kv(ui, "resources", &doc.ne.resources.len().to_string());
-                    kv(
-                        ui,
-                        "imports",
-                        &doc.ne.module_ref_names().len().to_string(),
-                    );
-                    widgets::section(ui, "HINT");
-                    ui.label(dim(
-                        "Select a line in a listing to see its bytes, its fixup \
-                         and everything that references it.",
-                    ));
-                }
+                Nav::Segment(segno) => match app.tab().and_then(|t| t.sel) {
+                    Some(sel) => address(app, ui, act, segno, sel),
+                    None => nothing_selected(app, ui, segno),
+                },
+                Nav::Resource(i) => resource(app, ui, act, i),
+                _ => module(app, ui),
             }
+            ui.add_space(16.0);
         });
 }
 
-fn segment_context(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16) {
+// ----------------------------------------------------------------- identity
+
+/// The headline: what this address is, and the actions that apply to it.
+fn identity(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segment: u16, offset: u32) {
     let Some(doc) = app.doc() else { return };
-    let Some(seg) = doc.ne.segment(segno) else { return };
-    let (sel_opt, seg_tab) = match app.tab() {
-        Some(t) => (t.sel, t.seg_tab),
-        None => return,
-    };
+    let marked = app.is_bookmarked(segment, offset);
+    let name = app.user_name(segment, offset);
+    let function = doc.program.function_containing(Addr { segment, offset });
 
-    widgets::section(ui, "SEGMENT");
-    kv(ui, "index", &segno.to_string());
-    kv(ui, "kind", seg.kind().as_str());
-    kv(ui, "file offset", &format!("{:08X}", seg.file_offset));
-    kv(ui, "size", &format!("{} bytes", seg.length));
-    kv(ui, "alloc", &format!("{} bytes", seg.min_alloc));
-    kv(ui, "fixups", &seg.relocs.len().to_string());
-    ui.horizontal_wrapped(|ui| {
-        for f in seg.flag_names().iter().skip(1) {
-            widgets::chip(ui, f, col::dim());
-        }
-    });
-
-    let Some(sel) = sel_opt else { return };
-
-    widgets::section(ui, "SELECTION");
-    kv(ui, "address", &format!("seg{segno:02}:{sel:04X}"));
-    kv(
-        ui,
-        "file offset",
-        &format!("{:08X}", seg.file_offset + sel as u64),
-    );
-
-    // Naming and annotating live where the address details are, so the whole
-    // loop -- see an address, understand it, write that down -- happens in one
-    // place.
-    ui.horizontal(|ui| {
-        if ui.small_button("Name…").clicked() {
-            act.push(Action::ShowRename {
-                segment: segno,
-                offset: sel,
-            });
-        }
-        let marked = app.is_bookmarked(segno, sel);
-        if ui
-            .small_button(if marked { "Un-bookmark" } else { "Bookmark" })
-            .clicked()
-        {
-            act.push(Action::ToggleBookmark {
-                segment: segno,
-                offset: sel,
-            });
-        }
-    });
-    if let Some(name) = app.user_name(segno, sel) {
-        kv(ui, "your name", name);
-    }
-
-    let mut note = app.user_comment(segno, sel).unwrap_or_default().to_string();
-    let before = note.clone();
-    ui.add(
-        egui::TextEdit::multiline(&mut note)
-            .hint_text("note…")
-            .desired_rows(2)
-            .desired_width(f32::INFINITY),
-    );
-    if note != before {
-        act.push(Action::SetComment {
-            segment: segno,
-            offset: sel,
-            text: note,
-        });
-    }
-
-    if let Some(f) = doc.program.function_containing(Addr {
-        segment: segno,
-        offset: sel,
-    }) {
-        kv(ui, "function", &app.label(f));
-        kv(ui, "func kind", f.kind.as_str());
-        kv(ui, "func size", &format!("{} bytes", f.size()));
-        if ui.small_button("Show in call graph").clicked() {
-            act.push(Action::SetGraphRoot(f.addr));
-        }
-    }
-
-    // Bytes at the selection, read as the common widths. A 16-bit binary is
-    // full of packed structures and this saves a trip to a calculator.
-    if let Some(bytes) = seg.data.get(sel as usize..(sel as usize + 8).min(seg.data.len())) {
-        widgets::section(ui, "BYTES");
-        ui.label(mono_c(
-            bytes.iter().map(|b| format!("{b:02X} ")).collect::<String>(),
-            col::bytes(),
-        ));
-        if bytes.len() >= 2 {
-            let w = u16::from_le_bytes([bytes[0], bytes[1]]);
-            kv(ui, "u16", &format!("{w:#06X}  {w}"));
-        }
-        if bytes.len() >= 4 {
-            let d = u32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]);
-            kv(ui, "u32", &format!("{d:#010X}  {d}"));
-        }
-        let printable: String = bytes
-            .iter()
-            .map(|&b| if (0x20..0x7F).contains(&b) { b as char } else { '.' })
-            .collect();
-        kv(ui, "ascii", &printable);
-    }
-
-    if seg_tab == SegTab::Disasm {
-        if let Some(code) = doc.program.code.get(&segno) {
-            if let Some((idx, insn)) = code
-                .insns
-                .iter()
-                .enumerate()
-                .find(|(_, i)| i.offset == sel)
-            {
-                widgets::section(ui, "INSTRUCTION");
-                ui.label(mono_c(&insn.text, flow_color(insn.flow)));
-                kv(ui, "length", &format!("{} bytes", insn.len));
-                kv(ui, "flow", &format!("{:?}", insn.flow));
-                if let Some(call) =
-                    ne_analysis::callargs::reconstruct(code, idx, ne_core::ApiDb::embedded())
-                {
-                    widgets::section(ui, "API CALL");
-                    ui.label(mono_c(
-                        format!("{}.{}", call.module, call.signature.render()),
-                        col::symbol(),
-                    ));
-                    ui.add_space(2.0);
-                    for (i, a) in call.args.iter().enumerate() {
-                        ui.horizontal(|ui| {
-                            ui.label(mono_c(
-                                format!("{:<10}", call.signature.param_name(i).unwrap_or("")),
-                                col::cyan(),
-                            ));
-                            ui.label(mono_c(format!("{:<7}", a.kind.as_str()), col::faint()));
-                            ui.label(mono_c(
-                                a.render(),
-                                if a.name.is_some() { col::green() } else { col::text() },
-                            ));
-                        });
-                    }
-                    if !call.complete {
-                        ui.label(dim("some arguments were not literal pushes"));
-                    }
+    egui::Frame::new()
+        .fill(col::raised())
+        .corner_radius(egui::CornerRadius::same(5))
+        .inner_margin(egui::Margin::symmetric(10, 9))
+        .show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            ui.horizontal(|ui| {
+                if marked {
+                    ui.label(mono_c("\u{25C6}", col::orange()));
                 }
-                if let Some(f) = &insn.fixup {
-                    widgets::section(ui, "FIXUP");
-                    kv(ui, "kind", f.addr_type.as_str());
-                    if f.additive {
-                        kv(ui, "additive", "yes");
+                ui.label(
+                    egui::RichText::new(format!("seg{segment:02}:{offset:04X}"))
+                        .monospace()
+                        .size(15.0)
+                        .strong()
+                        .color(col::accent()),
+                );
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if icons::button(ui, Icon::Copy, "Copy address").clicked() {
+                        ui.ctx().copy_text(format!("seg{segment:02}:{offset:04X}"));
+                        act.push(Action::Status("address copied".into()));
                     }
-                    if widgets::link(ui, f.target.to_string(), col::comment()).clicked() {
-                        act.push(crate::views::disasm::target_action(&f.target));
+                    if icons::button(
+                        ui,
+                        Icon::Version,
+                        if marked { "Remove bookmark (B)" } else { "Bookmark (B)" },
+                    )
+                    .clicked()
+                    {
+                        act.push(Action::ToggleBookmark { segment, offset });
                     }
+                    if icons::button(ui, Icon::Font, "Name this address (N)").clicked() {
+                        act.push(Action::ShowRename { segment, offset });
+                    }
+                });
+            });
+
+            // The name the user gave wins over the generated one, and says so.
+            match (name, function) {
+                (Some(n), _) => {
+                    ui.horizontal(|ui| {
+                        ui.label(mono_c(n, col::cyan()));
+                        widgets::chip(ui, "your name", col::cyan());
+                    });
+                }
+                (None, Some(f)) => {
+                    ui.horizontal(|ui| {
+                        ui.label(mono_c(f.label(), col::symbol()));
+                        if f.addr.offset != offset {
+                            ui.label(
+                                egui::RichText::new(format!("+{:X}", offset - f.addr.offset))
+                                    .monospace()
+                                    .size(11.0)
+                                    .color(col::faint()),
+                            );
+                        }
+                    });
+                }
+                (None, None) => {
+                    ui.label(dim("not inside a known function"));
                 }
             }
+            if let Some(seg) = doc.ne.segment(segment) {
+                ui.label(
+                    egui::RichText::new(format!("file {:08X}", seg.file_offset + offset as u64))
+                        .monospace()
+                        .size(11.0)
+                        .color(col::faint()),
+                );
+            }
+        });
+    ui.add_space(10.0);
+}
+
+/// The note box, which only takes space once it has something in it.
+fn note(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segment: u16, offset: u32) {
+    let existing = app.user_comment(segment, offset).unwrap_or_default();
+    let mut text = existing.to_string();
+    let before = text.clone();
+    card(ui, "NOTE", |ui| {
+        ui.add(
+            egui::TextEdit::multiline(&mut text)
+                .hint_text("what is this for?")
+                .desired_rows(if existing.is_empty() { 1 } else { 3 })
+                .desired_width(f32::INFINITY)
+                .frame(egui::Frame::NONE),
+        );
+    });
+    if text != before {
+        act.push(Action::SetComment {
+            segment,
+            offset,
+            text,
+        });
+    }
+}
+
+// ---------------------------------------------------------------- selection
+
+fn address(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segment: u16, offset: u32) {
+    let Some(doc) = app.doc() else { return };
+    identity(app, ui, act, segment, offset);
+    note(app, ui, act, segment, offset);
+
+    let seg_tab = app.tab().map(|t| t.seg_tab).unwrap_or(SegTab::Disasm);
+    let insn = if seg_tab == SegTab::Disasm {
+        doc.program
+            .code
+            .get(&segment)
+            .and_then(|c| c.insns.iter().enumerate().find(|(_, i)| i.offset == offset))
+    } else {
+        None
+    };
+
+    if let Some((index, insn)) = insn {
+        card(ui, "INSTRUCTION", |ui| {
+            ui.label(mono_c(&insn.text, flow_color(insn.flow)));
+            ui.add_space(4.0);
+            kv_colored(ui, "bytes", insn.hex(), col::bytes());
+            kv(ui, "length", format!("{} bytes", insn.len));
+            kv_colored(ui, "flow", format!("{:?}", insn.flow), flow_color(insn.flow));
+        });
+
+        if let Some(f) = &insn.fixup {
+            card(ui, "FIXUP", |ui| {
+                kv_colored(ui, "kind", f.addr_type.as_str(), col::dim());
+                if f.additive {
+                    kv_colored(ui, "additive", "yes", col::orange());
+                }
+                ui.horizontal(|ui| {
+                    ui.label(
+                        egui::RichText::new("target")
+                            .size(11.0)
+                            .monospace()
+                            .color(col::faint()),
+                    );
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if widgets::link(ui, f.target.to_string(), col::comment()).clicked() {
+                            act.push(crate::views::disasm::target_action(&f.target));
+                        }
+                    });
+                });
+            });
+        }
+
+        api_call(app, ui, segment, index);
+    }
+
+    // A loading call points at artwork; that is usually what you wanted.
+    if let Some(res) = doc.res_links.resource_at(Addr { segment, offset }) {
+        if let Some(r) = doc.ne.resources.get(res) {
+            card(ui, "LOADS", |ui| {
+                ui.horizontal(|ui| {
+                    icons::inline(ui, icons::for_resource(r.type_id.as_id()), col::orange());
+                    if widgets::link(
+                        ui,
+                        format!("{} {}", r.type_name(), r.res_id),
+                        col::orange(),
+                    )
+                    .clicked()
+                    {
+                        act.push(Action::Go(Nav::Resource(res)));
+                    }
+                });
+            });
         }
     }
 
-    // Anything that calls the selected address.
-    let label = format!("seg{segno:02X}:{sel:04X}");
-    let sites: Vec<Addr> = doc
-        .program
-        .xrefs
-        .get(&label)
-        .cloned()
-        .unwrap_or_default();
-    if !sites.is_empty() {
-        widgets::section(ui, &format!("REFERENCED FROM ({})", sites.len()));
+    bytes_at(app, ui, segment, offset);
+    references(app, ui, act, segment, offset);
+    function_card(app, ui, act, segment, offset);
+    segment_card(app, ui, segment, true);
+}
+
+/// The reconstructed call: signature, then one row per argument.
+fn api_call(app: &SithApp, ui: &mut Ui, segment: u16, index: usize) {
+    let Some(doc) = app.doc() else { return };
+    let Some(code) = doc.program.code.get(&segment) else {
+        return;
+    };
+    let Some(call) = ne_analysis::callargs::reconstruct(code, index, ne_core::ApiDb::embedded())
+    else {
+        return;
+    };
+
+    card(ui, "API CALL", |ui| {
+        ui.horizontal(|ui| {
+            ui.label(mono_c(&call.module, col::purple()));
+            ui.label(mono_c(&call.signature.name, col::symbol()).strong());
+            if !call.complete {
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    widgets::chip(ui, "partial", col::orange());
+                });
+            }
+        });
+        if let Some(ret) = &call.signature.ret {
+            ui.label(
+                egui::RichText::new(format!("returns {ret}"))
+                    .size(10.5)
+                    .monospace()
+                    .color(col::faint()),
+            );
+        }
+        ui.add_space(6.0);
+
+        for (i, a) in call.args.iter().enumerate() {
+            let label = call
+                .signature
+                .param_name(i)
+                .map(str::to_string)
+                .unwrap_or_else(|| format!("arg{i}"));
+            // The argument's width lives in the tooltip rather than in a
+            // column: an operand like `word [bp+0Ah]:word [bp+8]` already says
+            // it, and a third column collides with the value in a narrow panel.
+            let value = a.render();
+            let colour = if a.name.is_some() {
+                col::green()
+            } else if a.value.is_some() {
+                col::text()
+            } else {
+                col::faint()
+            };
+            let r = ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 6.0;
+                ui.label(
+                    egui::RichText::new(&label)
+                        .size(11.0)
+                        .monospace()
+                        .color(col::cyan()),
+                );
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.label(mono_c(elide(&strip_size(&value), 22), colour));
+                });
+            });
+            r.response.on_hover_text(format!(
+                "{} {}\n{}",
+                a.kind.as_str(),
+                label,
+                value
+            ));
+        }
+        if !call.complete {
+            ui.add_space(4.0);
+            ui.label(
+                egui::RichText::new("some arguments were not literal pushes")
+                    .size(10.5)
+                    .color(col::faint()),
+            );
+        }
+    });
+}
+
+/// The bytes at the cursor, read as the widths a 16-bit structure uses.
+fn bytes_at(app: &SithApp, ui: &mut Ui, segment: u16, offset: u32) {
+    let Some(doc) = app.doc() else { return };
+    let Some(seg) = doc.ne.segment(segment) else { return };
+    let start = offset as usize;
+    let Some(b) = seg.data.get(start..(start + 8).min(seg.data.len())) else {
+        return;
+    };
+    if b.is_empty() {
+        return;
+    }
+
+    card(ui, "DATA AT CURSOR", |ui| {
+        ui.label(mono_c(
+            b.iter().map(|x| format!("{x:02X} ")).collect::<String>(),
+            col::bytes(),
+        ));
+        ui.add_space(4.0);
+        kv(ui, "u8", format!("{:#04X}   {}", b[0], b[0]));
+        if b.len() >= 2 {
+            let w = u16::from_le_bytes([b[0], b[1]]);
+            kv(ui, "u16", format!("{w:#06X}   {w}"));
+            kv_colored(ui, "i16", format!("{}", w as i16), col::dim());
+        }
+        if b.len() >= 4 {
+            let d = u32::from_le_bytes([b[0], b[1], b[2], b[3]]);
+            kv(ui, "u32", format!("{d:#010X}   {d}"));
+            // A far pointer is the other thing four bytes usually mean here.
+            kv_colored(
+                ui,
+                "seg:off",
+                format!("{:04X}:{:04X}", d >> 16, d & 0xFFFF),
+                col::dim(),
+            );
+        }
+        let ascii: String = b
+            .iter()
+            .map(|&x| if (0x20..0x7F).contains(&x) { x as char } else { '·' })
+            .collect();
+        kv_colored(ui, "ascii", ascii, col::dim());
+    });
+}
+
+/// Everything that calls this address.
+fn references(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segment: u16, offset: u32) {
+    let Some(doc) = app.doc() else { return };
+    let label = format!("seg{segment:02X}:{offset:04X}");
+    let sites = doc.program.xrefs.get(&label).cloned().unwrap_or_default();
+    if sites.is_empty() {
+        return;
+    }
+    card(ui, &format!("REFERENCED FROM ({})", sites.len()), |ui| {
         for a in sites.iter().take(40) {
             let owner = doc
                 .program
                 .function_containing(*a)
-                .map(|f| f.label())
+                .map(|f| app.label(f))
                 .unwrap_or_default();
             ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 8.0;
                 if widgets::link(ui, a.to_string(), col::accent()).clicked() {
                     act.push(Action::Goto(*a));
                 }
-                ui.label(mono_c(owner, col::dim()));
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.label(mono_c(owner, col::symbol()));
+                });
             });
         }
-    }
+        if sites.len() > 40 {
+            ui.label(dim(format!("and {} more", sites.len() - 40)));
+        }
+    });
 }
 
-fn resource_context(app: &SithApp, ui: &mut Ui, index: usize) {
+fn function_card(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segment: u16, offset: u32) {
+    let Some(doc) = app.doc() else { return };
+    let Some(f) = doc.program.function_containing(Addr { segment, offset }) else {
+        return;
+    };
+    card(ui, "FUNCTION", |ui| {
+        ui.horizontal(|ui| {
+            icons::inline(ui, Icon::Code, col::symbol());
+            if widgets::link(ui, app.label(f), col::symbol()).clicked() {
+                act.push(Action::Goto(f.addr));
+            }
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                widgets::chip(ui, f.kind.as_str(), col::dim());
+            });
+        });
+        ui.add_space(4.0);
+        kv(ui, "start", f.addr.to_string());
+        kv(ui, "size", format!("{} bytes", f.size()));
+        kv(ui, "instructions", f.insn_count.to_string());
+        kv(ui, "calls", f.calls.len().to_string());
+        ui.add_space(6.0);
+        if ui.small_button("Show in call graph").clicked() {
+            act.push(Action::SetGraphRoot(f.addr));
+        }
+    });
+}
+
+/// The segment is context rather than selection, so it sits last and folded.
+fn segment_card(app: &SithApp, ui: &mut Ui, segno: u16, collapsed: bool) {
+    let Some(doc) = app.doc() else { return };
+    let Some(seg) = doc.ne.segment(segno) else { return };
+    egui::CollapsingHeader::new(
+        egui::RichText::new(format!("SEGMENT {segno}"))
+            .size(10.0)
+            .strong()
+            .color(col::faint()),
+    )
+    .id_salt("inspector-segment")
+    .default_open(!collapsed)
+    .show(ui, |ui| {
+        kv_colored(
+            ui,
+            "kind",
+            seg.kind().as_str(),
+            if seg.is_code() {
+                col::code_seg()
+            } else {
+                col::data_seg()
+            },
+        );
+        kv(ui, "file offset", format!("{:08X}", seg.file_offset));
+        kv(ui, "size", format!("{} bytes", seg.length));
+        kv(ui, "alloc", format!("{} bytes", seg.min_alloc));
+        kv(ui, "fixups", seg.relocs.len().to_string());
+        ui.add_space(4.0);
+        ui.horizontal_wrapped(|ui| {
+            for f in seg.flag_names().iter().skip(1) {
+                widgets::chip(ui, f, col::dim());
+            }
+        });
+    });
+}
+
+fn nothing_selected(app: &SithApp, ui: &mut Ui, segno: u16) {
+    segment_card(app, ui, segno, false);
+    ui.add_space(12.0);
+    ui.vertical_centered(|ui| {
+        icons::inline(ui, Icon::Target, col::faint());
+        ui.label(dim("select a line"));
+        ui.label(
+            egui::RichText::new("its bytes, its fixup and everything that references it")
+                .size(10.5)
+                .color(col::faint()),
+        );
+    });
+}
+
+/// An operand's size prefix repeats what the argument type already says.
+fn strip_size(text: &str) -> String {
+    let mut out = text.to_string();
+    for prefix in ["word ", "byte ", "dword ", "qword "] {
+        out = out.replace(prefix, "");
+    }
+    out
+}
+
+/// Keep a value inside the panel; the full text stays in the tooltip.
+fn elide(text: &str, max: usize) -> String {
+    if text.chars().count() <= max {
+        return text.to_string();
+    }
+    let head: String = text.chars().take(max - 1).collect();
+    format!("{head}\u{2026}")
+}
+
+// ----------------------------------------------------------------- resource
+
+fn resource(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, index: usize) {
     let Some(doc) = app.doc() else { return };
     let Some(r) = doc.ne.resources.get(index) else {
         return;
     };
-    widgets::section(ui, "RESOURCE");
-    kv(ui, "type", &r.type_name());
-    kv(ui, "id", &r.res_id.to_string());
-    kv(ui, "file offset", &format!("{:08X}", r.offset));
-    kv(ui, "size", &format!("{} bytes", r.length));
-    ui.horizontal_wrapped(|ui| {
-        for f in r.flag_names() {
-            widgets::chip(ui, f, col::dim());
-        }
+
+    egui::Frame::new()
+        .fill(col::raised())
+        .corner_radius(egui::CornerRadius::same(5))
+        .inner_margin(egui::Margin::symmetric(10, 9))
+        .show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            ui.horizontal(|ui| {
+                icons::inline(ui, icons::for_resource(r.type_id.as_id()), col::orange());
+                ui.label(
+                    egui::RichText::new(r.res_id.to_string())
+                        .monospace()
+                        .size(15.0)
+                        .strong()
+                        .color(col::text()),
+                );
+            });
+            ui.label(mono_c(r.type_name(), col::orange()));
+        });
+    ui.add_space(10.0);
+
+    card(ui, "STORED", |ui| {
+        kv(ui, "file offset", format!("{:08X}", r.offset));
+        kv(ui, "size", format!("{} bytes", r.length));
+        ui.add_space(4.0);
+        ui.horizontal_wrapped(|ui| {
+            for f in r.flag_names() {
+                widgets::chip(ui, f, col::dim());
+            }
+        });
     });
-    if let Some(info) = ne_core::dib::DibInfo::parse(doc.ne.resource_data(r)) {
-        widgets::section(ui, "BITMAP");
-        kv(
-            ui,
-            "size",
-            &format!("{} x {}", info.abs_width(), info.abs_height()),
-        );
-        kv(ui, "depth", &format!("{} bpp", info.bit_count));
-        kv(ui, "compression", info.compression_name());
-        kv(ui, "palette", &info.palette_len.to_string());
+
+    let data = doc.ne.resource_data(r);
+    if let Some(info) = ne_core::dib::DibInfo::parse(data) {
+        card(ui, "BITMAP", |ui| {
+            kv(ui, "size", format!("{} x {}", info.abs_width(), info.abs_height()));
+            kv(ui, "depth", format!("{} bpp", info.bit_count));
+            kv(ui, "compression", info.compression_name());
+            kv(ui, "palette", info.palette_len.to_string());
+        });
+    }
+    if let Some(font) = ne_core::fnt::parse(data) {
+        card(ui, "FONT", |ui| {
+            kv(ui, "face", &font.face);
+            kv(ui, "size", format!("{} point", font.header.points));
+            kv(
+                ui,
+                "cell",
+                format!("{} x {}", font.header.pix_width, font.header.pix_height),
+            );
+            kv(ui, "weight", font.header.weight_name());
+            kv(ui, "charset", font.header.charset_name());
+            kv(ui, "glyphs", font.glyphs.len().to_string());
+        });
+    }
+
+    let uses = doc.res_links.uses(index);
+    if !uses.is_empty() {
+        card(ui, &format!("LOADED BY ({})", uses.len()), |ui| {
+            for u in uses {
+                let owner = doc
+                    .program
+                    .function_containing(u.addr)
+                    .map(|f| app.label(f))
+                    .unwrap_or_default();
+                ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 8.0;
+                    if widgets::link(ui, u.addr.to_string(), col::accent()).clicked() {
+                        act.push(Action::Goto(u.addr));
+                    }
+                    ui.label(mono_c(owner, col::symbol()));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        widgets::chip(
+                            ui,
+                            &u.api,
+                            match u.confidence {
+                                Confidence::Id => col::green(),
+                                Confidence::Name => col::faint(),
+                            },
+                        );
+                    });
+                });
+            }
+        });
     }
 }
 
-/// A label/value line, aligned so the panel reads as a table.
-fn kv(ui: &mut Ui, key: &str, value: &str) {
-    ui.horizontal(|ui| {
-        ui.label(mono_c(format!("{key:<12}"), col::faint()));
-        ui.label(mono_c(value, col::text()));
+// ------------------------------------------------------------------ module
+
+fn module(app: &SithApp, ui: &mut Ui) {
+    let Some(doc) = app.doc() else { return };
+    card(ui, "MODULE", |ui| {
+        ui.horizontal(|ui| {
+            icons::inline(
+                ui,
+                Icon::Module,
+                if doc.ne.header.is_library() {
+                    col::purple()
+                } else {
+                    col::green()
+                },
+            );
+            ui.label(mono_c(doc.ne.module_name(), col::symbol()).strong());
+        });
+        if !doc.ne.description().is_empty() {
+            ui.label(
+                egui::RichText::new(doc.ne.description())
+                    .size(11.0)
+                    .color(col::dim()),
+            );
+        }
+        ui.add_space(6.0);
+        kv(ui, "segments", doc.ne.segments.len().to_string());
+        kv(ui, "functions", doc.program.functions.len().to_string());
+        kv(ui, "exports", doc.ne.exports().len().to_string());
+        kv(ui, "imports", doc.ne.module_ref_names().len().to_string());
+        kv(ui, "resources", doc.ne.resources.len().to_string());
+    });
+
+    if app.project.annotation_count() > 0 {
+        card(ui, "PROJECT", |ui| {
+            kv(
+                ui,
+                "name",
+                if app.project.name.is_empty() {
+                    "untitled".to_string()
+                } else {
+                    app.project.name.clone()
+                },
+            );
+            kv(ui, "annotations", app.project.annotation_count().to_string());
+            kv(ui, "binaries", app.project.binaries.len().to_string());
+        });
+    }
+
+    ui.add_space(6.0);
+    ui.vertical_centered(|ui| {
+        ui.label(
+            egui::RichText::new("select a line in a listing for its details")
+                .size(11.0)
+                .color(col::faint()),
+        );
     });
 }
-

@@ -20,6 +20,7 @@ pub enum Icon {
     Open,
     Reload,
     Save,
+    Copy,
     Close,
     Plus,
     Overview,
@@ -112,6 +113,17 @@ pub fn draw(painter: &egui::Painter, rect: Rect, icon: Icon, color: Color32) {
             path(vec![p(8.0, 2.0), p(8.0, 10.0)]);
             path(vec![p(5.0, 7.0), p(8.0, 10.5), p(11.0, 7.0)]);
             path(vec![p(3.0, 13.0), p(13.0, 13.0)]);
+        }
+        Icon::Copy => {
+            painter.rect_stroke(
+                Rect::from_min_max(p(5.5, 2.5), p(13.5, 11.0)),
+                egui::CornerRadius::same(2),
+                stroke,
+                egui::StrokeKind::Inside,
+            );
+            path(vec![p(10.0, 13.5), p(2.5, 13.5), p(2.5, 5.0)]);
+            line(p(2.5, 13.5), p(2.5, 5.0));
+            line(p(2.5, 5.0), p(5.5, 5.0));
         }
         Icon::Close => {
             line(p(4.0, 4.0), p(12.0, 12.0));
