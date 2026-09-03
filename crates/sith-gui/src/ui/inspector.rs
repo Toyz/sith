@@ -128,7 +128,7 @@ fn segment_context(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16
     // Bytes at the selection, read as the common widths. A 16-bit binary is
     // full of packed structures and this saves a trip to a calculator.
     if let Some(bytes) = seg.data.get(sel as usize..(sel as usize + 8).min(seg.data.len())) {
-        widgets::section(ui, "col::bytes()");
+        widgets::section(ui, "BYTES");
         ui.label(mono_c(
             bytes.iter().map(|b| format!("{b:02X} ")).collect::<String>(),
             col::bytes(),

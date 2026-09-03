@@ -75,6 +75,9 @@ pub fn frame(app: &mut SithApp, ui: &mut Ui) {
         views::central(app, ui, &mut act);
     });
 
+    if let Some(w) = &app.wizard {
+        crate::wizard::show(w, &ctx, &mut act);
+    }
     dialogs::show(app, &ctx, &mut act);
     app.apply(act);
 }
@@ -188,8 +191,8 @@ fn menu_bar(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                 });
             });
             ui.separator();
-            if ui.button("New project").clicked() {
-                act.push(Action::NewProject);
+            if ui.button("New project…").clicked() {
+                act.push(Action::ShowWizard);
                 ui.close();
             }
             if ui.button("Open project…").clicked() {

@@ -33,7 +33,7 @@ use std::path::{Path, PathBuf};
 pub use api::{ApiDb, ArgKind, CallConv, Signature};
 pub use entry::Entry;
 pub use header::{NeHeader, TargetOs};
-pub use index::ExportIndex;
+pub use index::{scan_dir, ExportIndex, ModuleSummary};
 pub use ordinals::OrdinalDb;
 pub use project::{BinaryNotes, Project};
 pub use reloc::{AddrType, Fixup, RelKind, Reloc, Target};

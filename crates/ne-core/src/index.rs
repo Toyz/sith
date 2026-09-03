@@ -39,6 +39,84 @@ impl ModuleInfo {
     }
 }
 
+/// What a directory scan reports about one NE file.
+///
+/// Enough to decide whether a module belongs in a project without opening it,
+/// which is what both the `scan` command and the new-project wizard need.
+#[derive(Debug, Clone)]
+pub struct ModuleSummary {
+    pub path: PathBuf,
+    pub module: String,
+    pub description: String,
+    pub is_library: bool,
+    pub file_size: u64,
+    pub segments: usize,
+    pub exports: usize,
+    pub resources: usize,
+    pub imports: Vec<String>,
+}
+
+/// Extensions worth opening. A directory beside a game executable is mostly
+/// data files, and trying to parse all of them wastes time to no purpose.
+pub fn is_candidate(path: &Path) -> bool {
+    let ext = path
+        .extension()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+        .to_ascii_uppercase();
+    matches!(
+        ext.as_str(),
+        "EXE" | "DLL" | "DRV" | "FON" | "MOD" | "OCX" | "VBX"
+    )
+}
+
+/// Every NE binary under `root`, summarised, sorted by path.
+///
+/// Files that are not NE binaries are skipped silently: none of them failing
+/// to parse is an error worth reporting.
+pub fn scan_dir(root: &Path) -> Vec<ModuleSummary> {
+    let mut out = Vec::new();
+    let mut stack = vec![root.to_path_buf()];
+    if root.is_file() {
+        stack.clear();
+        if let Some(s) = summarise(root) {
+            out.push(s);
+        }
+    }
+    while let Some(dir) = stack.pop() {
+        let Ok(entries) = std::fs::read_dir(&dir) else {
+            continue;
+        };
+        for e in entries.flatten() {
+            let p = e.path();
+            if p.is_dir() {
+                stack.push(p);
+            } else if is_candidate(&p) {
+                if let Some(s) = summarise(&p) {
+                    out.push(s);
+                }
+            }
+        }
+    }
+    out.sort_by(|a, b| a.path.cmp(&b.path));
+    out
+}
+
+fn summarise(path: &Path) -> Option<ModuleSummary> {
+    let ne = NeFile::open(path).ok()?;
+    Some(ModuleSummary {
+        path: path.to_path_buf(),
+        module: ne.module_name().to_string(),
+        description: ne.description().to_string(),
+        is_library: ne.header.is_library(),
+        file_size: ne.buf.len() as u64,
+        segments: ne.segments.len(),
+        exports: ne.exports().len(),
+        resources: ne.resources.len(),
+        imports: ne.module_ref_names(),
+    })
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct ExportIndex {
     modules: HashMap<String, ModuleInfo>,
@@ -81,12 +159,7 @@ impl ExportIndex {
     }
 
     fn add_file(&mut self, path: &Path) {
-        let ext = path
-            .extension()
-            .and_then(|s| s.to_str())
-            .unwrap_or("")
-            .to_ascii_uppercase();
-        if !matches!(ext.as_str(), "EXE" | "DLL" | "DRV" | "FON" | "MOD" | "OCX" | "VBX") {
+        if !is_candidate(path) {
             return;
         }
         let Ok(ne) = NeFile::open(path) else { return };

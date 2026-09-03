@@ -121,9 +121,16 @@ that, keyed by address:
 - your bookmarks,
 - which segments you decided hold 32-bit code.
 
+`File ▸ New project…` opens a three-step wizard: point it at the folder the
+program was installed to, tick the modules worth keeping, name the result. The
+scan finds the NE binaries among the data files and reports what each one holds
+— segments, exports, resources — so the choice can be made without opening any
+of them.
+
 `File ▸ Save project` writes a `.sith` file; `Ctrl+S` saves again, and every
 later change is written back automatically so nothing is lost to a crash.
-Opening a project reopens every binary it refers to.
+Opening a project reopens every binary it refers to, and `sith-gui FILE.sith`
+opens one straight from the command line.
 
 The format is JSON, so it diffs, merges and reads as plain text:
 

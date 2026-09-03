@@ -35,11 +35,20 @@ pub fn welcome(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
 
             // The two starting moves, given equal weight: open a binary to
             // look at, or reopen the project where the work already lives.
-            let width = 720.0_f32.min(ui.available_width() - 40.0);
+            let width = 860.0_f32.min(ui.available_width() - 40.0);
             centered(ui, width, |ui| {
-                ui.columns(2, |cols| {
+                ui.columns(3, |cols| {
                     start_card(
                         &mut cols[0],
+                        Icon::Plus,
+                        "New project",
+                        "scan a folder, pick the modules",
+                        col::green(),
+                        act,
+                        || Some(Action::ShowWizard),
+                    );
+                    start_card(
+                        &mut cols[1],
                         Icon::Open,
                         "Open a binary",
                         ".EXE, .DLL or .DRV from Windows 3.x",
@@ -54,7 +63,7 @@ pub fn welcome(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                         },
                     );
                     start_card(
-                        &mut cols[1],
+                        &mut cols[2],
                         Icon::Overview,
                         "Open a project",
                         "your names, notes and bookmarks",

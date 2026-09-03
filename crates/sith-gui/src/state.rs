@@ -222,7 +222,18 @@ pub enum Action {
         ordinal: Option<u16>,
         name: Option<String>,
     },
-    NewProject,
+    ShowWizard,
+    WizardScan(PathBuf),
+    WizardNext,
+    WizardBack,
+    WizardCancel,
+    WizardToggle(usize),
+    WizardSelectAll(bool),
+    WizardFilter(String),
+    WizardTyped(String),
+    WizardName(String),
+    WizardSaveTo(PathBuf),
+    WizardCreate,
     OpenProject,
     OpenProjectAt(PathBuf),
     SaveProject,
@@ -293,6 +304,8 @@ pub struct SithApp {
     pub palette_sel: usize,
     /// Set when the highlighted palette row must be scrolled back into view.
     pub palette_scroll: bool,
+    /// The new-project wizard, while it is open.
+    pub wizard: Option<crate::wizard::Wizard>,
     /// Address the rename box is editing, if it is open.
     pub rename_at: Option<(u16, u32)>,
     pub rename_text: String,
@@ -338,6 +351,7 @@ impl SithApp {
             palette_text: String::new(),
             palette_sel: 0,
             palette_scroll: false,
+            wizard: None,
             rename_at: None,
             rename_text: String::new(),
             focus_input: false,
@@ -345,7 +359,17 @@ impl SithApp {
             restyle: false,
         };
         if let Some(p) = initial {
-            app.open(&p);
+            // A project and a binary are both reasonable things to name on the
+            // command line, so the extension decides which was meant.
+            let is_project = p
+                .extension()
+                .and_then(|e| e.to_str())
+                .is_some_and(|e| e.eq_ignore_ascii_case("sith"));
+            if is_project {
+                app.open_project(&p);
+            } else {
+                app.open(&p);
+            }
         }
         app
     }
@@ -667,10 +691,73 @@ impl SithApp {
             Action::Status(s) => self.status = s,
             Action::SaveResource { index, raw } => self.save_resource(index, raw),
             Action::SaveListing => self.save_listing(),
-            Action::NewProject => {
-                self.project = Project::new("untitled");
-                self.status = "new project".into();
+            Action::ShowWizard => self.wizard = Some(crate::wizard::Wizard::default()),
+            Action::WizardScan(root) => {
+                if let Some(w) = &mut self.wizard {
+                    w.scan(root);
+                    // Landing straight on the module list is what the user
+                    // came for; an empty scan stays put so the message is read.
+                    if !w.found.is_empty() {
+                        w.step = crate::wizard::Step::Modules;
+                    }
+                }
             }
+            Action::WizardNext => {
+                if let Some(w) = &mut self.wizard {
+                    w.step = match w.step {
+                        crate::wizard::Step::Source => crate::wizard::Step::Modules,
+                        _ => crate::wizard::Step::Details,
+                    };
+                }
+            }
+            Action::WizardBack => {
+                if let Some(w) = &mut self.wizard {
+                    w.step = match w.step {
+                        crate::wizard::Step::Details => crate::wizard::Step::Modules,
+                        _ => crate::wizard::Step::Source,
+                    };
+                }
+            }
+            Action::WizardCancel => self.wizard = None,
+            Action::WizardToggle(i) => {
+                if let Some(w) = &mut self.wizard {
+                    if let Some(p) = w.picked.get_mut(i) {
+                        *p = !*p;
+                    }
+                }
+            }
+            Action::WizardSelectAll(on) => {
+                if let Some(w) = &mut self.wizard {
+                    w.picked.iter_mut().for_each(|p| *p = on);
+                }
+            }
+            Action::WizardFilter(f) => {
+                if let Some(w) = &mut self.wizard {
+                    w.filter = f;
+                }
+            }
+            Action::WizardTyped(t) => {
+                if let Some(w) = &mut self.wizard {
+                    w.typed = t;
+                }
+            }
+            Action::WizardName(n) => {
+                if let Some(w) = &mut self.wizard {
+                    // The suggested filename tracks the name until the user
+                    // picks a location of their own.
+                    if let Some(path) = &w.save_to {
+                        let dir = path.parent().map(PathBuf::from).unwrap_or_default();
+                        w.save_to = Some(dir.join(format!("{}.sith", n.trim())));
+                    }
+                    w.name = n;
+                }
+            }
+            Action::WizardSaveTo(p) => {
+                if let Some(w) = &mut self.wizard {
+                    w.save_to = Some(p);
+                }
+            }
+            Action::WizardCreate => self.create_from_wizard(),
             Action::OpenProject => self.open_project_dialog(),
             Action::OpenProjectAt(p) => self.open_project(&p),
             Action::SaveProject => self.save_project(false),
@@ -809,6 +896,7 @@ impl SithApp {
                 self.goto_open = false;
                 self.palette_open = false;
                 self.rename_at = None;
+                self.wizard = None;
                 self.error = None;
             }
         }
@@ -929,6 +1017,53 @@ impl SithApp {
         save_recent(&self.recent);
     }
 
+    /// Turn the wizard's choices into a project on disk, then open it.
+    fn create_from_wizard(&mut self) {
+        let Some(w) = self.wizard.take() else { return };
+        let Some(path) = w.save_to.clone() else {
+            self.wizard = Some(w);
+            return;
+        };
+        let chosen: Vec<(PathBuf, String)> = w
+            .selected()
+            .map(|m| (m.path.clone(), m.module.clone()))
+            .collect();
+        if chosen.is_empty() {
+            self.wizard = Some(w);
+            return;
+        }
+
+        let mut project = Project::new(w.name.trim());
+        // The path has to be set before any entry is added, or every binary is
+        // stored absolute and the project stops being portable.
+        project.path = Some(path.clone());
+        for (p, m) in &chosen {
+            let _ = project.notes_mut(p, m);
+        }
+        if let Err(e) = project.save(&path) {
+            self.error = Some(format!("{}: {e}", path.display()));
+            self.wizard = Some(w);
+            return;
+        }
+
+        self.project = project;
+        self.docs.clear();
+        self.tabs.clear();
+        self.textures.borrow_mut().clear();
+        for (p, _) in &chosen {
+            self.open(p);
+        }
+        // The first binary is the interesting one; leave the user there rather
+        // than on whichever happened to be scanned last.
+        self.active = 0;
+        self.remember_recent(&path, true);
+        self.status = format!(
+            "created {} with {} binaries",
+            path.display(),
+            chosen.len()
+        );
+    }
+
     /// Write the project back to its file once it has one. Annotations are
     /// cheap to write and losing them to a crash is not acceptable, so this
     /// happens on every change rather than on demand.
@@ -968,6 +1103,9 @@ impl SithApp {
                         opened += 1;
                     }
                 }
+                // Land on the first binary listed, not on whichever happened
+                // to be opened last.
+                self.active = 0;
                 self.remember_recent(path, true);
                 self.status = format!(
                     "{} — {} annotations across {} binaries{}",

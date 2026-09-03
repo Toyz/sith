@@ -9,6 +9,7 @@ mod theme;
 mod ui;
 mod views;
 mod widgets;
+mod wizard;
 
 use eframe::egui;
 
