@@ -3,16 +3,23 @@
 //! Color is load-bearing in a disassembly listing: the three things a reader
 //! scans for -- control flow, resolved symbols, and addresses -- have to be
 //! separable at a glance without the page turning into confetti. Every theme
-//! here fills the same set of roles, so switching one changes the look without
+//! fills the same set of roles, so switching one changes the look without
 //! changing what the colors mean.
+//!
+//! A theme is data. The built-in ones are the same shape as anything a user
+//! writes, so the editor can start from one, and a saved theme is a small JSON
+//! file in the config directory that can be copied between machines or shared.
 
 use eframe::egui::{self, Color32, CornerRadius, FontFamily, FontId, RichText, Stroke, TextStyle};
+use std::path::PathBuf;
 use std::sync::RwLock;
 
-/// The roles a theme must fill. Views name roles, never raw colors.
-#[derive(Debug, Clone, Copy)]
-pub struct Palette {
-    pub name: &'static str,
+/// The color roles. Views name roles, never a hue.
+///
+/// `Copy` on purpose: every one of these is read many times a frame, so the
+/// lookup has to be a read of a small value and not a clone.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Colors {
     pub dark: bool,
     /// Deepest surface: the listing background.
     pub bg: Color32,
@@ -33,6 +40,76 @@ pub struct Palette {
     pub yellow: Color32,
 }
 
+/// A named palette.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Theme {
+    pub name: String,
+    pub colors: Colors,
+    /// Built-in themes cannot be deleted or overwritten in place; editing one
+    /// makes a copy.
+    pub builtin: bool,
+}
+
+/// The editable roles, in the order the editor lists them.
+pub const ROLES: &[(&str, &str)] = &[
+    ("bg", "listing background"),
+    ("panel", "side panels"),
+    ("raised", "toolbars, tabs, cards"),
+    ("border", "outlines and separators"),
+    ("text", "body text"),
+    ("dim", "secondary text"),
+    ("faint", "labels and hints"),
+    ("accent", "selection, links, the root node"),
+    ("green", "calls, code segments"),
+    ("cyan", "jumps, data segments"),
+    ("purple", "returns, libraries"),
+    ("orange", "interrupts, warnings"),
+    ("red", "invalid instructions, errors"),
+    ("yellow", "symbols and your notes"),
+];
+
+impl Colors {
+    pub fn role(&self, name: &str) -> Color32 {
+        match name {
+            "bg" => self.bg,
+            "panel" => self.panel,
+            "raised" => self.raised,
+            "border" => self.border,
+            "text" => self.text,
+            "dim" => self.dim,
+            "faint" => self.faint,
+            "accent" => self.accent,
+            "green" => self.green,
+            "orange" => self.orange,
+            "purple" => self.purple,
+            "red" => self.red,
+            "cyan" => self.cyan,
+            "yellow" => self.yellow,
+            _ => self.text,
+        }
+    }
+
+    pub fn set_role(&mut self, name: &str, value: Color32) {
+        match name {
+            "bg" => self.bg = value,
+            "panel" => self.panel = value,
+            "raised" => self.raised = value,
+            "border" => self.border = value,
+            "text" => self.text = value,
+            "dim" => self.dim = value,
+            "faint" => self.faint = value,
+            "accent" => self.accent = value,
+            "green" => self.green = value,
+            "orange" => self.orange = value,
+            "purple" => self.purple = value,
+            "red" => self.red = value,
+            "cyan" => self.cyan = value,
+            "yellow" => self.yellow = value,
+            _ => {}
+        }
+    }
+}
+
 const fn rgb(hex: u32) -> Color32 {
     Color32::from_rgb(
         ((hex >> 16) & 0xFF) as u8,
@@ -41,153 +118,273 @@ const fn rgb(hex: u32) -> Color32 {
     )
 }
 
-pub const THEMES: &[Palette] = &[
-    Palette {
-        name: "Catppuccin Mocha",
-        dark: true,
-        bg: rgb(0x1E1E2E),
-        panel: rgb(0x181825),
-        raised: rgb(0x313244),
-        border: rgb(0x45475A),
-        text: rgb(0xCDD6F4),
-        dim: rgb(0xA6ADC8),
-        faint: rgb(0x7F849C),
-        accent: rgb(0x89B4FA),
-        green: rgb(0xA6E3A1),
-        orange: rgb(0xFAB387),
-        purple: rgb(0xCBA6F7),
-        red: rgb(0xF38BA8),
-        cyan: rgb(0x89DCEB),
-        yellow: rgb(0xF9E2AF),
-    },
-    Palette {
-        name: "Catppuccin Macchiato",
-        dark: true,
-        bg: rgb(0x24273A),
-        panel: rgb(0x1E2030),
-        raised: rgb(0x363A4F),
-        border: rgb(0x494D64),
-        text: rgb(0xCAD3F5),
-        dim: rgb(0xA5ADCB),
-        faint: rgb(0x8087A2),
-        accent: rgb(0x8AADF4),
-        green: rgb(0xA6DA95),
-        orange: rgb(0xF5A97F),
-        purple: rgb(0xC6A0F6),
-        red: rgb(0xED8796),
-        cyan: rgb(0x91D7E3),
-        yellow: rgb(0xEED49F),
-    },
-    Palette {
-        name: "Catppuccin Latte",
-        dark: false,
-        bg: rgb(0xEFF1F5),
-        panel: rgb(0xE6E9EF),
-        raised: rgb(0xDCE0E8),
-        border: rgb(0xBCC0CC),
-        text: rgb(0x4C4F69),
-        dim: rgb(0x6C6F85),
-        faint: rgb(0x8C8FA1),
-        accent: rgb(0x1E66F5),
-        green: rgb(0x40A02B),
-        orange: rgb(0xFE640B),
-        purple: rgb(0x8839EF),
-        red: rgb(0xD20F39),
-        cyan: rgb(0x179299),
-        yellow: rgb(0xDF8E1D),
-    },
-    Palette {
-        name: "Nord",
-        dark: true,
-        bg: rgb(0x2E3440),
-        panel: rgb(0x272B35),
-        raised: rgb(0x3B4252),
-        border: rgb(0x4C566A),
-        text: rgb(0xECEFF4),
-        dim: rgb(0xD8DEE9),
-        faint: rgb(0x7B879D),
-        accent: rgb(0x88C0D0),
-        green: rgb(0xA3BE8C),
-        orange: rgb(0xD08770),
-        purple: rgb(0xB48EAD),
-        red: rgb(0xBF616A),
-        cyan: rgb(0x8FBCBB),
-        yellow: rgb(0xEBCB8B),
-    },
-    Palette {
-        name: "Tokyo Night",
-        dark: true,
-        bg: rgb(0x1A1B26),
-        panel: rgb(0x16161E),
-        raised: rgb(0x292E42),
-        border: rgb(0x3B4261),
-        text: rgb(0xC0CAF5),
-        dim: rgb(0x9AA5CE),
-        faint: rgb(0x565F89),
-        accent: rgb(0x7AA2F7),
-        green: rgb(0x9ECE6A),
-        orange: rgb(0xFF9E64),
-        purple: rgb(0xBB9AF7),
-        red: rgb(0xF7768E),
-        cyan: rgb(0x7DCFFF),
-        yellow: rgb(0xE0AF68),
-    },
-    Palette {
-        name: "Gruvbox Dark",
-        dark: true,
-        bg: rgb(0x282828),
-        panel: rgb(0x1D2021),
-        raised: rgb(0x3C3836),
-        border: rgb(0x504945),
-        text: rgb(0xEBDBB2),
-        dim: rgb(0xBDAE93),
-        faint: rgb(0x928374),
-        accent: rgb(0x83A598),
-        green: rgb(0xB8BB26),
-        orange: rgb(0xFE8019),
-        purple: rgb(0xD3869B),
-        red: rgb(0xFB4934),
-        cyan: rgb(0x8EC07C),
-        yellow: rgb(0xFABD2F),
-    },
-    Palette {
-        name: "Midnight",
-        dark: true,
-        bg: rgb(0x0D1117),
-        panel: rgb(0x131821),
-        raised: rgb(0x1B222D),
-        border: rgb(0x2A3340),
-        text: rgb(0xC9D1D9),
-        dim: rgb(0x7D8A99),
-        faint: rgb(0x566270),
-        accent: rgb(0x58A6FF),
-        green: rgb(0x7EE787),
-        orange: rgb(0xFFA657),
-        purple: rgb(0xD2A8FF),
-        red: rgb(0xFF7B72),
-        cyan: rgb(0x79C0FF),
-        yellow: rgb(0xE3B341),
-    },
-];
+pub fn hex_of(c: Color32) -> String {
+    format!("#{:02X}{:02X}{:02X}", c.r(), c.g(), c.b())
+}
+
+/// Parse `#RRGGBB`, with or without the hash.
+pub fn color_of(hex: &str) -> Option<Color32> {
+    let h = hex.trim().trim_start_matches('#');
+    if h.len() != 6 {
+        return None;
+    }
+    let v = u32::from_str_radix(h, 16).ok()?;
+    Some(rgb(v))
+}
 
 pub const DEFAULT_THEME: &str = "Catppuccin Mocha";
 
-static CURRENT: RwLock<Palette> = RwLock::new(THEMES[0]);
+/// Colors a user can assign to an address, by name.
+///
+/// A short list on purpose: enough to separate subsystems at a glance, few
+/// enough that each stays distinguishable from the next.
+pub const USER_COLORS: &[&str] = &[
+    "red", "orange", "yellow", "green", "cyan", "blue", "purple", "grey",
+];
 
-pub fn current() -> Palette {
+/// Resolve a stored color name against the active theme.
+pub fn named_color(name: &str) -> Option<Color32> {
+    let p = current();
+    Some(match name {
+        "red" => p.red,
+        "orange" => p.orange,
+        "yellow" => p.yellow,
+        "green" => p.green,
+        "cyan" => p.cyan,
+        "blue" => p.accent,
+        "purple" => p.purple,
+        "grey" | "gray" => p.dim,
+        _ => return None,
+    })
+}
+
+fn builtin(name: &str, dark: bool, v: [u32; 14]) -> Theme {
+    Theme {
+        name: name.to_string(),
+        builtin: true,
+        colors: Colors {
+            dark,
+            bg: rgb(v[0]),
+            panel: rgb(v[1]),
+            raised: rgb(v[2]),
+            border: rgb(v[3]),
+            text: rgb(v[4]),
+            dim: rgb(v[5]),
+            faint: rgb(v[6]),
+            accent: rgb(v[7]),
+            green: rgb(v[8]),
+            orange: rgb(v[9]),
+            purple: rgb(v[10]),
+            red: rgb(v[11]),
+            cyan: rgb(v[12]),
+            yellow: rgb(v[13]),
+        },
+    }
+}
+
+pub fn builtins() -> Vec<Theme> {
+    vec![
+        builtin("Catppuccin Mocha", true, [
+            0x1E1E2E, 0x181825, 0x313244, 0x45475A, 0xCDD6F4, 0xA6ADC8, 0x7F849C,
+            0x89B4FA, 0xA6E3A1, 0xFAB387, 0xCBA6F7, 0xF38BA8, 0x89DCEB, 0xF9E2AF,
+        ]),
+        builtin("Catppuccin Macchiato", true, [
+            0x24273A, 0x1E2030, 0x363A4F, 0x494D64, 0xCAD3F5, 0xA5ADCB, 0x8087A2,
+            0x8AADF4, 0xA6DA95, 0xF5A97F, 0xC6A0F6, 0xED8796, 0x91D7E3, 0xEED49F,
+        ]),
+        builtin("Catppuccin Latte", false, [
+            0xEFF1F5, 0xE6E9EF, 0xDCE0E8, 0xBCC0CC, 0x4C4F69, 0x6C6F85, 0x8C8FA1,
+            0x1E66F5, 0x40A02B, 0xFE640B, 0x8839EF, 0xD20F39, 0x179299, 0xDF8E1D,
+        ]),
+        builtin("Nord", true, [
+            0x2E3440, 0x272B35, 0x3B4252, 0x4C566A, 0xECEFF4, 0xD8DEE9, 0x7B879D,
+            0x88C0D0, 0xA3BE8C, 0xD08770, 0xB48EAD, 0xBF616A, 0x8FBCBB, 0xEBCB8B,
+        ]),
+        builtin("Tokyo Night", true, [
+            0x1A1B26, 0x16161E, 0x292E42, 0x3B4261, 0xC0CAF5, 0x9AA5CE, 0x565F89,
+            0x7AA2F7, 0x9ECE6A, 0xFF9E64, 0xBB9AF7, 0xF7768E, 0x7DCFFF, 0xE0AF68,
+        ]),
+        builtin("Gruvbox Dark", true, [
+            0x282828, 0x1D2021, 0x3C3836, 0x504945, 0xEBDBB2, 0xBDAE93, 0x928374,
+            0x83A598, 0xB8BB26, 0xFE8019, 0xD3869B, 0xFB4934, 0x8EC07C, 0xFABD2F,
+        ]),
+        builtin("Midnight", true, [
+            0x0D1117, 0x131821, 0x1B222D, 0x2A3340, 0xC9D1D9, 0x7D8A99, 0x566270,
+            0x58A6FF, 0x7EE787, 0xFFA657, 0xD2A8FF, 0xFF7B72, 0x79C0FF, 0xE3B341,
+        ]),
+    ]
+}
+
+// The active colors are read constantly, so they live apart from the name and
+// stay `Copy`.
+static CURRENT: RwLock<Colors> = RwLock::new(Colors {
+    dark: true,
+    bg: rgb(0x1E1E2E),
+    panel: rgb(0x181825),
+    raised: rgb(0x313244),
+    border: rgb(0x45475A),
+    text: rgb(0xCDD6F4),
+    dim: rgb(0xA6ADC8),
+    faint: rgb(0x7F849C),
+    accent: rgb(0x89B4FA),
+    green: rgb(0xA6E3A1),
+    orange: rgb(0xFAB387),
+    purple: rgb(0xCBA6F7),
+    red: rgb(0xF38BA8),
+    cyan: rgb(0x89DCEB),
+    yellow: rgb(0xF9E2AF),
+});
+static CURRENT_NAME: RwLock<String> = RwLock::new(String::new());
+static REGISTRY: RwLock<Vec<Theme>> = RwLock::new(Vec::new());
+
+pub fn current() -> Colors {
     *CURRENT.read().unwrap()
 }
 
-/// Select a theme by name. Unknown names leave the current one in place, so a
+pub fn current_name() -> String {
+    CURRENT_NAME.read().unwrap().clone()
+}
+
+pub fn themes() -> Vec<Theme> {
+    REGISTRY.read().unwrap().clone()
+}
+
+pub fn theme(name: &str) -> Option<Theme> {
+    REGISTRY
+        .read()
+        .unwrap()
+        .iter()
+        .find(|t| t.name.eq_ignore_ascii_case(name))
+        .cloned()
+}
+
+/// Load the built-ins plus anything saved in the config directory.
+pub fn load_registry() {
+    let mut all = builtins();
+    for t in load_custom() {
+        // A saved theme with a built-in's name replaces it, which is how you
+        // adjust one of the shipped palettes without losing the original file.
+        if let Some(i) = all.iter().position(|b| b.name == t.name) {
+            all[i] = t;
+        } else {
+            all.push(t);
+        }
+    }
+    *REGISTRY.write().unwrap() = all;
+}
+
+/// Select a theme by name. An unknown name leaves the current one alone, so a
 /// settings file written by a newer build cannot leave the window unreadable.
 pub fn set_theme(name: &str) -> bool {
-    match THEMES.iter().find(|p| p.name.eq_ignore_ascii_case(name)) {
-        Some(p) => {
-            *CURRENT.write().unwrap() = *p;
+    match theme(name) {
+        Some(t) => {
+            *CURRENT.write().unwrap() = t.colors;
+            *CURRENT_NAME.write().unwrap() = t.name;
             true
         }
         None => false,
     }
+}
+
+/// Apply colors without naming them, for a live preview while editing.
+pub fn preview(colors: Colors) {
+    *CURRENT.write().unwrap() = colors;
+}
+
+pub fn themes_dir() -> Option<PathBuf> {
+    let dir = std::env::var_os("XDG_CONFIG_HOME")
+        .map(PathBuf::from)
+        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".config")))
+        .or_else(|| std::env::var_os("APPDATA").map(PathBuf::from))?;
+    Some(dir.join("sith").join("themes"))
+}
+
+fn slug(name: &str) -> String {
+    name.chars()
+        .map(|c| if c.is_ascii_alphanumeric() { c.to_ascii_lowercase() } else { '-' })
+        .collect::<String>()
+        .trim_matches('-')
+        .to_string()
+}
+
+fn to_json(t: &Theme) -> String {
+    let mut lines = vec![
+        format!("  \"name\": {}", serde_json::to_string(&t.name).unwrap_or_default()),
+        format!("  \"dark\": {}", t.colors.dark),
+    ];
+    for (role, _) in ROLES {
+        lines.push(format!("  \"{role}\": \"{}\"", hex_of(t.colors.role(role))));
+    }
+    format!("{{\n{}\n}}\n", lines.join(",\n"))
+}
+
+fn from_json(text: &str) -> Option<Theme> {
+    let v: serde_json::Value = serde_json::from_str(text).ok()?;
+    let name = v.get("name")?.as_str()?.to_string();
+    let mut colors = builtins()[0].colors;
+    colors.dark = v.get("dark").and_then(|d| d.as_bool()).unwrap_or(true);
+    for (role, _) in ROLES {
+        if let Some(c) = v.get(*role).and_then(|s| s.as_str()).and_then(color_of) {
+            colors.set_role(role, c);
+        }
+    }
+    Some(Theme {
+        name,
+        colors,
+        builtin: false,
+    })
+}
+
+fn load_custom() -> Vec<Theme> {
+    let Some(dir) = themes_dir() else {
+        return Vec::new();
+    };
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return Vec::new();
+    };
+    let mut out: Vec<Theme> = entries
+        .flatten()
+        .filter(|e| {
+            e.path()
+                .extension()
+                .and_then(|s| s.to_str())
+                .is_some_and(|s| s.eq_ignore_ascii_case("json"))
+        })
+        .filter_map(|e| std::fs::read_to_string(e.path()).ok())
+        .filter_map(|t| from_json(&t))
+        .collect();
+    out.sort_by(|a, b| a.name.cmp(&b.name));
+    out
+}
+
+/// Write a theme to the config directory and put it in the registry.
+pub fn save_theme(t: &Theme) -> std::io::Result<PathBuf> {
+    let Some(dir) = themes_dir() else {
+        return Err(std::io::Error::other("no config directory"));
+    };
+    std::fs::create_dir_all(&dir)?;
+    let path = dir.join(format!("{}.json", slug(&t.name)));
+    std::fs::write(&path, to_json(t))?;
+    let mut saved = t.clone();
+    saved.builtin = false;
+    let mut reg = REGISTRY.write().unwrap();
+    match reg.iter().position(|x| x.name == saved.name) {
+        Some(i) => reg[i] = saved,
+        None => reg.push(saved),
+    }
+    Ok(path)
+}
+
+/// Remove a saved theme. Built-ins come back on the next load.
+pub fn delete_theme(name: &str) -> std::io::Result<()> {
+    if let Some(dir) = themes_dir() {
+        let path = dir.join(format!("{}.json", slug(name)));
+        if path.exists() {
+            std::fs::remove_file(path)?;
+        }
+    }
+    load_registry();
+    Ok(())
 }
 
 /// Color roles, resolved against the current theme.
@@ -292,30 +489,6 @@ pub mod col {
     pub fn data_seg() -> Color32 {
         cyan()
     }
-}
-
-/// Colors a user can assign to an address, by name.
-///
-/// A short list on purpose: enough to separate subsystems at a glance, few
-/// enough that each stays distinguishable from the next.
-pub const USER_COLORS: &[&str] = &[
-    "red", "orange", "yellow", "green", "cyan", "blue", "purple", "grey",
-];
-
-/// Resolve a stored color name against the active theme.
-pub fn named_color(name: &str) -> Option<Color32> {
-    let p = current();
-    Some(match name {
-        "red" => p.red,
-        "orange" => p.orange,
-        "yellow" => p.yellow,
-        "green" => p.green,
-        "cyan" => p.cyan,
-        "blue" => p.accent,
-        "purple" => p.purple,
-        "grey" | "gray" => p.dim,
-        _ => return None,
-    })
 }
 
 pub fn flow_color(flow: ne_disasm::Flow) -> Color32 {

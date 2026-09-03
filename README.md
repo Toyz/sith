@@ -87,8 +87,46 @@ sith-gui [FILE|PROJECT]
   version info decode to text.
 - A command palette over everything in the binary, with scoped search and match
   highlighting.
-- Seven themes — Catppuccin Mocha, Macchiato and Latte, Nord, Tokyo Night,
-  Gruvbox Dark and Midnight — under View ▸ Theme, remembered between runs.
+- Seven built-in themes — Catppuccin Mocha, Macchiato and Latte, Nord, Tokyo
+  Night, Gruvbox Dark and Midnight — under View ▸ Theme, remembered between
+  runs, plus an editor for making your own.
+
+### Themes
+
+A theme is fourteen named roles, and every view names a role rather than a
+color, so a new palette changes the look without changing what anything means.
+View ▸ Theme ▸ Edit this theme opens an editor with a swatch and an editable
+hex field per role; changes apply to the running window as you make them,
+because a palette is judged by how a listing reads under it rather than by how
+the swatches look beside each other.
+
+Saving writes a small JSON file to `~/.config/sith/themes/`, which can be
+hand-written, copied between machines or checked in:
+
+```json
+{
+  "name": "My theme",
+  "dark": true,
+  "bg": "#1E1E2E",
+  "panel": "#181825",
+  "raised": "#313244",
+  "border": "#45475A",
+  "text": "#CDD6F4",
+  "dim": "#A6ADC8",
+  "faint": "#7F849C",
+  "accent": "#89B4FA",
+  "green": "#A6E3A1",
+  "cyan": "#89DCEB",
+  "purple": "#CBA6F7",
+  "orange": "#FAB387",
+  "red": "#F38BA8",
+  "yellow": "#F9E2AF"
+}
+```
+
+Editing a built-in starts a copy rather than overwriting it, and a saved theme
+that shares a built-in's name replaces it in the list, which is how to adjust
+one of the shipped palettes without losing the original.
 
 Keys: `Ctrl+O` open, `Ctrl+S` save project, `Ctrl+P` find anything, `Ctrl+G` go
 to an address or symbol, `Ctrl+W` close tab, `Alt+←`/`Alt+→` history, `↑`/`↓`

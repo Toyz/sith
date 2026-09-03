@@ -296,7 +296,12 @@ pub enum Action {
     SetColor { segment: u16, offset: u32, color: Option<&'static str> },
     ToggleBookmark { segment: u16, offset: u32 },
     SetRenameText(String),
-    SetTheme(&'static str),
+    SetTheme(String),
+    OpenThemeEditor,
+    EditTheme(Box<crate::theme::Theme>),
+    SaveTheme,
+    CancelThemeEdit,
+    DeleteTheme(String),
     SetNavFilter(String),
     SetGotoText(String),
     SetPaletteText(String),
@@ -381,15 +386,19 @@ pub struct SithApp {
     pub theme: String,
     /// Set when the egui style must be rebuilt, after a theme change.
     pub restyle: bool,
+    /// The theme editor, while it is open.
+    pub theme_editor: Option<crate::ui::theme_editor::ThemeEditor>,
 }
 
 impl SithApp {
     pub fn new(cc: &eframe::CreationContext<'_>, initial: Option<PathBuf>) -> SithApp {
         let settings = load_settings();
+        // Built-ins plus anything saved in the config directory.
+        crate::theme::load_registry();
         if !crate::theme::set_theme(&settings.theme) {
             crate::theme::set_theme(crate::theme::DEFAULT_THEME);
         }
-        let theme_name = crate::theme::current().name.to_string();
+        let theme_name = crate::theme::current_name();
         crate::theme::install(&cc.egui_ctx);
         egui_extras::install_image_loaders(&cc.egui_ctx);
 
@@ -425,6 +434,7 @@ impl SithApp {
             focus_input: false,
             theme: theme_name,
             restyle: false,
+            theme_editor: None,
         };
         if let Some(p) = initial {
             // A project and a binary are both reasonable things to name on the
@@ -973,9 +983,74 @@ impl SithApp {
                 );
             }
             Action::SetRenameText(t) => self.rename_text = t,
+            Action::OpenThemeEditor => {
+                let from = crate::theme::theme(&self.theme)
+                    .unwrap_or_else(|| crate::theme::builtins()[0].clone());
+                self.theme_editor = Some(crate::ui::theme_editor::ThemeEditor::open(
+                    from,
+                    self.theme.clone(),
+                ));
+            }
+            Action::EditTheme(t) => {
+                // Applied to the running window, because a palette is judged
+                // by how a listing reads under it.
+                crate::theme::preview(t.colors);
+                self.restyle = true;
+                if let Some(e) = &mut self.theme_editor {
+                    e.working = *t;
+                }
+            }
+            Action::SaveTheme => {
+                let Some(e) = self.theme_editor.take() else {
+                    return;
+                };
+                let name = e.working.name.trim().to_string();
+                if name.is_empty() {
+                    self.error = Some("a theme needs a name".into());
+                    self.theme_editor = Some(e);
+                    return;
+                }
+                let mut t = e.working.clone();
+                t.name = name.clone();
+                match crate::theme::save_theme(&t) {
+                    Ok(path) => {
+                        crate::theme::set_theme(&name);
+                        self.theme = name.clone();
+                        self.restyle = true;
+                        save_settings(&Settings {
+                            theme: self.theme.clone(),
+                        });
+                        self.status = format!("saved {name} to {}", path.display());
+                    }
+                    Err(err) => {
+                        self.error = Some(format!("{err}"));
+                        self.theme_editor = Some(e);
+                    }
+                }
+            }
+            Action::CancelThemeEdit => {
+                if let Some(e) = self.theme_editor.take() {
+                    // Put back whatever was showing before the editor opened.
+                    crate::theme::set_theme(&e.original_name);
+                    self.theme = e.original_name;
+                    self.restyle = true;
+                }
+            }
+            Action::DeleteTheme(name) => {
+                if let Err(e) = crate::theme::delete_theme(&name) {
+                    self.error = Some(format!("{e}"));
+                    return;
+                }
+                if self.theme == name {
+                    crate::theme::set_theme(crate::theme::DEFAULT_THEME);
+                    self.theme = crate::theme::current_name();
+                    self.restyle = true;
+                }
+                self.status = format!("deleted {name}");
+            }
             Action::SetTheme(name) => {
-                if crate::theme::set_theme(name) {
-                    self.theme = name.to_string();
+                if crate::theme::set_theme(&name) {
+                    self.theme = name.clone();
                     self.restyle = true;
                     save_settings(&Settings {
                         theme: self.theme.clone(),

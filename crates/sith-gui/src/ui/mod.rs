@@ -1,6 +1,7 @@
 //! Window chrome: menu bar, toolbar, tab strip, side panels, status bar.
 
 pub mod dialogs;
+pub mod theme_editor;
 pub mod inspector;
 pub mod navigator;
 
@@ -67,7 +68,15 @@ pub fn frame(app: &mut SithApp, ui: &mut Ui) {
             .show(ui, |ui| inspector::show(app, ui, &mut act));
     }
 
-    egui::CentralPanel::default_margins().show(ui, |ui| {
+    // The listing sits on `bg` and the panels either side on `panel`, which is
+    // what the theme editor says those roles mean.
+    egui::CentralPanel::default_margins()
+        .frame(
+            egui::Frame::new()
+                .fill(col::bg())
+                .inner_margin(egui::Margin::symmetric(10, 8)),
+        )
+        .show(ui, |ui| {
         if app.doc().is_none() {
             // An open project with nothing in it is not a cold start, and
             // should not look like one.
@@ -84,6 +93,7 @@ pub fn frame(app: &mut SithApp, ui: &mut Ui) {
     if let Some(w) = &app.wizard {
         crate::wizard::show(w, &ctx, &mut act);
     }
+    theme_editor::show(app, &ctx, &mut act);
     dialogs::show(app, &ctx, &mut act);
     app.apply(act);
 }
@@ -247,22 +257,38 @@ fn menu_bar(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
             }
             ui.separator();
             ui.menu_button("Theme", |ui| {
-                for p in crate::theme::THEMES {
+                if ui.button("Edit this theme…").clicked() {
+                    act.push(Action::OpenThemeEditor);
+                    ui.close();
+                }
+                ui.separator();
+                for p in crate::theme::themes() {
                     let active = app.theme == p.name;
+                    let c = p.colors;
                     // A swatch beside each name says what the theme looks like
                     // without having to try it.
                     let r = ui.horizontal(|ui| {
-                        for c in [p.accent, p.green, p.yellow, p.red, p.purple] {
+                        for c in [c.accent, c.green, c.yellow, c.red, c.purple] {
                             let (rect, _) =
                                 ui.allocate_exact_size(egui::vec2(8.0, 12.0), egui::Sense::hover());
                             ui.painter()
                                 .rect_filled(rect, egui::CornerRadius::same(2), c);
                         }
-                        ui.selectable_label(active, p.name)
+                        ui.selectable_label(active, &p.name)
                     });
                     if r.inner.clicked() {
-                        act.push(Action::SetTheme(p.name));
+                        act.push(Action::SetTheme(p.name.clone()));
                         ui.close();
+                    }
+                    // Only a saved theme can be removed; the shipped ones come
+                    // back on the next launch anyway.
+                    if !p.builtin {
+                        r.response.context_menu(|ui| {
+                            if ui.button(format!("Delete {}", p.name)).clicked() {
+                                act.push(Action::DeleteTheme(p.name.clone()));
+                                ui.close();
+                            }
+                        });
                     }
                 }
             });
