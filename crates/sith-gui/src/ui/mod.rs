@@ -284,6 +284,11 @@ fn tab_strip(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                     let title = tab.nav.title(app.docs.get(tab.doc));
                     let fill = if active { BG } else { RAISED };
                     let text_col = if active { TEXT } else { DIM };
+                    // The close target is recorded rather than interacted
+                    // with: the tab's own click area is created afterwards
+                    // and covers it, so the two must be told apart by
+                    // position rather than by widget order.
+                    let mut close_rect = egui::Rect::NOTHING;
                     let r = egui::Frame::new()
                         .fill(fill)
                         .corner_radius(egui::CornerRadius {
@@ -305,8 +310,8 @@ fn tab_strip(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                                 ui.label(egui::RichText::new(&title).color(text_col).size(12.0));
                                 // A tab from another file says so: with several
                                 // modules open the title alone is ambiguous.
-                                if let Some(d) = app.docs.get(tab.doc) {
-                                    if app.docs.len() > 1 {
+                                if app.docs.len() > 1 {
+                                    if let Some(d) = app.docs.get(tab.doc) {
                                         ui.label(
                                             egui::RichText::new(d.ne.module_name())
                                                 .color(FAINT)
@@ -314,30 +319,39 @@ fn tab_strip(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                                         );
                                     }
                                 }
-                                if app.tabs.len() > 1 {
-                                    let (r, resp) = ui.allocate_exact_size(
-                                        egui::vec2(11.0, 11.0),
-                                        egui::Sense::click(),
-                                    );
-                                    icons::draw(
-                                        ui.painter(),
-                                        r,
-                                        Icon::Close,
-                                        if resp.hovered() { RED } else { FAINT },
-                                    );
-                                    if resp.clicked() {
-                                        act.push(Action::CloseTab(i));
-                                    }
-                                }
+                                let (rect, _) = ui.allocate_exact_size(
+                                    egui::vec2(12.0, 12.0),
+                                    egui::Sense::hover(),
+                                );
+                                close_rect = rect;
                             });
                         });
+
                     let resp = ui.interact(
                         r.response.rect,
                         ui.id().with(("tab", i)),
                         egui::Sense::click(),
                     );
+                    let over_close = ui
+                        .ctx()
+                        .pointer_latest_pos()
+                        .is_some_and(|p| close_rect.contains(p));
+                    icons::draw(
+                        ui.painter(),
+                        close_rect,
+                        Icon::Close,
+                        if over_close { RED } else { FAINT },
+                    );
                     if resp.clicked() {
-                        act.push(Action::SelectTab(i));
+                        act.push(if over_close {
+                            Action::CloseTab(i)
+                        } else {
+                            Action::SelectTab(i)
+                        });
+                    }
+                    // Middle-click closes, as it does in every editor.
+                    if resp.middle_clicked() {
+                        act.push(Action::CloseTab(i));
                     }
                     if active {
                         let mut bar = r.response.rect;

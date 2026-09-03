@@ -95,6 +95,11 @@ pub struct Signature {
     pub name: String,
     pub conv: CallConv,
     pub args: Vec<ArgKind>,
+    /// Return type, where the curated overlay supplies one.
+    pub ret: Option<String>,
+    /// Parameter names, where the curated overlay supplies them. Always the
+    /// same length as `args` when present.
+    pub params: Vec<String>,
 }
 
 impl Signature {
@@ -103,17 +108,27 @@ impl Signature {
         self.args.iter().map(|a| a.words()).sum()
     }
 
+    /// Name of parameter `index`, where one is known.
+    pub fn param_name(&self, index: usize) -> Option<&str> {
+        self.params.get(index).map(String::as_str)
+    }
+
     /// A C-ish rendering, for tooltips and headers.
     pub fn render(&self) -> String {
-        format!(
-            "{}({})",
-            self.name,
-            self.args
-                .iter()
-                .map(|a| a.as_str())
-                .collect::<Vec<_>>()
-                .join(", ")
-        )
+        let args = self
+            .args
+            .iter()
+            .enumerate()
+            .map(|(i, a)| match self.param_name(i) {
+                Some(n) => format!("{} {n}", a.as_str()),
+                None => a.as_str().to_string(),
+            })
+            .collect::<Vec<_>>()
+            .join(", ");
+        match &self.ret {
+            Some(r) => format!("{r} {}({args})", self.name),
+            None => format!("{}({args})", self.name),
+        }
     }
 }
 
@@ -189,23 +204,44 @@ impl ApiDb {
     pub fn from_json(s: &str) -> Result<ApiDb, serde_json::Error> {
         #[derive(serde::Deserialize)]
         struct Raw {
-            n: String,
-            cc: String,
-            a: Vec<String>,
+            name: String,
+            conv: String,
+            #[serde(default)]
+            ret: Option<String>,
+            #[serde(default)]
+            args: Vec<String>,
+            #[serde(default)]
+            params: Vec<String>,
         }
-        let flat: HashMap<String, Raw> = serde_json::from_str(s)?;
+        // The file carries a `_comment` key; JSON has no comments, so keys
+        // beginning with an underscore are documentation and are skipped.
+        let flat: HashMap<String, serde_json::Value> = serde_json::from_str(s)?;
         let mut db = ApiDb::default();
-        for (key, raw) in flat {
+        for (key, value) in flat {
+            if key.starts_with('_') {
+                continue;
+            }
             let Some((module, ord)) = key.rsplit_once('.') else {
                 continue;
             };
             let Ok(ord) = ord.parse::<u16>() else { continue };
+            let raw: Raw = serde_json::from_value(value)?;
+            let args: Vec<ArgKind> = raw.args.iter().map(|a| ArgKind::parse(a)).collect();
+            // A stale overlay whose names no longer line up is dropped: a
+            // wrong parameter name is worse than none.
+            let params = if raw.params.len() == args.len() {
+                raw.params
+            } else {
+                Vec::new()
+            };
             db.by_ordinal.insert(
                 (module.to_ascii_uppercase(), ord),
                 Signature {
-                    name: raw.n,
-                    conv: CallConv::parse(&raw.cc),
-                    args: raw.a.iter().map(|a| ArgKind::parse(a)).collect(),
+                    name: raw.name,
+                    conv: CallConv::parse(&raw.conv),
+                    args,
+                    ret: raw.ret,
+                    params,
                 },
             );
         }
@@ -220,6 +256,8 @@ impl ApiDb {
         }
         #[derive(serde::Deserialize)]
         struct Raw {
+            #[serde(default, rename = "_comment")]
+            _comment: String,
             sets: HashMap<String, RawSet>,
             params: HashMap<String, Vec<Option<String>>>,
         }

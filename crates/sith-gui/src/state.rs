@@ -539,8 +539,17 @@ impl SithApp {
             }
             Action::CloseTab(i) => {
                 if i < self.tabs.len() {
+                    let doc = self.tabs[i].doc;
                     self.tabs.remove(i);
-                    self.active = self.active.min(self.tabs.len().saturating_sub(1));
+                    if i < self.active || self.active >= self.tabs.len() {
+                        self.active = self.active.saturating_sub(1);
+                    }
+                    // Closing the last tab of a loaded file leaves nothing to
+                    // look at, so a fresh overview takes its place.
+                    if self.tabs.is_empty() && self.docs.get(doc).is_some() {
+                        self.tabs.push(Tab::new(doc, Nav::Overview));
+                        self.active = 0;
+                    }
                 }
             }
             Action::SelectTab(i) => self.active = i.min(self.tabs.len() - 1),

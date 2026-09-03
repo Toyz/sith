@@ -130,13 +130,16 @@ fn segment_context(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16
                     ui.add_space(2.0);
                     for (i, a) in call.args.iter().enumerate() {
                         ui.horizontal(|ui| {
-                            ui.label(mono_c(format!("{:<8}", a.kind.as_str()), FAINT));
+                            ui.label(mono_c(
+                                format!("{:<10}", call.signature.param_name(i).unwrap_or("")),
+                                CYAN,
+                            ));
+                            ui.label(mono_c(format!("{:<7}", a.kind.as_str()), FAINT));
                             ui.label(mono_c(
                                 a.render(),
                                 if a.name.is_some() { GREEN } else { TEXT },
                             ));
                         });
-                        let _ = i;
                     }
                     if !call.complete {
                         ui.label(dim("some arguments were not literal pushes"));

@@ -19,15 +19,16 @@ fn print_signature(module: &str, ordinal: u16) {
         sig.stack_words()
     );
     for (i, arg) in sig.args.iter().enumerate() {
-        let set = api.param_set(module, &sig.name, i);
-        match set {
+        let label = sig.param_name(i).unwrap_or("");
+        let head = format!("    {:<12} {:<8}", cyan(label), arg.as_str());
+        match api.param_set(module, &sig.name, i) {
             Some(s) => {
-                println!("  {} {:<8} {}", dim(&format!("  arg{i}")), arg.as_str(), magenta(&s.name));
+                println!("{head} {}", magenta(&s.name));
                 for (v, n) in s.values.iter().take(64) {
-                    println!("        {:#010X}  {}", v, n);
+                    println!("        {v:#010X}  {n}");
                 }
             }
-            None => println!("  {} {}", dim(&format!("  arg{i}")), arg.as_str()),
+            None => println!("{head}"),
         }
     }
 }

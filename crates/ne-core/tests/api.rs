@@ -26,7 +26,8 @@ fn signatures_describe_the_stack_shape() {
     let sig = db.signature("KERNEL", 15).unwrap();
     assert_eq!(sig.args, vec![ArgKind::Word, ArgKind::Long]);
     assert_eq!(sig.stack_words(), 3);
-    assert_eq!(sig.render(), "GlobalAlloc(word, long)");
+    assert_eq!(sig.render(), "HGLOBAL GlobalAlloc(word flags, long bytes)");
+    assert_eq!(sig.param_name(0), Some("flags"));
 
     // MessageBox(word, str, str, word): two words and two far pointers.
     let sig = db.signature("USER", 1).unwrap();
