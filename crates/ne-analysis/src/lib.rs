@@ -9,6 +9,148 @@ pub mod resrefs;
 
 use ne_core::{NeFile, Target};
 use ne_disasm::{disassemble, Flow, Insn, Options, SegmentCode};
+
+/// What a function's stack frame says about its arguments and locals.
+///
+/// Win16 code gives this away without any symbols, from two independent
+/// signals:
+///
+/// - **`ret imm16` / `retf imm16`.** The pascal convention makes the *callee*
+///   pop its arguments, so the immediate on the return is the argument area in
+///   bytes, stated by the compiler. A bare `ret` means either cdecl -- where
+///   the caller cleans up -- or no arguments at all.
+/// - **`[bp+n]` accesses.** After `push bp; mov bp,sp` the frame is fixed:
+///   below `bp` are locals, above it are the saved frame pointer, the return
+///   address, and then the caller's arguments. The first argument therefore
+///   sits at `[bp+4]` for a near function and `[bp+6]` for a far one, and the
+///   highest offset touched shows how far the argument area reaches.
+///
+/// The two agree in the ordinary case and disagree in the interesting ones: a
+/// function that pops eight bytes but only ever reads the first four is
+/// ignoring an argument, and one that reads past what it pops is reading its
+/// caller's frame.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Frame {
+    /// True when the function sets up a `bp` frame.
+    pub has_frame: bool,
+    /// True when it returns with `retf`, so it is called far.
+    pub far: bool,
+    /// Bytes of arguments the callee pops, from the return instruction.
+    pub popped_bytes: Option<u16>,
+    /// Bytes of locals, from the `sub sp, n` in the prologue.
+    pub local_bytes: Option<u16>,
+    /// Distinct positive `[bp+n]` offsets the body reads, sorted.
+    pub argument_offsets: Vec<i32>,
+}
+
+impl Frame {
+    /// Where the first argument sits, given how the function returns.
+    pub fn first_argument_offset(&self) -> i32 {
+        if self.far {
+            6
+        } else {
+            4
+        }
+    }
+
+    /// Arguments in bytes, preferring what the compiler stated.
+    pub fn argument_bytes(&self) -> Option<u16> {
+        if let Some(n) = self.popped_bytes {
+            return Some(n);
+        }
+        // Nothing was popped, so fall back to how far the reads reached. This
+        // is a floor, not a count: an argument that is never read leaves no
+        // trace at all.
+        let highest = *self.argument_offsets.last()?;
+        let span = highest - self.first_argument_offset();
+        (span >= 0).then_some(span as u16 + 2)
+    }
+
+    /// Does it take arguments at all?
+    pub fn takes_arguments(&self) -> bool {
+        self.popped_bytes.is_some_and(|n| n > 0) || !self.argument_offsets.is_empty()
+    }
+
+    /// A short description for a listing or a tooltip.
+    pub fn describe(&self) -> String {
+        if !self.has_frame && self.popped_bytes.is_none() {
+            return "no stack frame".into();
+        }
+        let mut parts = Vec::new();
+        match self.argument_bytes() {
+            Some(0) | None if self.argument_offsets.is_empty() => {
+                parts.push("no arguments".to_string())
+            }
+            Some(n) => {
+                let counted = if self.popped_bytes.is_some() {
+                    format!("{n} bytes of arguments")
+                } else {
+                    format!("at least {n} bytes of arguments")
+                };
+                parts.push(counted);
+            }
+            None => parts.push("arguments of unknown size".to_string()),
+        }
+        if let Some(l) = self.local_bytes.filter(|l| *l > 0) {
+            parts.push(format!("{l} bytes of locals"));
+        }
+        parts.join(", ")
+    }
+}
+
+/// Read the frame of the function covering `range` in `code`.
+pub fn analyze_frame(code: &SegmentCode, start: u32, end: u32) -> Frame {
+    use iced_x86::{Mnemonic, Register};
+    let mut frame = Frame::default();
+    let body: Vec<&Insn> = code
+        .insns
+        .iter()
+        .filter(|i| i.offset >= start && i.offset < end)
+        .collect();
+
+    for (i, insn) in body.iter().enumerate() {
+        match insn.mnemonic {
+            // `mov bp, sp` right after a `push bp` is the frame being set up.
+            Mnemonic::Mov if insn.op0_register == Some(Register::BP) => {
+                if i > 0 && body[i - 1].mnemonic == Mnemonic::Push {
+                    frame.has_frame = true;
+                }
+            }
+            Mnemonic::Enter => {
+                frame.has_frame = true;
+                frame.local_bytes = insn.immediate.map(|v| v as u16);
+            }
+            // The prologue's `sub sp, n` reserves the locals, and only counts
+            // while the frame is being built.
+            Mnemonic::Sub if insn.op0_register == Some(Register::SP) => {
+                if frame.local_bytes.is_none() && frame.has_frame {
+                    frame.local_bytes = insn.immediate.map(|v| v as u16);
+                }
+            }
+            Mnemonic::Ret => {
+                frame.popped_bytes = Some(insn.immediate.unwrap_or(0) as u16);
+            }
+            Mnemonic::Retf => {
+                frame.far = true;
+                frame.popped_bytes = Some(insn.immediate.unwrap_or(0) as u16);
+            }
+            _ => {}
+        }
+        if let Some(d) = insn.bp_displacement {
+            if d > 0 {
+                frame.argument_offsets.push(d);
+            }
+        }
+    }
+    frame.argument_offsets.sort_unstable();
+    frame.argument_offsets.dedup();
+    // Anything at or below the saved frame pointer and return address is not an
+    // argument, whatever the displacement says.
+    let first = frame.first_argument_offset();
+    frame.argument_offsets.retain(|d| *d >= first);
+    frame
+}
+
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 /// Address of a code location within the module.
@@ -104,6 +246,8 @@ pub struct Function {
     pub calls: Vec<CallSite>,
     /// Instruction count, useful as a rough size signal in the GUI.
     pub insn_count: usize,
+    /// What the stack frame says about arguments and locals.
+    pub frame: Frame,
 }
 
 impl Function {
@@ -440,6 +584,7 @@ fn find_functions(ne: &NeFile, segno: u16, sc: &SegmentCode, seeds: Option<&Seed
             kind,
             calls,
             insn_count: body.len(),
+            frame: analyze_frame(sc, start, end),
         });
     }
     out

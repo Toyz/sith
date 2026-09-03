@@ -82,6 +82,48 @@ fn identity(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segment: u16, off
                 });
             });
 
+            // Colour is an annotation like naming, and belongs beside it.
+            ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 4.0;
+                for name in crate::theme::USER_COLORS {
+                    let Some(c) = crate::theme::named_color(name) else {
+                        continue;
+                    };
+                    let picked = app.user_color_name(segment, offset) == Some(*name);
+                    let (rect, resp) =
+                        ui.allocate_exact_size(egui::vec2(15.0, 15.0), egui::Sense::click());
+                    ui.painter().rect_filled(
+                        rect,
+                        egui::CornerRadius::same(4),
+                        c.gamma_multiply(if picked { 0.9 } else { 0.55 }),
+                    );
+                    if picked || resp.hovered() {
+                        ui.painter().rect_stroke(
+                            rect,
+                            egui::CornerRadius::same(4),
+                            egui::Stroke::new(if picked { 2.0 } else { 1.0 }, c),
+                            egui::StrokeKind::Outside,
+                        );
+                    }
+                    // Clicking the colour it already has clears it.
+                    if resp
+                        .on_hover_text(if picked {
+                            format!("{name} — click to clear")
+                        } else {
+                            name.to_string()
+                        })
+                        .clicked()
+                    {
+                        act.push(Action::SetColor {
+                            segment,
+                            offset,
+                            color: if picked { None } else { Some(name) },
+                        });
+                    }
+                }
+            });
+            ui.add_space(3.0);
+
             // The name the user gave wins over the generated one, and says so.
             match (name, function) {
                 (Some(n), _) => {
@@ -391,6 +433,31 @@ fn function_card(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segment: u16
         kv(ui, "size", format!("{} bytes", f.size()));
         kv(ui, "instructions", f.insn_count.to_string());
         kv(ui, "calls", f.calls.len().to_string());
+        // Recovered from the frame, without symbols: a pascal callee pops its
+        // own arguments, so the return instruction states their size.
+        kv_colored(ui, "called", if f.frame.far { "far" } else { "near" }, col::dim());
+        match f.frame.argument_bytes() {
+            Some(n) if n > 0 => {
+                kv_colored(ui, "arguments", format!("{n} bytes"), col::green());
+                if !f.frame.argument_offsets.is_empty() {
+                    kv_colored(
+                        ui,
+                        "at",
+                        f.frame
+                            .argument_offsets
+                            .iter()
+                            .map(|d| format!("bp+{d:X}"))
+                            .collect::<Vec<_>>()
+                            .join(" "),
+                        col::dim(),
+                    );
+                }
+            }
+            _ => kv_colored(ui, "arguments", "none", col::faint()),
+        }
+        if let Some(l) = f.frame.local_bytes.filter(|l| *l > 0) {
+            kv(ui, "locals", format!("{l} bytes"));
+        }
         ui.add_space(6.0);
         if ui.small_button("Show in call graph").clicked() {
             act.push(Action::SetGraphRoot(f.addr));

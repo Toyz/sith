@@ -186,6 +186,13 @@ pub struct GraphState {
     pub framed: bool,
     /// A pending zoom step from the toolbar, applied where the clamping lives.
     pub zoom_nudge: f32,
+    /// Where the user has dragged individual nodes, relative to where the
+    /// layout put them. Keyed by node, so it survives a re-layout.
+    pub moved: std::collections::HashMap<String, egui::Vec2>,
+    /// The node currently being dragged.
+    pub dragging: Option<String>,
+    /// The node whose context menu is open.
+    pub menu_for: Option<String>,
 }
 
 impl Default for GraphState {
@@ -201,6 +208,9 @@ impl Default for GraphState {
             zoom: 1.0,
             framed: false,
             zoom_nudge: 1.0,
+            moved: Default::default(),
+            dragging: None,
+            menu_for: None,
         }
     }
 }
@@ -276,6 +286,7 @@ pub enum Action {
     ShowRename { segment: u16, offset: u32 },
     SetName { segment: u16, offset: u32, name: String },
     SetComment { segment: u16, offset: u32, text: String },
+    SetColor { segment: u16, offset: u32, color: Option<&'static str> },
     ToggleBookmark { segment: u16, offset: u32 },
     SetRenameText(String),
     SetTheme(&'static str),
@@ -291,6 +302,11 @@ pub enum Action {
     SetGraphView { pan: egui::Vec2, zoom: f32 },
     GraphFit,
     GraphZoom(f32),
+    GraphDragStart(String),
+    GraphDragBy(egui::Vec2),
+    GraphDragEnd,
+    GraphResetLayout,
+    GraphMenuFor(Option<String>),
     ConsumeScroll,
     SetGraphDir(GraphDir),
     ToggleGraphImports,
@@ -573,6 +589,25 @@ impl SithApp {
         self.project
             .notes_for(&doc.path, doc.ne.module_name())?
             .comment_at(segment, offset)
+    }
+
+    /// The colour the user gave an address, resolved against the theme.
+    ///
+    /// Stored by name, so a project keeps its meaning when the theme changes.
+    pub fn user_color(&self, segment: u16, offset: u32) -> Option<egui::Color32> {
+        let doc = self.doc()?;
+        let name = self
+            .project
+            .notes_for(&doc.path, doc.ne.module_name())?
+            .color_at(segment, offset)?;
+        crate::theme::named_color(name)
+    }
+
+    pub fn user_color_name(&self, segment: u16, offset: u32) -> Option<&str> {
+        let doc = self.doc()?;
+        self.project
+            .notes_for(&doc.path, doc.ne.module_name())?
+            .color_at(segment, offset)
     }
 
     pub fn is_bookmarked(&self, segment: u16, offset: u32) -> bool {
@@ -903,6 +938,20 @@ impl SithApp {
                 }
                 self.autosave();
             }
+            Action::SetColor {
+                segment,
+                offset,
+                color,
+            } => {
+                if let Some(n) = self.notes_mut() {
+                    n.set_color(segment, offset, color);
+                }
+                self.autosave();
+                self.status = match color {
+                    Some(c) => format!("coloured seg{segment:02}:{offset:04X} {c}"),
+                    None => format!("cleared the colour on seg{segment:02}:{offset:04X}"),
+                };
+            }
             Action::ToggleBookmark { segment, offset } => {
                 let on = self
                     .notes_mut()
@@ -947,6 +996,10 @@ impl SithApp {
                 if let Some(t) = self.tab_mut() {
                     t.nav = Nav::Graph;
                     t.graph.root = Some(a);
+                    // Positions belong to the graph that was drawn, not to the
+                    // next one, so a new root starts from the clean layout.
+                    t.graph.moved.clear();
+                    t.graph.dragging = None;
                     // A new root needs re-framing, otherwise the view stays
                     // parked wherever the previous graph happened to be.
                     t.graph.framed = false;
@@ -970,6 +1023,35 @@ impl SithApp {
             Action::GraphZoom(factor) => {
                 if let Some(t) = self.tab_mut() {
                     t.graph.zoom_nudge = factor;
+                }
+            }
+            Action::GraphDragStart(key) => {
+                if let Some(t) = self.tab_mut() {
+                    t.graph.dragging = Some(key);
+                }
+            }
+            Action::GraphDragBy(delta) => {
+                if let Some(t) = self.tab_mut() {
+                    if let Some(key) = t.graph.dragging.clone() {
+                        *t.graph.moved.entry(key).or_default() += delta;
+                    }
+                }
+            }
+            Action::GraphDragEnd => {
+                if let Some(t) = self.tab_mut() {
+                    t.graph.dragging = None;
+                }
+            }
+            Action::GraphMenuFor(key) => {
+                if let Some(t) = self.tab_mut() {
+                    t.graph.menu_for = key;
+                }
+            }
+            Action::GraphResetLayout => {
+                if let Some(t) = self.tab_mut() {
+                    t.graph.moved.clear();
+                    t.graph.dragging = None;
+                    t.graph.framed = false;
                 }
             }
             Action::ConsumeScroll => {

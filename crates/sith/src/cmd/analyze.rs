@@ -34,6 +34,10 @@ pub fn funcs(
                     "ordinal": f.ordinal,
                     "kind": f.kind.as_str(),
                     "instructions": f.insn_count,
+                    "far": f.frame.far,
+                    "argument_bytes": f.frame.argument_bytes(),
+                    "local_bytes": f.frame.local_bytes,
+                    "argument_offsets": f.frame.argument_offsets,
                     "calls": f.calls.iter().map(|c| c.target.to_string()).collect::<Vec<_>>(),
                 })
             })
@@ -48,13 +52,20 @@ pub fn funcs(
             current = f.addr.segment;
             println!();
             println!("{}", heading(&format!("segment {current}")));
-            println!("{}", dim("  address       size  insns  kind        name"));
+            println!(
+                "{}",
+                dim("  address       size  insns  args  kind        name")
+            );
         }
         println!(
-            "  {}  {:>5}  {:>5}  {:<10}  {}",
+            "  {}  {:>5}  {:>5}  {:>4}  {:<10}  {}",
             f.addr,
             f.size(),
             f.insn_count,
+            match f.frame.argument_bytes() {
+                Some(0) | None => dim("-"),
+                Some(n) => format!("{n}"),
+            },
             dim(f.kind.as_str()),
             cyan(&f.label())
         );

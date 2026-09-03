@@ -154,3 +154,33 @@ fn a_newer_format_version_is_refused_rather_than_misread() {
         "the error should say why: {err}"
     );
 }
+
+#[test]
+fn colours_are_stored_by_name_and_survive_a_save() {
+    let dir = tmpdir("colours");
+    let file = dir.join("p.sith");
+    let bin = Path::new("/x/A.EXE");
+    let mut p = Project::new("p");
+    p.path = Some(file.clone());
+    p.notes_mut(bin, "A").set_color(2, 0x100, Some("green"));
+    p.save(&file).unwrap();
+
+    let text = std::fs::read_to_string(&file).unwrap();
+    assert!(text.contains("\"green\""), "the name is stored, not a value");
+
+    let loaded = Project::load(&file).unwrap();
+    assert_eq!(
+        loaded.notes_for(bin, "A").unwrap().color_at(2, 0x100),
+        Some("green")
+    );
+}
+
+#[test]
+fn clearing_a_colour_removes_it() {
+    let mut p = Project::new("p");
+    let bin = Path::new("/x/A.EXE");
+    p.notes_mut(bin, "A").set_color(1, 0x10, Some("red"));
+    assert_eq!(p.annotation_count(), 1);
+    p.notes_mut(bin, "A").set_color(1, 0x10, None);
+    assert_eq!(p.annotation_count(), 0);
+}

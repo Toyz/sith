@@ -54,6 +54,13 @@ pub struct BinaryNotes {
     /// Addresses worth coming back to.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub bookmarks: Vec<String>,
+    /// `SS:OOOO` -> a colour name.
+    ///
+    /// Colours are stored by name rather than as a value so a project keeps
+    /// its meaning under a different theme: "this subsystem is the green one"
+    /// survives, where a stored `#A6E3A1` would not.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub colors: BTreeMap<String, String>,
 }
 
 impl BinaryNotes {
@@ -75,6 +82,25 @@ impl BinaryNotes {
             self.names.remove(&key);
         } else {
             self.names.insert(key, name.trim().to_string());
+        }
+    }
+
+    pub fn color_at(&self, segment: u16, offset: u32) -> Option<&str> {
+        self.colors
+            .get(&addr_key(segment, offset))
+            .map(String::as_str)
+    }
+
+    /// Set or clear a colour. `None` removes the entry.
+    pub fn set_color(&mut self, segment: u16, offset: u32, color: Option<&str>) {
+        let key = addr_key(segment, offset);
+        match color {
+            Some(c) if !c.is_empty() => {
+                self.colors.insert(key, c.to_string());
+            }
+            _ => {
+                self.colors.remove(&key);
+            }
         }
     }
 
@@ -110,6 +136,7 @@ impl BinaryNotes {
         self.names.is_empty()
             && self.comments.is_empty()
             && self.bookmarks.is_empty()
+            && self.colors.is_empty()
             && self.bits32.is_empty()
     }
 }
@@ -245,7 +272,7 @@ impl Project {
     pub fn annotation_count(&self) -> usize {
         self.binaries
             .iter()
-            .map(|b| b.names.len() + b.comments.len() + b.bookmarks.len())
+            .map(|b| b.names.len() + b.comments.len() + b.bookmarks.len() + b.colors.len())
             .sum()
     }
 

@@ -102,6 +102,14 @@ pub struct Insn {
     /// a pushed constant: reading `push word [bp+6]` as the literal `6` turns
     /// a stack variable into a plausible, wrong argument value.
     pub immediate: Option<u32>,
+    /// Signed displacement when a memory operand is based on BP.
+    ///
+    /// In a function with a stack frame this is the whole story about locals
+    /// and arguments: negatives are locals, positives are the caller's
+    /// arguments, and the boundary is fixed by the calling convention.
+    pub bp_displacement: Option<i32>,
+    /// Register of the first operand, where it has one.
+    pub op0_register: Option<iced_x86::Register>,
     /// Immediate and displacement values in the operands.
     ///
     /// In 16-bit code a pointer into the data segment is usually a bare
@@ -221,6 +229,11 @@ fn decode(
         let flow = classify(&instr);
         let operand_values = operand_values(&instr);
         let immediate = immediate(&instr);
+        let bp_displacement = bp_displacement(&instr);
+        let op0_register = match instr.op0_kind() {
+            OpKind::Register => Some(instr.op0_register()),
+            _ => None,
+        };
         let near_target = match flow {
             Flow::Call | Flow::Jump | Flow::CondJump => Some(instr.near_branch_target() as u32),
             _ => None,
@@ -236,6 +249,8 @@ fn decode(
             near_target,
             fixup,
             immediate,
+            bp_displacement,
+            op0_register,
             operand_values,
         });
     }
@@ -244,6 +259,28 @@ fn decode(
         bits: opts.bits,
         insns,
     }
+}
+
+/// The displacement of a BP-relative memory operand, signed.
+fn bp_displacement(instr: &Instruction) -> Option<i32> {
+    use iced_x86::Register;
+    for i in 0..instr.op_count() {
+        if instr.op_kind(i) != OpKind::Memory {
+            continue;
+        }
+        if instr.memory_base() != Register::BP && instr.memory_base() != Register::EBP {
+            continue;
+        }
+        // 16-bit displacements are stored zero-extended, so the sign has to be
+        // put back or every local looks like an argument at a huge offset.
+        let raw = instr.memory_displacement64();
+        return Some(if instr.memory_displ_size() <= 2 {
+            raw as u16 as i16 as i32
+        } else {
+            raw as i32
+        });
+    }
+    None
 }
 
 /// The single immediate operand, if the instruction has exactly one.

@@ -294,6 +294,30 @@ pub mod col {
     }
 }
 
+/// Colours a user can assign to an address, by name.
+///
+/// A short list on purpose: enough to separate subsystems at a glance, few
+/// enough that each stays distinguishable from the next.
+pub const USER_COLORS: &[&str] = &[
+    "red", "orange", "yellow", "green", "cyan", "blue", "purple", "grey",
+];
+
+/// Resolve a stored colour name against the active theme.
+pub fn named_color(name: &str) -> Option<Color32> {
+    let p = current();
+    Some(match name {
+        "red" => p.red,
+        "orange" => p.orange,
+        "yellow" => p.yellow,
+        "green" => p.green,
+        "cyan" => p.cyan,
+        "blue" => p.accent,
+        "purple" => p.purple,
+        "grey" | "gray" => p.dim,
+        _ => return None,
+    })
+}
+
 pub fn flow_color(flow: ne_disasm::Flow) -> Color32 {
     use ne_disasm::Flow as F;
     match flow {

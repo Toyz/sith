@@ -309,12 +309,21 @@ fn function_row(
             ui.label(mono_c(format!("{:04X}", f.addr.offset), col::addr()));
             widgets::chip(ui, kind_label, kind_color);
             let user_named = app.user_name(f.addr.segment, f.addr.offset).is_some();
+            let tint = app.user_color(f.addr.segment, f.addr.offset);
+            if let Some(c) = tint {
+                // A colour the user chose is the strongest signal on the row.
+                let (dot, _) =
+                    ui.allocate_exact_size(egui::vec2(7.0, 7.0), egui::Sense::hover());
+                ui.painter().circle_filled(dot.center(), 3.5, c);
+            }
             if app.is_bookmarked(f.addr.segment, f.addr.offset) {
                 ui.label(mono_c("\u{25C6}", col::orange()));
             }
             ui.label(mono_c(
                 app.label(f),
-                if user_named {
+                if let Some(c) = tint {
+                    c
+                } else if user_named {
                     col::cyan()
                 } else {
                     match f.kind {
@@ -339,6 +348,7 @@ fn function_row(
             widgets::hover_row(ui, "size", format!("{} bytes", f.size()), col::text());
             widgets::hover_row(ui, "instructions", f.insn_count.to_string(), col::text());
             widgets::hover_row(ui, "calls", f.calls.len().to_string(), col::text());
+            widgets::hover_row(ui, "frame", f.frame.describe(), col::text());
             if app.user_name(f.addr.segment, f.addr.offset).is_some() {
                 widgets::hover_row(ui, "generated", f.label(), col::faint());
             }

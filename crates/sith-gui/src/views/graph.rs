@@ -13,7 +13,7 @@ use crate::theme::col;
 
 use eframe::egui::{self, Pos2, Rect, Stroke, Ui, Vec2};
 use ne_analysis::{Addr, Function};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 /// How many nodes a single column may hold before the rest are summarised.
 ///
@@ -29,6 +29,8 @@ const ROW_GAP: f32 = 14.0;
 
 #[derive(Clone)]
 struct Node {
+    /// Stable identity, used to remember where the user dragged it to.
+    key: String,
     /// `None` for an imported symbol, which has no address in this module.
     addr: Option<Addr>,
     label: String,
@@ -65,8 +67,16 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
         return;
     };
 
-    let nodes = layout(app, doc, root_fn, g.depth, g.dir, g.show_imports);
-    let edges = edges(app, doc, &nodes, g.dir, g.show_imports);
+    let nodes = layout(
+        app,
+        doc,
+        root_fn,
+        g.depth,
+        g.dir,
+        g.show_imports,
+        &g.moved,
+    );
+    let edges = edges(app, doc, &nodes);
 
     header(app, ui, act, root_fn, &nodes, &edges);
     controls(app, ui, act, g);
@@ -229,8 +239,42 @@ fn canvas(
                 zoom = (zoom * g.zoom_nudge).clamp(0.12, 4.0);
             }
 
+            // Node rectangles are needed before the drag is resolved, so the
+            // press can tell a node drag from a pan. They are projected with
+            // the transform as it stands now, which is what the pointer was
+            // pressed against.
+            let project = |w: Pos2, pan: Vec2, zoom: f32| {
+                rect.center() + (w.to_vec2() - pan) * zoom
+            };
+            // Captured by value: the transform is about to change, and the
+            // press was made against this one.
+            let (press_pan, press_zoom) = (pan, zoom);
+            let at_pointer = move |p: Pos2| {
+                nodes.iter().position(|n| {
+                    Rect::from_min_max(
+                        project(n.rect.min, press_pan, press_zoom),
+                        project(n.rect.max, press_pan, press_zoom),
+                    )
+                    .contains(p)
+                })
+            };
+
+            if resp.drag_started() {
+                if let Some(i) = resp.interact_pointer_pos().and_then(at_pointer) {
+                    act.push(Action::GraphDragStart(nodes[i].key.clone()));
+                }
+            }
+            if resp.drag_stopped() {
+                act.push(Action::GraphDragEnd);
+            }
             if resp.dragged() {
-                pan -= resp.drag_delta() / zoom;
+                if g.dragging.is_some() {
+                    // Moving one node, in world units so it tracks the pointer
+                    // at any zoom.
+                    act.push(Action::GraphDragBy(resp.drag_delta() / zoom));
+                } else {
+                    pan -= resp.drag_delta() / zoom;
+                }
             }
             // Zoom about the pointer, so the thing under the cursor stays put.
             if let Some(hover) = resp.hover_pos() {
@@ -243,7 +287,7 @@ fn canvas(
                 }
             }
 
-            let to_screen = |w: Pos2| rect.center() + (w.to_vec2() - pan) * zoom;
+            let to_screen = |w: Pos2| project(w, pan, zoom);
             let painter = ui.painter_at(rect);
 
             for (from, to) in edges {
@@ -272,8 +316,19 @@ fn canvas(
                 if over {
                     hovered = Some(i);
                 }
+                // A colour the user assigned outranks everything but the
+                // root marker: it is the whole point of assigning one.
+                let tint = n
+                    .addr
+                    .and_then(|a| app.user_color(a.segment, a.offset));
                 let (fill, border, text_col) = if n.is_overflow {
                     (col::bg(), col::border(), col::faint())
+                } else if let Some(c) = tint {
+                    (
+                        c.gamma_multiply(if over { 0.34 } else { 0.22 }),
+                        c,
+                        col::text(),
+                    )
                 } else if n.is_root {
                     (
                         col::accent().gamma_multiply(0.22),
@@ -287,7 +342,16 @@ fn canvas(
                 } else {
                     (col::raised(), col::border(), col::text())
                 };
-                let radius = egui::CornerRadius::same((5.0 * zoom).clamp(1.0, 8.0) as u8);
+                if n.is_root && tint.is_some() {
+                    // The root still has to be findable once it is coloured.
+                    painter.rect_stroke(
+                        r.expand(2.0),
+                        radius_of(zoom),
+                        Stroke::new((1.0 * zoom).clamp(0.6, 2.0), col::accent()),
+                        egui::StrokeKind::Outside,
+                    );
+                }
+                let radius = radius_of(zoom);
                 painter.rect_filled(r, radius, fill);
                 painter.rect_stroke(
                     r,
@@ -313,11 +377,110 @@ fn canvas(
                     painter.text(
                         r.min + Vec2::new(9.0 * zoom, 19.0 * zoom),
                         egui::Align2::LEFT_TOP,
-                        &n.sub,
+                        // Same clipping as the title: a sub-line that runs
+                        // past its box reads as a rendering fault.
+                        elide(&n.sub, ((n.rect.width() - 16.0) / 6.0) as usize),
                         egui::FontId::monospace(sub_px),
                         col::faint(),
                     );
                 }
+            }
+
+            // Right-click opens the menu for whichever node it landed on, and
+            // the choice is remembered: the pointer moves into the menu, so
+            // "what is hovered now" is the wrong question by then.
+            if resp.secondary_clicked() {
+                let key = resp.interact_pointer_pos().and_then(at_pointer).map(|i| nodes[i].key.clone());
+                act.push(Action::GraphMenuFor(key));
+            }
+            let menu_node = g
+                .menu_for
+                .as_ref()
+                .and_then(|k| nodes.iter().find(|n| n.key == *k));
+            if let Some(n) = menu_node {
+                let addr = n.addr;
+                let label = n.label.clone();
+                resp.context_menu(|ui| {
+                    ui.label(
+                        egui::RichText::new(&label)
+                            .monospace()
+                            .size(11.5)
+                            .color(col::faint()),
+                    );
+                    ui.separator();
+                    if let Some(addr) = addr {
+                        if ui.button("Open in listing").clicked() {
+                            act.push(Action::Goto(addr));
+                            ui.close();
+                        }
+                        if ui.button("Centre the graph here").clicked() {
+                            act.push(Action::SetGraphRoot(addr));
+                            ui.close();
+                        }
+                        if ui.button("Name this function…").clicked() {
+                            act.push(Action::ShowRename {
+                                segment: addr.segment,
+                                offset: addr.offset,
+                            });
+                            ui.close();
+                        }
+                        ui.separator();
+                        ui.label(
+                            egui::RichText::new("colour")
+                                .size(10.5)
+                                .color(col::faint()),
+                        );
+                        ui.horizontal(|ui| {
+                            ui.spacing_mut().item_spacing.x = 4.0;
+                            for name in crate::theme::USER_COLORS {
+                                let Some(c) = crate::theme::named_color(name) else {
+                                    continue;
+                                };
+                                let (sw, swr) = ui.allocate_exact_size(
+                                    egui::vec2(16.0, 16.0),
+                                    egui::Sense::click(),
+                                );
+                                ui.painter().rect_filled(
+                                    sw,
+                                    egui::CornerRadius::same(4),
+                                    c.gamma_multiply(0.7),
+                                );
+                                if swr.hovered() {
+                                    ui.painter().rect_stroke(
+                                        sw,
+                                        egui::CornerRadius::same(4),
+                                        Stroke::new(1.5, c),
+                                        egui::StrokeKind::Inside,
+                                    );
+                                }
+                                if swr.on_hover_text(*name).clicked() {
+                                    act.push(Action::SetColor {
+                                        segment: addr.segment,
+                                        offset: addr.offset,
+                                        color: Some(name),
+                                    });
+                                    ui.close();
+                                }
+                            }
+                        });
+                        if ui.button("Clear colour").clicked() {
+                            act.push(Action::SetColor {
+                                segment: addr.segment,
+                                offset: addr.offset,
+                                color: None,
+                            });
+                            ui.close();
+                        }
+                    } else if ui.button("Show its call sites").clicked() {
+                        act.push(Action::Go(Nav::Xrefs(label.clone())));
+                        ui.close();
+                    }
+                    ui.separator();
+                    if ui.button("Reset the layout").clicked() {
+                        act.push(Action::GraphResetLayout);
+                        ui.close();
+                    }
+                });
             }
 
             if let Some(i) = hovered {
@@ -375,7 +538,12 @@ fn canvas(
         });
 }
 
-/// Breadth-first levels out from the root, laid out in columns.
+/// Build the graph around `root`.
+///
+/// One node per function, not one per path to it. A breadth-first walk records
+/// each function at its shortest distance from the root and never adds it
+/// again, so a helper reachable four ways appears once with four edges into
+/// it, rather than four times in four columns.
 fn layout(
     app: &SithApp,
     doc: &crate::state::Doc,
@@ -383,23 +551,27 @@ fn layout(
     depth: usize,
     dir: GraphDir,
     show_imports: bool,
+    moved: &HashMap<String, Vec2>,
 ) -> Vec<Node> {
     let mut nodes: Vec<Node> = Vec::new();
-    let mut seen: HashSet<String> = HashSet::new();
+    let mut level_of: HashMap<String, i32> = HashMap::new();
 
-    let push = |nodes: &mut Vec<Node>,
-                    seen: &mut HashSet<String>,
-                    label: String,
-                    sub: String,
-                    addr: Option<Addr>,
-                    level: i32,
-                    is_root: bool,
-                    is_import: bool| {
-        let key = format!("{level}|{label}");
-        if !seen.insert(key) {
-            return;
+    let add = |nodes: &mut Vec<Node>,
+                   level_of: &mut HashMap<String, i32>,
+                   key: String,
+                   label: String,
+                   sub: String,
+                   addr: Option<Addr>,
+                   level: i32,
+                   is_root: bool,
+                   is_import: bool|
+     -> bool {
+        if level_of.contains_key(&key) {
+            return false;
         }
+        level_of.insert(key.clone(), level);
         nodes.push(Node {
+            key,
             addr,
             label,
             sub,
@@ -409,11 +581,13 @@ fn layout(
             is_overflow: false,
             rect: Rect::ZERO,
         });
+        true
     };
 
-    push(
+    add(
         &mut nodes,
-        &mut seen,
+        &mut level_of,
+        fn_key(root.addr),
         app.label(root),
         root.addr.to_string(),
         Some(root.addr),
@@ -431,23 +605,26 @@ fn layout(
                     continue;
                 };
                 for g in doc.program.callees_of(f) {
-                    push(
+                    if add(
                         &mut nodes,
-                        &mut seen,
+                        &mut level_of,
+                        fn_key(g.addr),
                         app.label(g),
-                        format!("{}  {} B", g.addr, g.size()),
+                        node_sub(g),
                         Some(g.addr),
                         level,
                         false,
                         false,
-                    );
-                    next.push(g.addr);
+                    ) {
+                        next.push(g.addr);
+                    }
                 }
                 if show_imports {
                     for name in doc.program.external_calls_of(f) {
-                        push(
+                        add(
                             &mut nodes,
-                            &mut seen,
+                            &mut level_of,
+                            import_key(&name),
                             name,
                             "import".into(),
                             None,
@@ -471,17 +648,19 @@ fn layout(
             let mut next = Vec::new();
             for a in &frontier {
                 for f in doc.program.callers_of(*a) {
-                    push(
+                    if add(
                         &mut nodes,
-                        &mut seen,
+                        &mut level_of,
+                        fn_key(f.addr),
                         app.label(f),
-                        format!("{}  {} B", f.addr, f.size()),
+                        node_sub(f),
                         Some(f.addr),
                         -level,
                         false,
                         false,
-                    );
-                    next.push(f.addr);
+                    ) {
+                        next.push(f.addr);
+                    }
                 }
             }
             frontier = next;
@@ -491,16 +670,37 @@ fn layout(
         }
     }
 
-    // Trim each column to something that can be read, keeping the module's own
-    // functions ahead of imported symbols: the structure is the interesting
-    // part, and a list of KERNEL calls is available elsewhere.
-    let mut by_level_all: HashMap<i32, Vec<usize>> = HashMap::new();
-    for (i, n) in nodes.iter().enumerate() {
-        by_level_all.entry(n.level).or_default().push(i);
+    trim_columns(&mut nodes);
+    order_columns(&mut nodes, doc, app);
+    place(&mut nodes, moved);
+    nodes
+}
+
+/// The line under a node's name: where it is, how big, and what it takes.
+fn node_sub(f: &Function) -> String {
+    match f.frame.argument_bytes() {
+        Some(n) if n > 0 => format!("{}  {} B  ({n} args)", f.addr, f.size()),
+        _ => format!("{}  {} B", f.addr, f.size()),
     }
-    let mut keep: Vec<bool> = vec![true; nodes.len()];
-    let mut overflow: Vec<(i32, usize)> = Vec::new();
-    for (level, mut idxs) in by_level_all {
+}
+
+fn fn_key(addr: Addr) -> String {
+    format!("f{:02}:{:04X}", addr.segment, addr.offset)
+}
+
+fn import_key(name: &str) -> String {
+    format!("i{name}")
+}
+
+/// Keep each column to something readable, the module's own functions first.
+fn trim_columns(nodes: &mut Vec<Node>) {
+    let mut by_level: HashMap<i32, Vec<usize>> = HashMap::new();
+    for (i, n) in nodes.iter().enumerate() {
+        by_level.entry(n.level).or_default().push(i);
+    }
+    let mut keep = vec![true; nodes.len()];
+    let mut hidden: Vec<(i32, usize)> = Vec::new();
+    for (level, mut idxs) in by_level {
         if idxs.len() <= MAX_PER_LEVEL || level == 0 {
             continue;
         }
@@ -508,94 +708,183 @@ fn layout(
         for i in idxs.iter().skip(MAX_PER_LEVEL) {
             keep[*i] = false;
         }
-        overflow.push((level, idxs.len() - MAX_PER_LEVEL));
+        hidden.push((level, idxs.len() - MAX_PER_LEVEL));
     }
-    if keep.iter().any(|k| !k) {
-        let mut kept = Vec::with_capacity(nodes.len());
-        for (n, k) in nodes.into_iter().zip(&keep) {
-            if *k {
-                kept.push(n);
-            }
-        }
-        nodes = kept;
-        for (level, hidden) in overflow {
-            nodes.push(Node {
-                addr: None,
-                label: format!("+{hidden} more"),
-                sub: "raise the depth or pick a smaller root".into(),
-                level,
-                is_root: false,
-                is_import: false,
-                is_overflow: true,
-                rect: Rect::ZERO,
-            });
+    if hidden.is_empty() {
+        return;
+    }
+    let mut kept = Vec::with_capacity(nodes.len());
+    for (n, k) in std::mem::take(nodes).into_iter().zip(&keep) {
+        if *k {
+            kept.push(n);
         }
     }
-
-    // Place each level in its own column, centred vertically.
-    let mut by_level: HashMap<i32, Vec<usize>> = HashMap::new();
-    for (i, n) in nodes.iter().enumerate() {
-        by_level.entry(n.level).or_default().push(i);
+    *nodes = kept;
+    for (level, n) in hidden {
+        nodes.push(Node {
+            key: format!("o{level}"),
+            addr: None,
+            label: format!("+{n} more"),
+            sub: "raise the levels to see them".into(),
+            level,
+            is_root: false,
+            is_import: false,
+            is_overflow: true,
+            rect: Rect::ZERO,
+        });
     }
-    for (level, mut idxs) in by_level {
-        // Overflow markers sit at the foot of their column.
-        idxs.sort_by_key(|i| (nodes[*i].is_overflow, nodes[*i].is_import));
-        let x = level as f32 * (NODE_W + COL_GAP);
-        let total = idxs.len() as f32 * (NODE_H + ROW_GAP) - ROW_GAP;
-        let mut y = -total / 2.0;
-        for i in idxs {
-            nodes[i].rect = Rect::from_min_size(Pos2::new(x, y), Vec2::new(NODE_W, NODE_H));
-            y += NODE_H + ROW_GAP;
-        }
-    }
-    nodes
 }
 
-fn edges(
-    app: &SithApp,
-    doc: &crate::state::Doc,
-    nodes: &[Node],
-    dir: GraphDir,
-    show_imports: bool,
-) -> Vec<(usize, usize)> {
-    let index: HashMap<(i32, &str), usize> = nodes
+/// Order each column so edges cross as little as possible.
+///
+/// The classic barycentre heuristic: put a node opposite the average position
+/// of the nodes it connects to in the column before it. Two passes is enough
+/// to stop the picture looking like a cat's cradle, and it is stable, so the
+/// layout does not reshuffle itself when nothing changed.
+fn order_columns(nodes: &mut [Node], doc: &crate::state::Doc, app: &SithApp) {
+    let index: HashMap<String, usize> = nodes
         .iter()
         .enumerate()
-        .map(|(i, n)| ((n.level, n.label.as_str()), i))
+        .map(|(i, n)| (n.key.clone(), i))
         .collect();
-    let mut out = Vec::new();
+    let links = adjacency(nodes, &index, doc, app);
 
+    let mut levels: Vec<i32> = nodes.iter().map(|n| n.level).collect();
+    levels.sort_unstable();
+    levels.dedup();
+
+    // Position within a column, seeded by the order nodes were discovered.
+    let mut pos: HashMap<usize, f32> = HashMap::new();
+    for level in &levels {
+        let mut col: Vec<usize> = nodes
+            .iter()
+            .enumerate()
+            .filter(|(_, n)| n.level == *level)
+            .map(|(i, _)| i)
+            .collect();
+        col.sort_by_key(|i| (nodes[*i].is_overflow, nodes[*i].is_import));
+        for (k, i) in col.iter().enumerate() {
+            pos.insert(*i, k as f32);
+        }
+    }
+
+    for _ in 0..2 {
+        for level in &levels {
+            if *level == 0 {
+                continue;
+            }
+            // Look towards the root: that is the column already settled.
+            let previous = if *level > 0 { level - 1 } else { level + 1 };
+            let mut col: Vec<usize> = nodes
+                .iter()
+                .enumerate()
+                .filter(|(_, n)| n.level == *level)
+                .map(|(i, _)| i)
+                .collect();
+            let bary = |i: usize| -> f32 {
+                let mut sum = 0.0;
+                let mut count = 0.0;
+                for (a, b) in &links {
+                    let other = if *a == i {
+                        *b
+                    } else if *b == i {
+                        *a
+                    } else {
+                        continue;
+                    };
+                    if nodes[other].level == previous {
+                        sum += pos.get(&other).copied().unwrap_or(0.0);
+                        count += 1.0;
+                    }
+                }
+                if count == 0.0 {
+                    // Nothing to line up with: keep where it was.
+                    pos.get(&i).copied().unwrap_or(0.0)
+                } else {
+                    sum / count
+                }
+            };
+            let mut keyed: Vec<(usize, f32)> = col.iter().map(|i| (*i, bary(*i))).collect();
+            keyed.sort_by(|a, b| {
+                a.1.partial_cmp(&b.1)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+                    // Overflow markers stay at the foot of their column.
+                    .then(nodes[a.0].is_overflow.cmp(&nodes[b.0].is_overflow))
+            });
+            col = keyed.into_iter().map(|(i, _)| i).collect();
+            for (k, i) in col.iter().enumerate() {
+                pos.insert(*i, k as f32);
+            }
+        }
+    }
+
+    for (i, n) in nodes.iter_mut().enumerate() {
+        // Stash the row in the rect's y for `place` to turn into a position.
+        n.rect = Rect::from_min_size(
+            Pos2::new(0.0, pos.get(&i).copied().unwrap_or(0.0)),
+            Vec2::ZERO,
+        );
+    }
+}
+
+/// Every edge between nodes that are both present.
+fn adjacency(
+    nodes: &[Node],
+    index: &HashMap<String, usize>,
+    doc: &crate::state::Doc,
+    app: &SithApp,
+) -> Vec<(usize, usize)> {
+    let _ = app;
+    let mut out = Vec::new();
     for (i, n) in nodes.iter().enumerate() {
         let Some(addr) = n.addr else { continue };
         let Some(f) = doc.program.function_at(addr) else {
             continue;
         };
-        if matches!(dir, GraphDir::Callees | GraphDir::Both) && n.level >= 0 {
-            for g in doc.program.callees_of(f) {
-                if let Some(&j) = index.get(&(n.level + 1, app.label(g).as_str())) {
-                    out.push((i, j));
-                }
-            }
-            if show_imports {
-                for name in doc.program.external_calls_of(f) {
-                    if let Some(&j) = index.get(&(n.level + 1, name.as_str())) {
-                        out.push((i, j));
-                    }
-                }
+        for g in doc.program.callees_of(f) {
+            if let Some(j) = index.get(&fn_key(g.addr)) {
+                out.push((i, *j));
             }
         }
-        // Caller columns sit to the left, so the edge runs from them inwards.
-        if matches!(dir, GraphDir::Callers | GraphDir::Both) && n.level <= 0 {
-            for g in doc.program.callers_of(addr) {
-                if let Some(&j) = index.get(&(n.level - 1, app.label(g).as_str())) {
-                    out.push((j, i));
-                }
+        for name in doc.program.external_calls_of(f) {
+            if let Some(j) = index.get(&import_key(&name)) {
+                out.push((i, *j));
             }
         }
     }
     out.sort_unstable();
     out.dedup();
     out
+}
+
+/// Turn column and row into a rectangle, then apply anything the user moved.
+fn place(nodes: &mut [Node], moved: &HashMap<String, Vec2>) {
+    let mut per_level: HashMap<i32, usize> = HashMap::new();
+    for n in nodes.iter() {
+        let e = per_level.entry(n.level).or_insert(0);
+        *e = (*e).max(n.rect.min.y as usize + 1);
+    }
+    for n in nodes.iter_mut() {
+        let rows = per_level.get(&n.level).copied().unwrap_or(1) as f32;
+        let total = rows * (NODE_H + ROW_GAP) - ROW_GAP;
+        let x = n.level as f32 * (NODE_W + COL_GAP);
+        let y = -total / 2.0 + n.rect.min.y * (NODE_H + ROW_GAP);
+        let offset = moved.get(&n.key).copied().unwrap_or(Vec2::ZERO);
+        n.rect = Rect::from_min_size(Pos2::new(x, y) + offset, Vec2::new(NODE_W, NODE_H));
+    }
+}
+
+fn edges(app: &SithApp, doc: &crate::state::Doc, nodes: &[Node]) -> Vec<(usize, usize)> {
+    let index: HashMap<String, usize> = nodes
+        .iter()
+        .enumerate()
+        .map(|(i, n)| (n.key.clone(), i))
+        .collect();
+    adjacency(nodes, &index, doc, app)
+}
+
+fn radius_of(zoom: f32) -> egui::CornerRadius {
+    egui::CornerRadius::same((5.0 * zoom).clamp(1.0, 8.0) as u8)
 }
 
 fn bounds(nodes: &[Node]) -> Rect {
@@ -610,7 +899,6 @@ fn elide(s: &str, max: usize) -> String {
     if s.chars().count() <= max {
         return s.to_string();
     }
-    let head: String = s.chars().take(max - 1).collect();
-    format!("{head}…")
+    let head: String = s.chars().take(max.saturating_sub(1)).collect();
+    format!("{head}\u{2026}")
 }
-
