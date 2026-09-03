@@ -9,9 +9,16 @@
 use crate::state::{Action, GraphDir, Nav, SithApp};
 use crate::theme::{col, *};
 
-use eframe::egui::{self, Color32, CornerRadius, Pos2, Rect, Stroke, Ui, Vec2};
+use eframe::egui::{self, Pos2, Rect, Stroke, Ui, Vec2};
 use ne_analysis::{Addr, Function};
 use std::collections::{HashMap, HashSet};
+
+/// How many nodes a single column may hold before the rest are summarised.
+///
+/// A well-connected function can call sixty things. Drawing all of them makes
+/// a column taller than any useful zoom level, and the graph stops being a
+/// picture of anything.
+const MAX_PER_LEVEL: usize = 14;
 
 const NODE_W: f32 = 190.0;
 const NODE_H: f32 = 34.0;
@@ -28,6 +35,8 @@ struct Node {
     level: i32,
     is_root: bool,
     is_import: bool,
+    /// A stand-in for the entries a level did not have room for.
+    is_overflow: bool,
     rect: Rect,
 }
 
@@ -89,94 +98,166 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
     let nodes = layout(app, doc, root_fn, g.depth, g.dir, g.show_imports);
     let edges = edges(app, doc, &nodes, g.dir, g.show_imports);
 
-    ui.label(dim(&format!(
-        "{} nodes, {} edges — drag to pan, scroll to zoom, click a node to re-centre",
+    ui.label(dim(format!(
+        "{} nodes, {} edges — drag to pan, scroll to zoom, click a node to re-centre, \
+         double-click to open it",
         nodes.len(),
         edges.len()
     )));
     ui.add_space(4.0);
 
-    let mut scene_rect = g.scene_rect;
-    if scene_rect == Rect::ZERO {
-        // First frame for this root: frame the whole graph.
-        scene_rect = bounds(&nodes).expand(40.0);
+    // The transform is applied by hand rather than by egui::Scene. Scene puts
+    // a scale on the whole layer, which scales the glyph *meshes* that were
+    // rasterised at their original size, so text turns to mush as you zoom in.
+    // Computing screen positions here means every label is rasterised at the
+    // size it is actually drawn at, and it makes level-of-detail possible.
+    let (rect, resp) = ui.allocate_exact_size(ui.available_size(), egui::Sense::click_and_drag());
+
+    let content = bounds(&nodes);
+    let mut zoom = g.zoom;
+    let mut pan = g.pan;
+    if !g.framed {
+        // Frame the whole graph, with a little air around it.
+        let sx = rect.width() / (content.width() + 80.0).max(1.0);
+        let sy = rect.height() / (content.height() + 80.0).max(1.0);
+        zoom = sx.min(sy).clamp(0.15, 1.0);
+        pan = content.center().to_vec2();
     }
-    let before = scene_rect;
 
-    egui::Scene::new()
-        .zoom_range(0.15..=3.0)
-        .show(ui, &mut scene_rect, |ui| {
-            let painter = ui.painter();
-            for (from, to) in &edges {
-                let a = nodes[*from].rect;
-                let b = nodes[*to].rect;
-                let (p0, p1) = (
-                    Pos2::new(a.max.x, a.center().y),
-                    Pos2::new(b.min.x, b.center().y),
-                );
-                let mid = (p0.x + p1.x) / 2.0;
-                let stroke = Stroke::new(1.2, Color32::from_rgb(0x35, 0x42, 0x52));
-                painter.line_segment([p0, Pos2::new(mid, p0.y)], stroke);
-                painter.line_segment([Pos2::new(mid, p0.y), Pos2::new(mid, p1.y)], stroke);
-                painter.line_segment([Pos2::new(mid, p1.y), p1], stroke);
-                // Arrow head.
-                painter.line_segment([p1, p1 + Vec2::new(-6.0, -3.5)], stroke);
-                painter.line_segment([p1, p1 + Vec2::new(-6.0, 3.5)], stroke);
+    if resp.dragged() {
+        pan -= resp.drag_delta() / zoom;
+    }
+    // Zoom about the pointer, so the thing under the cursor stays put.
+    if let Some(hover) = resp.hover_pos() {
+        let scroll = ui.input(|i| i.smooth_scroll_delta.y + i.zoom_delta().ln() * 60.0);
+        if scroll.abs() > 0.01 {
+            let before = (hover - rect.center()) / zoom + pan;
+            zoom = (zoom * (1.0 + scroll * 0.0015)).clamp(0.12, 4.0);
+            let after = (hover - rect.center()) / zoom + pan;
+            pan += before - after;
+        }
+    }
+
+    let to_screen = |w: Pos2| rect.center() + (w.to_vec2() - pan) * zoom;
+    let painter = ui.painter_at(rect);
+
+    for (from, to) in &edges {
+        let a = nodes[*from].rect;
+        let b = nodes[*to].rect;
+        let p0 = to_screen(Pos2::new(a.max.x, a.center().y));
+        let p1 = to_screen(Pos2::new(b.min.x, b.center().y));
+        let mid = (p0.x + p1.x) / 2.0;
+        let stroke = Stroke::new((1.2 * zoom).clamp(0.6, 2.0), col::border());
+        painter.line_segment([p0, Pos2::new(mid, p0.y)], stroke);
+        painter.line_segment([Pos2::new(mid, p0.y), Pos2::new(mid, p1.y)], stroke);
+        painter.line_segment([Pos2::new(mid, p1.y), p1], stroke);
+        let head = (6.0 * zoom).clamp(3.0, 10.0);
+        painter.line_segment([p1, p1 + Vec2::new(-head, -head * 0.55)], stroke);
+        painter.line_segment([p1, p1 + Vec2::new(-head, head * 0.55)], stroke);
+    }
+
+    let pointer = resp.hover_pos();
+    let mut hovered: Option<usize> = None;
+    for (i, n) in nodes.iter().enumerate() {
+        let r = Rect::from_min_max(to_screen(n.rect.min), to_screen(n.rect.max));
+        if !rect.intersects(r) {
+            continue;
+        }
+        let over = pointer.is_some_and(|p| r.contains(p));
+        if over {
+            hovered = Some(i);
+        }
+        let (fill, border, text_col) = if n.is_overflow {
+            (col::bg(), col::border(), col::faint())
+        } else if n.is_root {
+            (col::accent().gamma_multiply(0.22), col::accent(), col::text())
+        } else if n.is_import {
+            (col::raised(), col::border(), col::comment())
+        } else if over {
+            (col::raised().gamma_multiply(1.3), col::accent(), col::text())
+        } else {
+            (col::raised(), col::border(), col::text())
+        };
+        let radius = egui::CornerRadius::same((5.0 * zoom).clamp(1.0, 8.0) as u8);
+        painter.rect_filled(r, radius, fill);
+        painter.rect_stroke(
+            r,
+            radius,
+            Stroke::new((1.0 * zoom).clamp(0.6, 2.0), border),
+            egui::StrokeKind::Inside,
+        );
+
+        // Level of detail: below a few pixels a label is a smear, so it is
+        // left out rather than drawn illegibly.
+        let title_px = 12.0 * zoom;
+        if title_px >= 5.0 {
+            painter.text(
+                r.min + Vec2::new(9.0 * zoom, 6.0 * zoom),
+                egui::Align2::LEFT_TOP,
+                elide(&n.label, ((n.rect.width() - 16.0) / 7.2) as usize),
+                egui::FontId::monospace(title_px),
+                text_col,
+            );
+        }
+        let sub_px = 10.0 * zoom;
+        if sub_px >= 6.5 {
+            painter.text(
+                r.min + Vec2::new(9.0 * zoom, 19.0 * zoom),
+                egui::Align2::LEFT_TOP,
+                &n.sub,
+                egui::FontId::monospace(sub_px),
+                col::faint(),
+            );
+        }
+    }
+
+    if let Some(i) = hovered {
+        let n = &nodes[i];
+        if !n.is_overflow {
+            ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+        }
+        if resp.clicked() && !n.is_overflow {
+            match n.addr {
+                Some(addr) => act.push(Action::SetGraphRoot(addr)),
+                None => act.push(Action::Go(Nav::Xrefs(n.label.clone()))),
             }
-
-            for (i, n) in nodes.iter().enumerate() {
-                let resp = ui.interact(
-                    n.rect,
-                    ui.id().with(("node", i)),
-                    egui::Sense::click(),
-                );
-                let (fill, border, text_col) = if n.is_root {
-                    (col::accent().gamma_multiply(0.22), col::accent(), col::text())
-                } else if n.is_import {
-                    (col::raised(), Color32::from_rgb(0x3A, 0x46, 0x54), col::comment())
-                } else if resp.hovered() {
-                    (Color32::from_rgb(0x22, 0x2B, 0x36), col::accent(), col::text())
-                } else {
-                    (col::raised(), Color32::from_rgb(0x30, 0x3B, 0x49), col::text())
-                };
-                let p = ui.painter();
-                p.rect_filled(n.rect, CornerRadius::same(5), fill);
-                p.rect_stroke(
-                    n.rect,
-                    CornerRadius::same(5),
-                    Stroke::new(1.0, border),
-                    egui::StrokeKind::Inside,
-                );
-                p.text(
-                    n.rect.min + Vec2::new(9.0, 6.0),
-                    egui::Align2::LEFT_TOP,
-                    elide(&n.label, 24),
-                    egui::FontId::monospace(12.0),
-                    text_col,
-                );
-                p.text(
-                    n.rect.min + Vec2::new(9.0, 19.0),
-                    egui::Align2::LEFT_TOP,
-                    &n.sub,
-                    egui::FontId::monospace(10.0),
-                    col::faint(),
-                );
-
-                if let Some(addr) = n.addr {
-                    if resp.clicked() {
-                        act.push(Action::SetGraphRoot(addr));
-                    }
-                    if resp.double_clicked() {
-                        act.push(Action::Goto(addr));
-                    }
-                } else if resp.clicked() {
-                    act.push(Action::Go(Nav::Xrefs(n.label.clone())));
-                }
+        }
+        if resp.double_clicked() {
+            if let Some(addr) = n.addr {
+                act.push(Action::Goto(addr));
             }
+        }
+        resp.show_tooltip_ui(|ui| {
+                ui.set_max_width(320.0);
+                ui.label(
+                    egui::RichText::new(&n.label)
+                        .monospace()
+                        .strong()
+                        .color(if n.is_import { col::comment() } else { col::symbol() }),
+                );
+                ui.label(
+                    egui::RichText::new(&n.sub)
+                        .monospace()
+                        .size(11.0)
+                        .color(col::faint()),
+                );
+                ui.add_space(4.0);
+                ui.label(
+                    egui::RichText::new(if n.is_overflow {
+                        "too many to draw: pick one of these as the root, or filter first"
+                    } else if n.is_import {
+                        "click for its call sites"
+                    } else {
+                        "click to re-centre, double-click to open in the listing"
+                    })
+                    .size(11.0)
+                    .color(col::dim()),
+                );
         });
+    }
 
-    if scene_rect != before {
-        act.push(Action::SetGraphRect(scene_rect));
+    if zoom != g.zoom || pan != g.pan || !g.framed {
+        act.push(Action::SetGraphView { pan, zoom });
     }
 }
 
@@ -211,6 +292,7 @@ fn layout(
             level,
             is_root,
             is_import,
+            is_overflow: false,
             rect: Rect::ZERO,
         });
     };
@@ -295,12 +377,55 @@ fn layout(
         }
     }
 
+    // Trim each column to something that can be read, keeping the module's own
+    // functions ahead of imported symbols: the structure is the interesting
+    // part, and a list of KERNEL calls is available elsewhere.
+    let mut by_level_all: HashMap<i32, Vec<usize>> = HashMap::new();
+    for (i, n) in nodes.iter().enumerate() {
+        by_level_all.entry(n.level).or_default().push(i);
+    }
+    let mut keep: Vec<bool> = vec![true; nodes.len()];
+    let mut overflow: Vec<(i32, usize)> = Vec::new();
+    for (level, mut idxs) in by_level_all {
+        if idxs.len() <= MAX_PER_LEVEL || level == 0 {
+            continue;
+        }
+        idxs.sort_by_key(|i| (nodes[*i].is_import, nodes[*i].label.clone()));
+        for i in idxs.iter().skip(MAX_PER_LEVEL) {
+            keep[*i] = false;
+        }
+        overflow.push((level, idxs.len() - MAX_PER_LEVEL));
+    }
+    if keep.iter().any(|k| !k) {
+        let mut kept = Vec::with_capacity(nodes.len());
+        for (n, k) in nodes.into_iter().zip(&keep) {
+            if *k {
+                kept.push(n);
+            }
+        }
+        nodes = kept;
+        for (level, hidden) in overflow {
+            nodes.push(Node {
+                addr: None,
+                label: format!("+{hidden} more"),
+                sub: "raise the depth or pick a smaller root".into(),
+                level,
+                is_root: false,
+                is_import: false,
+                is_overflow: true,
+                rect: Rect::ZERO,
+            });
+        }
+    }
+
     // Place each level in its own column, centred vertically.
     let mut by_level: HashMap<i32, Vec<usize>> = HashMap::new();
     for (i, n) in nodes.iter().enumerate() {
         by_level.entry(n.level).or_default().push(i);
     }
-    for (level, idxs) in by_level {
+    for (level, mut idxs) in by_level {
+        // Overflow markers sit at the foot of their column.
+        idxs.sort_by_key(|i| (nodes[*i].is_overflow, nodes[*i].is_import));
         let x = level as f32 * (NODE_W + COL_GAP);
         let total = idxs.len() as f32 * (NODE_H + ROW_GAP) - ROW_GAP;
         let mut y = -total / 2.0;

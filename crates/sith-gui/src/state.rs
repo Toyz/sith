@@ -179,18 +179,25 @@ pub struct GraphState {
     pub dir: GraphDir,
     /// Draw calls to imported symbols as leaf nodes.
     pub show_imports: bool,
-    /// Pan and zoom rectangle owned by the scene widget.
-    pub scene_rect: egui::Rect,
+    /// World point shown at the centre of the view.
+    pub pan: egui::Vec2,
+    pub zoom: f32,
+    /// Cleared when the graph should re-frame itself, after a new root.
+    pub framed: bool,
 }
 
 impl Default for GraphState {
     fn default() -> Self {
         GraphState {
             root: None,
-            depth: 2,
+            // One level out is legible at a glance; a function with sixty
+            // callees already fills the view at depth 1.
+            depth: 1,
             dir: GraphDir::Callees,
             show_imports: true,
-            scene_rect: egui::Rect::ZERO,
+            pan: egui::Vec2::ZERO,
+            zoom: 1.0,
+            framed: false,
         }
     }
 }
@@ -271,7 +278,7 @@ pub enum Action {
     SetViewFilter(String),
     SetGraphRoot(Addr),
     SetGraphDepth(usize),
-    SetGraphRect(egui::Rect),
+    SetGraphView { pan: egui::Vec2, zoom: f32 },
     ConsumeScroll,
     SetGraphDir(GraphDir),
     ToggleGraphImports,
@@ -870,14 +877,16 @@ impl SithApp {
                 if let Some(t) = self.tab_mut() {
                     t.nav = Nav::Graph;
                     t.graph.root = Some(a);
-                    // A new root needs a fresh view rectangle, otherwise the
-                    // scene stays parked wherever the previous graph was.
-                    t.graph.scene_rect = egui::Rect::ZERO;
+                    // A new root needs re-framing, otherwise the view stays
+                    // parked wherever the previous graph happened to be.
+                    t.graph.framed = false;
                 }
             }
-            Action::SetGraphRect(r) => {
+            Action::SetGraphView { pan, zoom } => {
                 if let Some(t) = self.tab_mut() {
-                    t.graph.scene_rect = r;
+                    t.graph.pan = pan;
+                    t.graph.zoom = zoom;
+                    t.graph.framed = true;
                 }
             }
             Action::ConsumeScroll => {
