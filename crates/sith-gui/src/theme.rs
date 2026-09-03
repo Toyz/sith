@@ -50,23 +50,83 @@ pub struct Theme {
     pub builtin: bool,
 }
 
-/// The editable roles, in the order the editor lists them.
+/// The editable roles, grouped the way the editor presents them.
+///
+/// Grouping is not decoration: the surfaces have to work against each other,
+/// the text shades against the surfaces, and the accents against everything.
+/// Editing them in those three groups is how the decisions actually get made.
+pub const ROLE_GROUPS: &[(&str, &[(&str, &str)])] = &[
+    (
+        "SURFACES",
+        &[
+            ("bg", "the listing itself"),
+            ("panel", "navigator and inspector"),
+            ("raised", "toolbars, tabs, cards"),
+            ("border", "outlines and separators"),
+        ],
+    ),
+    (
+        "TEXT",
+        &[
+            ("text", "instructions, values, names"),
+            ("dim", "secondary text and labels"),
+            ("faint", "captions, addresses, bytes"),
+        ],
+    ),
+    (
+        "MEANING",
+        &[
+            ("accent", "selection, links, the graph root"),
+            ("green", "calls, code segments, exports"),
+            ("cyan", "jumps, data segments, your names"),
+            ("purple", "returns, libraries"),
+            ("orange", "interrupts, warnings, bookmarks"),
+            ("red", "invalid instructions, errors"),
+            ("yellow", "symbols and your notes"),
+        ],
+    ),
+];
+
+/// Every role, flattened.
 pub const ROLES: &[(&str, &str)] = &[
-    ("bg", "listing background"),
-    ("panel", "side panels"),
+    ("bg", "the listing itself"),
+    ("panel", "navigator and inspector"),
     ("raised", "toolbars, tabs, cards"),
     ("border", "outlines and separators"),
-    ("text", "body text"),
-    ("dim", "secondary text"),
-    ("faint", "labels and hints"),
-    ("accent", "selection, links, the root node"),
-    ("green", "calls, code segments"),
-    ("cyan", "jumps, data segments"),
+    ("text", "instructions, values, names"),
+    ("dim", "secondary text and labels"),
+    ("faint", "captions, addresses, bytes"),
+    ("accent", "selection, links, the graph root"),
+    ("green", "calls, code segments, exports"),
+    ("cyan", "jumps, data segments, your names"),
     ("purple", "returns, libraries"),
-    ("orange", "interrupts, warnings"),
+    ("orange", "interrupts, warnings, bookmarks"),
     ("red", "invalid instructions, errors"),
     ("yellow", "symbols and your notes"),
 ];
+
+/// WCAG relative luminance.
+fn luminance(c: Color32) -> f32 {
+    let f = |v: u8| {
+        let s = v as f32 / 255.0;
+        if s <= 0.03928 {
+            s / 12.92
+        } else {
+            ((s + 0.055) / 1.055).powf(2.4)
+        }
+    };
+    0.2126 * f(c.r()) + 0.7152 * f(c.g()) + 0.0722 * f(c.b())
+}
+
+/// Contrast ratio between two colors, 1.0 (identical) to 21.0 (black on white).
+///
+/// Worth checking in a tool whose whole job is reading dense text: a palette
+/// that looks pleasant as a row of swatches can be unreadable as a listing.
+pub fn contrast(a: Color32, b: Color32) -> f32 {
+    let (x, y) = (luminance(a), luminance(b));
+    let (hi, lo) = if x > y { (x, y) } else { (y, x) };
+    (hi + 0.05) / (lo + 0.05)
+}
 
 impl Colors {
     pub fn role(&self, name: &str) -> Color32 {
