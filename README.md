@@ -7,6 +7,8 @@ command-line tool, and a GUI browser.
 
 It is not tied to any one project. Point it at any NE binary.
 
+![The disassembly listing](docs/screenshots/disasm.png)
+
 ## Why
 
 NE binaries have a trap in them. Relocations are stored as *chains threaded
@@ -28,12 +30,73 @@ constants. So a call site reads
 
 instead of `call 0:0FFFFh`.
 
+## Reading the code as C
+
+Every listing has a **C** tab. It is not a decompiler: each line still
+corresponds to one instruction and registers stay registers. What it does is
+spend what the tool already knows — the stack frame, the call sites, the
+imported signatures — on making the listing read as statements.
+
+![The C view](docs/screenshots/pseudo.png)
+
+Forward conditionals that skip a region become `if` blocks, an unconditional
+jump at the end of one becomes its `else`, and a backward conditional becomes
+`do … while`. A region only becomes a block when nothing outside it branches
+into its middle: a block with two entrances is not a block, and writing one as
+if it were would be the first place this view lied. Everything that fails that
+test keeps its `goto`, which is ugly and correct.
+
+The idioms a 16-bit compiler leans on are read as what they mean rather than
+what they are. `xor ax,ax` is zero. `or ax,ax` is a test against zero, not a
+bitwise or. `sbb r,r` / `inc r` is a comparison being stored, so it folds back
+into the comparison. A chain of `sub ax,n` / `je` is a switch, so the flags an
+arithmetic instruction leaves are tracked to the branch that reads them.
+
+Frame setup and teardown are dropped, because the signature and the local
+declarations above already say what they say. They are matched as runs from
+each end of the function rather than by pattern anywhere in it: `mov ds,ax` on
+the way in is the Win16 data-segment reload, and the same instruction two
+hundred bytes later is the program doing something.
+
+It also writes the header a function would need, from the import table and the
+call sites:
+
+```c
+#include <windows.h>
+
+// from KERNEL
+extern FARPROC   FAR PASCAL GetProcAddress(WORD hModule, LPCSTR procName);
+extern HINSTANCE FAR PASCAL LoadLibrary(LPCSTR fileName);
+extern UINT      FAR PASCAL SetErrorMode(WORD mode);
+
+// in this module
+static WORD sub_02_17A2(void);
+
+// module data, named by where it sits
+static WORD g_13C8;
+```
+
+The widths are real. The types are not: a `WORD` here may have been an `HWND`
+or a `BOOL`, and only the header this stands in for could say which. A DLL
+belonging to the program has no SDK header at all, and the view says so rather
+than naming a file that was never shipped.
+
+Nothing is invented anywhere in this view. A value computed rather than pushed
+is left as the register holding it, an argument the reconstruction could not
+recover is marked, a jump out of the function is shown as an address rather
+than a label that does not exist, and an instruction with no C shape is emitted
+verbatim inside `__asm` and colored so it stands out.
+
 ## Install
 
 ```sh
 cargo build --release
 # binaries land in target/release/{sith,sith-gui}
 ```
+
+Linux, macOS and Windows. Configuration goes wherever the platform keeps it:
+`~/.config/sith` (honouring `XDG_CONFIG_HOME`), `~/Library/Application
+Support/sith`, or `%APPDATA%\sith`.
 
 ## Command line
 
@@ -45,6 +108,7 @@ sith exports   FILE
 sith entries   FILE                  the entry table, exported or not
 sith relocs    FILE [-s N] [--sites] fixups, collapsed by target or per patch site
 sith dis       FILE -s N             disassemble, with fixups and API calls resolved
+sith pseudo    FILE -s N [-f OFF]    render a function as C-shaped statements
 sith funcs     FILE [-s N]           discovered functions and the evidence for each
 sith callgraph FILE [-s N]
 sith xref      FILE NAME             call sites of a symbol
@@ -73,15 +137,23 @@ sith-gui [FILE|PROJECT]
 - Tabbed views over a workspace of files, with back/forward history. Clicking
   an imported symbol opens the DLL that exports it, at the export.
 - A navigator with segments, functions grouped by segment, resources with live
-  thumbnails, and every sibling module found beside the file.
+  thumbnails, and every sibling module found beside the file. A function opens
+  to the arguments it takes: where each one sits, how wide it is, and whether
+  the body ever reads it.
 - A disassembly listing with an interactive branch-arrow gutter — hover an arc
   to light up the whole path and both ends, click to follow it — plus function
   banners, resolved fixups and reconstructed API calls.
+- A **C** tab on every listing, and an **All code** view that puts every code
+  segment in one listing when you want to read the program end to end.
 - An inspector showing the selected instruction's bytes, its fixup, the API
   signature with named arguments, everything that references it, and the box
   where you name it and write your note.
-- A call-graph explorer: pan and zoom, callers and callees, click to re-centre.
-- A strings browser that cross-references each string to the code that loads it.
+- A call-graph explorer: pan and zoom, callers and callees, drag nodes where
+  you want them, color and name them, click to re-centre, and search by name
+  or address with every match ringed.
+- A strings browser that cross-references each string to the code that loads
+  it, and a string table that shows which `LoadString` call asks for each
+  entry.
 - Resource preview for bitmaps, icons and cursors, with export to real `.bmp`,
   `.ico` and `.cur` files; menus, dialogs, string tables, accelerators and
   version info decode to text.
@@ -90,6 +162,18 @@ sith-gui [FILE|PROJECT]
 - Seven built-in themes — Catppuccin Mocha, Macchiato and Latte, Nord, Tokyo
   Night, Gruvbox Dark and Midnight — under View ▸ Theme, remembered between
   runs, plus an editor for making your own.
+
+![The overview](docs/screenshots/overview.png)
+
+### The call graph
+
+![The call graph](docs/screenshots/graph.png)
+
+One node per function, not one per path to it: a breadth-first walk records
+each function at its shortest distance from the root and never adds it again,
+so a helper reachable four ways appears once with four edges into it rather
+than four times in four columns. Nodes drag where you put them and stay there
+across a re-layout; a color or a name you give one follows it everywhere.
 
 ### Themes
 
@@ -100,8 +184,8 @@ hex field per role; changes apply to the running window as you make them,
 because a palette is judged by how a listing reads under it rather than by how
 the swatches look beside each other.
 
-Saving writes a small JSON file to `~/.config/sith/themes/`, which can be
-hand-written, copied between machines or checked in:
+Saving writes a small JSON file to the `themes/` directory beside the config,
+which can be hand-written, copied between machines or checked in:
 
 ```json
 {
@@ -124,13 +208,28 @@ hand-written, copied between machines or checked in:
 }
 ```
 
+![The theme editor](docs/screenshots/theme.png)
+
+The editor checks contrast as you go. A tool whose job is dense text has to say
+when a palette fails at it, because a palette that looks pleasant as a row of
+swatches can be unreadable as a listing.
+
 Editing a built-in starts a copy rather than overwriting it, and a saved theme
 that shares a built-in's name replaces it in the list, which is how to adjust
 one of the shipped palettes without losing the original.
 
-Keys: `Ctrl+O` open, `Ctrl+S` save project, `Ctrl+P` find anything, `Ctrl+G` go
-to an address or symbol, `Ctrl+W` close tab, `Alt+←`/`Alt+→` history, `↑`/`↓`
-move, `Enter` follow, `N` name the selected address, `B` bookmark it.
+### Keys
+
+`Ctrl+O` open, `Ctrl+S` save project, `Ctrl+P` find anything, `Ctrl+G` go to an
+address or symbol, `Ctrl+W` close tab, `Alt+←`/`Alt+→` history, `Ctrl+1`/`Ctrl+2`
+show or hide the side panels, `↑`/`↓` move, `Enter` follow, `N` name the
+selected address, `B` bookmark it. On macOS `Ctrl` reads as `Cmd`.
+
+All of them are rebindable under View ▸ Key bindings. Click a shortcut, press
+the key you want. A key another command already holds is refused rather than
+taken, because silently unbinding the other one takes away a shortcut you never
+touched. Only what you changed is written to `keys.json`, so a default that
+improves later still reaches you.
 
 ### The command palette
 
@@ -199,7 +298,7 @@ moved is still matched by its module name.
 | --- | --- |
 | `ne-core` | NE container parsing: header, segments, relocation chains, entry table, names, resources, DIB decoding, the Win16 ordinal and API databases |
 | `ne-disasm` | `iced-x86` decoding with each instruction annotated by the fixup covering its operand bytes |
-| `ne-analysis` | function discovery, call graph, cross-references, data references, call-site argument reconstruction |
+| `ne-analysis` | function discovery, call graph, cross-references, data references, call-site argument reconstruction, stack-frame signatures, the C rendering |
 | `sith` | the command-line tool |
 | `sith-gui` | the `egui` browser |
 
@@ -222,6 +321,8 @@ of its glyphs. Glyph bitmaps are stored *column major*, which is the detail
 that turns a naive reader's output into a sheared mess.
 
 ### Resources and the code that loads them
+
+![A bitmap resource](docs/screenshots/resource.png)
 
 A resource is inert until something asks for it, and the ask is always the same
 shape: a `LoadBitmap`, `DialogBox` or `LoadString` call naming it. Both idioms
@@ -271,6 +372,12 @@ Two things in here are heuristics, and both say so where they are shown:
   bare immediate, so tying a string to its code, or an argument to its value,
   is pattern matching rather than proof. Arguments that were not literal pushes
   are shown as their operand text, and partial reconstructions are marked.
+- **Reconstructed signatures.** How many bytes a function takes comes from its
+  `retf n`, which is the compiler stating it. What those bytes *are* does not:
+  slots are words unless the code proves otherwise by loading four bytes into
+  a segment register, and an argument the body never reads is marked as such
+  rather than dropped. A function with no stated frame falls back to how far
+  its `[bp+n]` reads reached, which is a floor and not a count.
 
 ## Tests
 
@@ -281,7 +388,9 @@ cargo test
 The parser is exercised against a hand-assembled NE image built byte by byte in
 the test, so a failure names the field that moved. The DIB decoder was
 validated pixel-for-pixel against ImageMagick on RLE4, RLE8 and uncompressed
-resources.
+resources. The control-flow structuring is tested against synthetic bodies,
+including the case it must refuse: a region something else jumps into cannot
+become a block.
 
 ## License
 
