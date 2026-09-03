@@ -1,6 +1,6 @@
 //! Segment view: a tab bar over the disassembly, hex, fixup and string modes.
 
-use crate::state::{Action, SegTab, SithApp};
+use crate::state::{Action, Nav, SegTab, SithApp};
 use crate::theme::{col, *};
 use crate::views::{disasm, hex, strings};
 use crate::icons::{self, Icon};
@@ -17,7 +17,20 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16) {
     let Some(tab) = app.tab() else { return };
 
     ui.horizontal(|ui| {
+        // Stepping through the segments from here, rather than only from the
+        // tree: reading a module means walking its code end to end, and
+        // going back to the sidebar between each one is a detour.
+        let count = doc.ne.segments.len();
+        if let Some(next) = widgets::stepper(ui, segno as usize, 1, count) {
+            act.push(Action::Go(Nav::Segment(next as u16)));
+        }
+        ui.add_space(6.0);
         ui.label(egui::RichText::new(format!("Segment {segno}")).size(15.0).strong());
+        ui.label(
+            egui::RichText::new(format!("of {count}"))
+                .size(11.0)
+                .color(col::faint()),
+        );
         widgets::chip(
             ui,
             seg.kind().as_str(),
