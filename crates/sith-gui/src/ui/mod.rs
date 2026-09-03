@@ -91,7 +91,12 @@ fn dropped_files(ctx: &egui::Context, act: &mut Vec<Action>) {
 
 fn shortcuts(app: &SithApp, ctx: &egui::Context, act: &mut Vec<Action>) {
     use egui::{Key, Modifiers};
-    let typing = ctx.egui_wants_keyboard_input() && (app.goto_open || app.palette_open);
+    // Any open dialog owns the keyboard. Listing shortcuts are single letters,
+    // so leaving them live while a text box has focus types nothing and
+    // renames something instead.
+    let modal_open =
+        app.goto_open || app.palette_open || app.wizard.is_some() || app.rename_at.is_some();
+    let typing = modal_open || ctx.egui_wants_keyboard_input();
     ctx.input_mut(|i| {
         if i.consume_key(Modifiers::COMMAND, Key::O) {
             if let Some(p) = rfd::FileDialog::new().pick_file() {
