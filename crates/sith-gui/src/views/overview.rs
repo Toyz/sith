@@ -8,7 +8,7 @@
 use crate::icons::{self, Icon};
 use crate::state::{Action, Nav, SithApp};
 use crate::theme::{col, *};
-use crate::widgets::{self, human, tail};
+use crate::widgets::{self, human};
 use eframe::egui::{self, Color32, Ui};
 use ne_analysis::FuncKind;
 use std::collections::BTreeMap;
@@ -21,41 +21,79 @@ pub fn show(app: &SithApp, ui_: &mut Ui, act: &mut Vec<Action>) {
     egui::ScrollArea::vertical()
         .auto_shrink([false, false])
         .show(ui_, |ui| {
-            let total = ui.available_width() - widgets::SCROLLBAR_GUTTER;
+            let total = (ui.available_width() - widgets::SCROLLBAR_GUTTER).max(1.0);
             banner(app, ui, act, total);
             ui.add_space(10.0);
             stats(app, ui, act, total);
             ui.add_space(12.0);
 
             // Two columns: what the module is made of on the left, what it
-            // says about itself and who it talks to on the right.
-            let left = (total * 0.56).clamp(340.0, total - 300.0);
-            let right = total - left - 14.0;
-            ui.horizontal_top(|ui| {
-                ui.allocate_ui_with_layout(
-                    egui::vec2(left, 0.0),
-                    egui::Layout::top_down(egui::Align::Min),
-                    |ui| {
-                        ui.set_width(left);
-                        segments_card(app, ui, act);
-                        resources_card(app, ui, act);
-                    },
-                );
-                ui.add_space(14.0);
-                ui.allocate_ui_with_layout(
-                    egui::vec2(right, 0.0),
-                    egui::Layout::top_down(egui::Align::Min),
-                    |ui| {
-                        ui.set_width(right);
-                        header_card(app, ui, act);
-                        code_card(app, ui);
-                        modules_card(app, ui, act);
-                        workspace_card(app, ui, act);
-                    },
-                );
-            });
+            // says about itself and who it talks to on the right. Below the
+            // width where both are readable they stack instead.
+            match split(total) {
+                Some((left, right)) => {
+                    ui.horizontal_top(|ui| {
+                        ui.allocate_ui_with_layout(
+                            egui::vec2(left, 0.0),
+                            egui::Layout::top_down(egui::Align::Min),
+                            |ui| {
+                                ui.set_width(left);
+                                made_of(app, ui, act);
+                            },
+                        );
+                        ui.add_space(COL_GAP);
+                        ui.allocate_ui_with_layout(
+                            egui::vec2(right, 0.0),
+                            egui::Layout::top_down(egui::Align::Min),
+                            |ui| {
+                                ui.set_width(right);
+                                says_about_itself(app, ui, act);
+                            },
+                        );
+                    });
+                }
+                None => {
+                    made_of(app, ui, act);
+                    says_about_itself(app, ui, act);
+                }
+            }
             ui.add_space(16.0);
         });
+}
+
+/// The narrowest a column may be before stacking is the better answer.
+///
+/// A card here is a table of label and value with the value against the right
+/// edge. Squeezed much below this the two collide, which is the failure the
+/// tooltips had.
+const MIN_COL: f32 = 320.0;
+const COL_GAP: f32 = 14.0;
+
+/// How to divide `total` between the two columns, or `None` to stack them.
+///
+/// Split out because the arithmetic is the part that can be wrong: clamping
+/// to a computed upper bound panics outright once the panel is narrow enough
+/// for that bound to fall below the lower one.
+fn split(total: f32) -> Option<(f32, f32)> {
+    if !total.is_finite() || total < MIN_COL * 2.0 + COL_GAP {
+        return None;
+    }
+    let left = (total * 0.56).clamp(MIN_COL, total - MIN_COL - COL_GAP);
+    Some((left, total - left - COL_GAP))
+}
+
+/// What the module is made of.
+fn made_of(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
+    segments_card(app, ui, act);
+    resources_card(app, ui, act);
+}
+
+/// What it says about itself, and who it talks to.
+fn says_about_itself(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
+    header_card(app, ui, act);
+    code_card(app, ui);
+    modules_card(app, ui, act);
+    workspace_card(app, ui, act);
 }
 
 /// Module name, what kind of thing it is, and where it came from.
@@ -121,8 +159,18 @@ fn banner(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, width: f32) {
                             ui.label(egui::RichText::new(desc).size(12.0).color(col::dim()));
                         }
                         let path = doc.path.display().to_string();
+                        // Measured, not counted. A character budget has to
+                        // assume a width, and at a narrow one it guesses high
+                        // and the path wraps onto a second line.
+                        let shown = widgets::fit(
+                            ui,
+                            &path,
+                            egui::FontId::monospace(11.0),
+                            title_w,
+                            true,
+                        );
                         ui.label(
-                            egui::RichText::new(tail(&path, (title_w / 6.2) as usize))
+                            egui::RichText::new(shown)
                                 .size(11.0)
                                 .monospace()
                                 .color(col::faint()),
@@ -636,4 +684,39 @@ fn workspace_card(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
             }
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_wide_panel_splits_in_two() {
+        let (left, right) = split(1000.0).unwrap();
+        assert!(left >= MIN_COL && right >= MIN_COL);
+        assert!((left + right + COL_GAP - 1000.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn a_narrow_panel_stacks_rather_than_panicking() {
+        // 614 wide was a real crash: clamping to `total - 300` put the upper
+        // bound below the lower one, and `f32::clamp` panics on that rather
+        // than picking one.
+        assert_eq!(split(614.0), None);
+        assert_eq!(split(0.0), None);
+        assert_eq!(split(f32::NAN), None);
+    }
+
+    #[test]
+    fn neither_column_is_ever_below_the_minimum() {
+        // Every width from the stacking threshold up, including the boundary
+        // where the clamp used to invert.
+        let mut w = MIN_COL * 2.0 + COL_GAP;
+        while w < 4000.0 {
+            let (left, right) = split(w).unwrap_or_else(|| panic!("no split at {w}"));
+            assert!(left >= MIN_COL - 0.01, "left {left} at {w}");
+            assert!(right >= MIN_COL - 0.01, "right {right} at {w}");
+            w += 1.0;
+        }
+    }
 }
