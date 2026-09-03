@@ -16,6 +16,7 @@ pub mod tables;
 pub mod xrefs;
 
 use crate::icons::{self, Icon};
+use crate::widgets;
 use crate::state::{Action, Nav, SithApp};
 use crate::theme::{col, *};
 use eframe::egui::{self, Ui};
@@ -369,6 +370,7 @@ pub fn central(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
     // the listing and stop the user scrolling by hand.
     match app.nav() {
         Nav::Overview => overview::show(app, ui, act),
+        Nav::AllCode => all_code(app, ui, act),
         Nav::Segment(n) => segment::show(app, ui, act, n),
         Nav::Resource(i) => resource::show(app, ui, act, i),
         Nav::Imports => tables::imports(app, ui, act),
@@ -395,4 +397,38 @@ pub fn filter_box(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, hint: &str)
         act.push(Action::SetViewFilter(text.clone()));
     }
     text
+}
+
+/// Every code segment in one listing.
+fn all_code(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
+    let Some(doc) = app.doc() else { return };
+    let insns: usize = doc.program.code.values().map(|c| c.insns.len()).sum();
+    ui.horizontal(|ui| {
+        widgets::strip_item(ui, |ui| {
+            icons::inline(ui, Icon::Code, col::code_seg());
+            ui.label(
+                egui::RichText::new("All code")
+                    .size(15.0)
+                    .strong()
+                    .color(col::text()),
+            );
+            widgets::chip(
+                ui,
+                &format!("{} segments", doc.program.code.len()),
+                col::dim(),
+            );
+            widgets::chip(ui, &format!("{insns} instructions"), col::dim());
+        });
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            // Say what this view does not have, rather than leaving the
+            // reader to notice the gutter is missing and wonder why.
+            ui.label(
+                egui::RichText::new("jump arcs are drawn per segment")
+                    .size(10.5)
+                    .color(col::faint()),
+            );
+        });
+    });
+    crate::ui::sep(ui);
+    disasm::show_all(app, ui, act);
 }

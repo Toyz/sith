@@ -108,33 +108,85 @@ fn header<R>(
     let _ = icon;
 }
 
+/// The fixed views, at the top of the tree.
+///
+/// These are not part of the module the way segments and resources are, so
+/// they get their own heading rather than floating above the first one. Each
+/// carries the count of what it holds, which turns a menu into something that
+/// says whether it is worth opening.
 fn views_section(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, keep: &dyn Fn(&str) -> bool) {
-    for (nav, label) in [
-        (Nav::Overview, "Overview"),
-        (Nav::Imports, "Imports"),
-        (Nav::Exports, "Exports"),
-        (Nav::Entries, "Entry table"),
-        (Nav::Strings, "Strings"),
-        (Nav::Graph, "Call graph"),
-        (Nav::Xrefs(String::new()), "Cross-references"),
-    ] {
+    let doc = app.doc();
+    let entries: [(Nav, &str, Option<usize>); 8] = [
+        (Nav::Overview, "Overview", None),
+        (Nav::AllCode, "All code", doc.map(|d| d.program.code.len())),
+        (
+            Nav::Imports,
+            "Imports",
+            doc.map(|d| d.ne.module_ref_names().len()),
+        ),
+        (Nav::Exports, "Exports", doc.map(|d| d.ne.exports().len())),
+        (
+            Nav::Entries,
+            "Entry table",
+            doc.map(|d| d.ne.entries.len()),
+        ),
+        (Nav::Strings, "Strings", None),
+        (
+            Nav::Graph,
+            "Call graph",
+            doc.map(|d| d.program.functions.len()),
+        ),
+        (
+            Nav::Xrefs(String::new()),
+            "Cross-references",
+            doc.map(|d| d.program.xrefs.len()),
+        ),
+    ];
+
+    let any = entries.iter().any(|(_, label, _)| keep(label));
+    if !any {
+        return;
+    }
+    ui.add_space(2.0);
+    ui.label(
+        egui::RichText::new("VIEWS")
+            .size(10.0)
+            .strong()
+            .color(col::faint()),
+    );
+    ui.add_space(2.0);
+    ui.spacing_mut().item_spacing.y = 1.0;
+
+    for (nav, label, count) in entries {
         if !keep(label) {
             continue;
         }
         let selected = app.nav() == nav;
-        let (_, r) = widgets::row(
+        let (_, r) = widgets::row_sized(
             ui,
             ui.id().with(("navtop", label)),
+            21.0,
             selected,
             false,
             |ui| {
-                ui.add_space(2.0);
-                icons::inline(ui, nav.icon(), if selected { col::accent() } else { col::dim() });
+                ui.spacing_mut().item_spacing.x = 7.0;
+                icons::inline(
+                    ui,
+                    nav.icon(),
+                    if selected { col::accent() } else { col::dim() },
+                );
                 ui.label(
                     egui::RichText::new(label)
                         .size(12.5)
-                        .color(if selected { col::text() } else { Color32::from_gray(0xA8) }),
+                        // Was a hardcoded grey, which is invisible on a light
+                        // palette; the theme decides what dim text looks like.
+                        .color(if selected { col::text() } else { col::dim() }),
                 );
+                if let Some(n) = count {
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.label(mono_c(n.to_string(), col::faint()));
+                    });
+                }
             },
         );
         if r.clicked() {
@@ -144,6 +196,7 @@ fn views_section(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, keep: &dyn F
             act.push(Action::GoNewTab(nav));
         }
     }
+    ui.add_space(6.0);
 }
 
 fn segments_section(

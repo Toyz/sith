@@ -340,6 +340,7 @@ fn menu_bar(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
             ui.separator();
             for (nav, name) in [
                 (Nav::Overview, "Overview"),
+                (Nav::AllCode, "All code"),
                 (Nav::Imports, "Imports"),
                 (Nav::Exports, "Exports"),
                 (Nav::Entries, "Entry table"),

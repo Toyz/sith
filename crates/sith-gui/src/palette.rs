@@ -258,6 +258,11 @@ fn commands(app: &SithApp) -> Vec<(String, String, Nav)> {
     vec![
         ("Overview".into(), "module summary".into(), Nav::Overview),
         (
+            "All code".into(),
+            "every code segment in one listing".into(),
+            Nav::AllCode,
+        ),
+        (
             "Imports".into(),
             doc.map(|d| format!("{} modules", d.ne.module_ref_names().len()))
                 .unwrap_or_default(),

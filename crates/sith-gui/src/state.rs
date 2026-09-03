@@ -18,6 +18,8 @@ use std::path::{Path, PathBuf};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Nav {
     Overview,
+    /// Every code segment in one listing.
+    AllCode,
     Segment(u16),
     Resource(usize),
     Imports,
@@ -34,6 +36,7 @@ impl Nav {
     pub fn title(&self, doc: Option<&Doc>) -> String {
         match self {
             Nav::Overview => "Overview".into(),
+            Nav::AllCode => "All code".into(),
             Nav::Segment(n) => format!("Segment {n}"),
             Nav::Resource(i) => doc
                 .and_then(|d| d.ne.resources.get(*i))
@@ -65,6 +68,7 @@ impl Nav {
         use crate::icons::Icon;
         match self {
             Nav::Overview => Icon::Overview,
+            Nav::AllCode => Icon::Code,
             Nav::Segment(_) => Icon::Segment,
             Nav::Resource(_) => Icon::Resource,
             Nav::Imports => Icon::Import,

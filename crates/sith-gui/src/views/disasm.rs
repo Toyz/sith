@@ -222,6 +222,108 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16) {
 }
 
 /// The segment offset a listing row sits at, if it is an instruction.
+/// Every code segment in one listing.
+///
+/// Deliberately without the branch gutter. A jump never leaves its segment,
+/// so the arcs would all be local anyway, and threading a per-segment lane
+/// assignment through one flat virtualised row list buys nothing you cannot
+/// get by opening the segment. This view is for reading the program end to
+/// end and finding where to go next.
+pub fn show_all(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
+    let Some(doc) = app.doc() else { return };
+
+    // Flattened once per frame. Each row knows its segment, so a click can
+    // land in the right place without searching for it.
+    enum AllRow<'a> {
+        Segment(u16, usize),
+        Function(&'a Function),
+        Insn(u16, &'a Insn),
+    }
+
+    let mut rows: Vec<AllRow> = Vec::new();
+    let mut byte_w = 8usize;
+    for (segno, code) in &doc.program.code {
+        let funcs: BTreeMap<u32, &Function> = doc
+            .program
+            .functions
+            .iter()
+            .filter(|f| f.addr.segment == *segno)
+            .map(|f| (f.addr.offset, f))
+            .collect();
+        rows.push(AllRow::Segment(*segno, code.insns.len()));
+        byte_w = byte_w.max(ne_disasm::byte_column_width(&code.insns));
+        for insn in &code.insns {
+            if let Some(f) = funcs.get(&insn.offset) {
+                rows.push(AllRow::Function(f));
+            }
+            rows.push(AllRow::Insn(*segno, insn));
+        }
+    }
+    if rows.is_empty() {
+        crate::ui::empty(ui, "no decoded code in this module");
+        return;
+    }
+
+    let labels: BTreeMap<u32, String> = BTreeMap::new();
+    let row_h = ui.text_style_height(&egui::TextStyle::Monospace) + 4.0;
+    ui.spacing_mut().item_spacing.y = 0.0;
+    egui::ScrollArea::vertical()
+        .id_salt("allcode")
+        .auto_shrink([false, false])
+        .show_rows(ui, row_h, rows.len(), |ui, range| {
+            for i in range {
+                match &rows[i] {
+                    AllRow::Segment(segno, count) => {
+                        segment_banner(app, ui, act, *segno, *count, row_h)
+                    }
+                    AllRow::Function(f) => function_banner(app, ui, act, f, 6.0, row_h),
+                    AllRow::Insn(segno, insn) => insn_row(
+                        app, ui, act, *segno, insn, byte_w, 6.0, &labels, None, None, None, row_h,
+                    ),
+                }
+            }
+        });
+}
+
+/// The band that starts a segment in the all-code listing.
+fn segment_banner(
+    app: &SithApp,
+    ui: &mut Ui,
+    act: &mut Vec<Action>,
+    segno: u16,
+    insns: usize,
+    row_h: f32,
+) {
+    let code = app
+        .doc()
+        .and_then(|d| d.ne.segment(segno))
+        .map(|s| s.is_code())
+        .unwrap_or(true);
+    let color = if code { col::code_seg() } else { col::data_seg() };
+    let (_, resp) = widgets::row_sized(
+        ui,
+        ui.id().with(("allseg", segno)),
+        row_h,
+        false,
+        false,
+        |ui| {
+            ui.spacing_mut().item_spacing.x = 8.0;
+            icons::inline(ui, if code { Icon::Code } else { Icon::Data }, color);
+            ui.label(mono_c(format!("SEGMENT {segno}"), color).strong());
+            ui.label(mono_c(format!("{insns} instructions"), col::faint()));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.label(mono_c("open on its own", col::faint()));
+            });
+        },
+    );
+    if resp
+        .on_hover_cursor(egui::CursorIcon::PointingHand)
+        .clicked()
+    {
+        act.push(Action::Go(Nav::Segment(segno)));
+    }
+}
+
 fn row_offset(rows: &[Row], code: &ne_disasm::SegmentCode, row: usize) -> Option<u32> {
     match rows.get(row)? {
         Row::Insn(i) => Some(code.insns[*i].offset),
