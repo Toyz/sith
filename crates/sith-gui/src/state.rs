@@ -193,6 +193,9 @@ pub struct GraphState {
     pub dragging: Option<String>,
     /// The node whose context menu is open.
     pub menu_for: Option<String>,
+    /// The node the user last clicked. Selecting reads it in the inspector
+    /// without moving the graph, which is what a click should do.
+    pub selected: Option<Addr>,
 }
 
 impl Default for GraphState {
@@ -211,6 +214,7 @@ impl Default for GraphState {
             moved: Default::default(),
             dragging: None,
             menu_for: None,
+            selected: None,
         }
     }
 }
@@ -307,6 +311,7 @@ pub enum Action {
     GraphDragEnd,
     GraphResetLayout,
     GraphMenuFor(Option<String>),
+    GraphSelect(Option<Addr>),
     ConsumeScroll,
     SetGraphDir(GraphDir),
     ToggleGraphImports,
@@ -1000,6 +1005,7 @@ impl SithApp {
                     // next one, so a new root starts from the clean layout.
                     t.graph.moved.clear();
                     t.graph.dragging = None;
+                    t.graph.selected = Some(a);
                     // A new root needs re-framing, otherwise the view stays
                     // parked wherever the previous graph happened to be.
                     t.graph.framed = false;
@@ -1040,6 +1046,11 @@ impl SithApp {
             Action::GraphDragEnd => {
                 if let Some(t) = self.tab_mut() {
                     t.graph.dragging = None;
+                }
+            }
+            Action::GraphSelect(addr) => {
+                if let Some(t) = self.tab_mut() {
+                    t.graph.selected = addr;
                 }
             }
             Action::GraphMenuFor(key) => {

@@ -30,6 +30,13 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                     None => nothing_selected(app, ui, segno),
                 },
                 Nav::Resource(i) => resource(app, ui, act, i),
+                // Selecting in the graph reads the function here, which is
+                // what lets a click stay in the graph instead of navigating
+                // away from it.
+                Nav::Graph => match app.tab().and_then(|t| t.graph.selected) {
+                    Some(a) => address(app, ui, act, a.segment, a.offset),
+                    None => module(app, ui),
+                },
                 _ => module(app, ui),
             }
             ui.add_space(16.0);

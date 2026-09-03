@@ -342,6 +342,14 @@ fn canvas(
                 } else {
                     (col::raised(), col::border(), col::text())
                 };
+                if n.addr.is_some() && n.addr == g.selected {
+                    painter.rect_stroke(
+                        r.expand(3.0),
+                        radius_of(zoom),
+                        Stroke::new((1.6 * zoom).clamp(1.0, 3.0), col::yellow()),
+                        egui::StrokeKind::Outside,
+                    );
+                }
                 if n.is_root && tint.is_some() {
                     // The root still has to be findable once it is coloured.
                     painter.rect_stroke(
@@ -488,18 +496,24 @@ fn canvas(
                 if !n.is_overflow {
                     ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
                 }
+                // A click reads the node; it does not move the graph or leave
+                // the view. Re-centring is the deliberate act, so it takes a
+                // double click, and opening the code is on the menu.
                 if resp.clicked() && !n.is_overflow {
+                    act.push(Action::GraphSelect(n.addr));
+                }
+                if resp.double_clicked() && !n.is_overflow {
                     match n.addr {
                         Some(addr) => act.push(Action::SetGraphRoot(addr)),
                         None => act.push(Action::Go(Nav::Xrefs(n.label.clone()))),
                     }
                 }
-                if resp.double_clicked() {
-                    if let Some(addr) = n.addr {
-                        act.push(Action::Goto(addr));
-                    }
-                }
-                resp.show_tooltip_ui(|ui| {
+                // Anchored to the pointer, not to the response: the response
+                // is the whole canvas, so its own corner is nowhere near the
+                // node being described.
+                egui::Tooltip::for_widget(&resp)
+                    .at_pointer()
+                    .show(|ui| {
                     ui.set_max_width(320.0);
                     ui.label(
                         egui::RichText::new(&n.label)
@@ -520,16 +534,17 @@ fn canvas(
                     ui.add_space(4.0);
                     ui.label(
                         egui::RichText::new(if n.is_overflow {
-                            "too many to draw: pick one of these as the root, or raise the level"
+                            "raise the levels to see these, or make one of them the root"
                         } else if n.is_import {
-                            "click for its call sites"
+                            "double-click for its call sites"
                         } else {
-                            "click to re-centre, double-click to open in the listing"
+                            "click to read it, double-click to centre the graph here, \
+                             right-click for more"
                         })
-                        .size(11.0)
-                        .color(col::dim()),
-                    );
-                });
+                            .size(11.0)
+                            .color(col::dim()),
+                        );
+                    });
             }
 
             if zoom != g.zoom || pan != g.pan || !g.framed || g.zoom_nudge != 1.0 {
