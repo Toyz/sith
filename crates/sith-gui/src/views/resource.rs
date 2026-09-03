@@ -2,6 +2,7 @@
 
 use crate::state::{Action, SithApp};
 use crate::theme::{col, *};
+use crate::icons::{self};
 use crate::widgets;
 use eframe::egui::{self, Ui};
 use ne_core::render;
@@ -14,6 +15,7 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, index: usize) {
     };
 
     ui.horizontal(|ui| {
+        icons::inline(ui, icons::for_resource(r.type_id.as_id()), col::orange());
         ui.label(
             egui::RichText::new(format!("{} {}", r.type_name(), r.res_id))
                 .size(15.0)
@@ -91,18 +93,60 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, index: usize) {
         crate::ui::sep(ui);
     }
 
+    references(app, ui, act, index);
+
     if let Some(text) = render::resource_text(&doc.ne, r) {
         egui::ScrollArea::both()
             .id_salt("restext")
             .auto_shrink([false, false])
             .show(ui, |ui| {
-                ui.label(mono_c(text, col::text()));
+                ui.label(super::highlight::job(
+                    &text,
+                    egui::FontId::monospace(13.0),
+                ));
             });
         return;
     }
 
     let data = doc.ne.resource_data(r).to_vec();
     super::hex::dump(ui, act, &data, None, None);
+}
+
+/// The code that loads this resource.
+///
+/// This is the half of the link that is hard to get any other way: a bitmap
+/// tells you nothing about which function draws it.
+fn references(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, index: usize) {
+    let Some(doc) = app.doc() else { return };
+    let uses = doc.res_links.uses(index);
+    if uses.is_empty() {
+        return;
+    }
+    widgets::section(ui, &format!("LOADED BY ({})", uses.len()));
+    for u in uses {
+        let owner = doc
+            .program
+            .function_containing(u.addr)
+            .map(|f| app.label(f))
+            .unwrap_or_default();
+        ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 10.0;
+            ui.add_space(2.0);
+            if widgets::link(ui, u.addr.to_string(), col::accent()).clicked() {
+                act.push(Action::Goto(u.addr));
+            }
+            ui.label(mono_c(format!("{:<22}", owner), col::symbol()));
+            widgets::chip(
+                ui,
+                &u.api,
+                match u.confidence {
+                    ne_analysis::resrefs::Confidence::Id => col::green(),
+                    ne_analysis::resrefs::Confidence::Name => col::faint(),
+                },
+            );
+        });
+    }
+    crate::ui::sep(ui);
 }
 
 fn checkerboard(ui: &Ui, rect: egui::Rect) {

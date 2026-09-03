@@ -49,6 +49,18 @@ impl Nav {
         }
     }
 
+    /// The icon for this view. A resource takes the icon of its type, which
+    /// needs the document to look up.
+    pub fn icon_for(&self, doc: Option<&Doc>) -> crate::icons::Icon {
+        if let Nav::Resource(i) = self {
+            let type_id = doc
+                .and_then(|d| d.ne.resources.get(*i))
+                .and_then(|r| r.type_id.as_id());
+            return crate::icons::for_resource(type_id);
+        }
+        self.icon()
+    }
+
     pub fn icon(&self) -> crate::icons::Icon {
         use crate::icons::Icon;
         match self {
@@ -89,6 +101,8 @@ pub struct Doc {
     pub ne: NeFile,
     pub program: Program,
     pub bits32: BTreeSet<u16>,
+    /// Which code loads which resource, both ways round.
+    pub res_links: ne_analysis::resrefs::ResourceLinks,
 }
 
 impl Doc {
@@ -100,11 +114,14 @@ impl Doc {
             ne.set_export_index(index.clone());
         }
         let program = Program::analyze(&ne, &bits32);
+        let res_links =
+            ne_analysis::resrefs::analyze(&ne, &program, ne_core::ApiDb::embedded());
         Ok(Doc {
             path: path.to_path_buf(),
             ne,
             program,
             bits32,
+            res_links,
         })
     }
 
@@ -454,8 +471,11 @@ impl SithApp {
             Some(e) => Nav::Segment(e.segment),
             None => Nav::Overview,
         };
-        self.tabs.push(Tab::new(doc, nav));
-        self.active = self.tabs.len() - 1;
+        // Already open? Go to it rather than stacking another copy.
+        if !self.focus_tab(doc, Some(&nav)) {
+            self.tabs.push(Tab::new(doc, nav));
+            self.active = self.tabs.len() - 1;
+        }
         if let Some(e) = target {
             let off = e.offset as u32;
             if let Some(t) = self.tab_mut() {
@@ -485,8 +505,10 @@ impl SithApp {
                     d.program.functions.len(),
                     d.ne.resources.len()
                 );
-                self.tabs.push(Tab::new(i, Nav::Overview));
-                self.active = self.tabs.len() - 1;
+                if !self.focus_tab(i, None) {
+                    self.tabs.push(Tab::new(i, Nav::Overview));
+                    self.active = self.tabs.len() - 1;
+                }
                 self.error = None;
                 self.textures.borrow_mut().clear();
                 self.zoom_index.set(None);
@@ -501,6 +523,7 @@ impl SithApp {
         let Some(i) = self.tab().map(|t| t.doc) else { return };
         let Some(d) = self.docs.get_mut(i) else { return };
         d.program = Program::analyze(&d.ne, &d.bits32);
+        d.res_links = ne_analysis::resrefs::analyze(&d.ne, &d.program, ne_core::ApiDb::embedded());
     }
 
     /// The name to show for a function: the user's, if they gave one.
@@ -1084,6 +1107,35 @@ impl SithApp {
             return;
         };
         self.open_project(&path);
+    }
+
+    /// Activate an existing tab showing `doc`, preferring one already on
+    /// `nav`. Returns false when there is none.
+    ///
+    /// Opening something already open should take you to it. Only an explicit
+    /// new-tab gesture -- middle-click, or the + button -- adds one.
+    fn focus_tab(&mut self, doc: usize, nav: Option<&Nav>) -> bool {
+        let exact = nav.and_then(|n| {
+            self.tabs
+                .iter()
+                .position(|t| t.doc == doc && t.nav == *n)
+        });
+        let any = self.tabs.iter().position(|t| t.doc == doc);
+        match exact.or(any) {
+            Some(i) => {
+                self.active = i;
+                if let (Some(n), Some(t)) = (nav, self.tabs.get_mut(i)) {
+                    if t.nav != *n {
+                        let cur = std::mem::replace(&mut t.nav, n.clone());
+                        t.history.push(cur);
+                        t.forward.clear();
+                        t.sel = None;
+                    }
+                }
+                true
+            }
+            None => false,
+        }
     }
 
     /// Load a project and open every binary it refers to.

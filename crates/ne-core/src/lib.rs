@@ -16,6 +16,7 @@
 pub mod api;
 pub mod dib;
 pub mod entry;
+pub mod fnt;
 pub mod header;
 pub mod index;
 pub mod ordinals;
@@ -597,6 +598,9 @@ impl NeFile {
                 dib::apply_and_mask(&mut img, body, &info);
                 Some(img)
             }
+            // A bitmap font previews as a sheet of its glyphs, which says far
+            // more about a face than any of its header fields.
+            resource::rt::FONT => fnt::parse(data).map(|f| fnt::render_sheet(&f)),
             resource::rt::GROUP_ICON | resource::rt::GROUP_CURSOR => {
                 let is_cursor = r.type_id.as_id() == Some(resource::rt::GROUP_CURSOR);
                 let dir = GroupDir::parse(data, is_cursor)?;

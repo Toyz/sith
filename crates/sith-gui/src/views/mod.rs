@@ -5,6 +5,7 @@
 
 pub mod disasm;
 pub mod graph;
+pub mod highlight;
 pub mod hex;
 pub mod overview;
 pub mod resource;

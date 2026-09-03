@@ -4,7 +4,8 @@ use crate::cmd::hex::dump;
 use crate::style::*;
 use anyhow::{bail, Result};
 use clap::Subcommand;
-use ne_core::{render, NeFile, ResId, Resource};
+use ne_analysis::resrefs;
+use ne_core::{render, ApiDb, NeFile, ResId, Resource};
 use serde_json::json;
 use std::path::PathBuf;
 
@@ -53,11 +54,16 @@ pub fn run(ne: &NeFile, cmd: &ResCmd, as_json: bool) -> Result<()> {
 }
 
 fn list(ne: &NeFile, as_json: bool) -> Result<()> {
+    // Which code loads each resource is the fact the directory alone cannot
+    // give you, so the listing carries it.
+    let program = ne_analysis::Program::analyze(ne, &Default::default());
+    let links = resrefs::analyze(ne, &program, ApiDb::embedded());
     if as_json {
         let v: Vec<_> = ne
             .resources
             .iter()
-            .map(|r| {
+            .enumerate()
+            .map(|(i, r)| {
                 json!({
                     "type": r.type_name(),
                     "id": r.res_id.to_string(),
@@ -65,6 +71,10 @@ fn list(ne: &NeFile, as_json: bool) -> Result<()> {
                     "length": r.length,
                     "flags": r.flags,
                     "flag_names": r.flag_names(),
+                    "loaded_by": links.uses(i).iter().map(|u| json!({
+                        "address": u.addr.to_string(),
+                        "api": u.api,
+                    })).collect::<Vec<_>>(),
                 })
             })
             .collect();
@@ -77,16 +87,35 @@ fn list(ne: &NeFile, as_json: bool) -> Result<()> {
     }
     println!(
         "{}",
-        dim("  type            id                  offset     size  flags")
+        dim("  type            id                  offset     size  refs  loaded by")
     );
-    for r in &ne.resources {
+    for (i, r) in ne.resources.iter().enumerate() {
+        let uses = links.uses(i);
+        let by = if uses.is_empty() {
+            dim("-")
+        } else {
+            let mut apis: Vec<&str> = uses.iter().map(|u| u.api.as_str()).collect();
+            apis.sort();
+            apis.dedup();
+            format!(
+                "{}  {}",
+                cyan(&apis.join(", ")),
+                dim(&uses
+                    .iter()
+                    .take(4)
+                    .map(|u| u.addr.to_string())
+                    .collect::<Vec<_>>()
+                    .join(" "))
+            )
+        };
         println!(
-            "  {:<14}  {:<18}  {:08X} {:>8}  {}",
+            "  {:<14}  {:<18}  {:08X} {:>8}  {:>4}  {}",
             yellow(&r.type_name()),
             r.res_id.to_string(),
             r.offset,
             r.length,
-            dim(&r.flag_names().join(" "))
+            uses.len(),
+            by
         );
     }
     Ok(())

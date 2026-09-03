@@ -350,6 +350,12 @@ pub fn install(ctx: &egui::Context) {
     v.widgets.hovered.bg_fill = p.raised.gamma_multiply(lift);
     v.widgets.active.weak_bg_fill = p.raised.gamma_multiply(lift * lift);
 
+    // Labels are not documents. egui makes every label selectable text by
+    // default, which puts an I-beam over chips, headings and table cells and
+    // makes them look editable. Copying is offered explicitly instead, through
+    // context menus and Copy buttons.
+    style.interaction.selectable_labels = false;
+
     style.spacing.item_spacing = egui::vec2(8.0, 4.0);
     style.spacing.button_padding = egui::vec2(8.0, 3.0);
     style.spacing.menu_margin = egui::Margin::same(6);

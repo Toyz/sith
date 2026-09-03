@@ -178,6 +178,27 @@ Resources decode rather than merely dump: `RT_BITMAP` to `.bmp`, `RT_ICON` and
 dialog templates, accelerator tables and `VS_VERSIONINFO` in its 16-bit ANSI
 form.
 
+Bitmap fonts are decoded too, so a `.FON` — an NE library whose only payload is
+`RT_FONTDIR` and `RT_FONT` — opens like anything else and previews as a sheet
+of its glyphs. Glyph bitmaps are stored *column major*, which is the detail
+that turns a naive reader's output into a sheared mess.
+
+### Resources and the code that loads them
+
+A resource is inert until something asks for it, and the ask is always the same
+shape: a `LoadBitmap`, `DialogBox` or `LoadString` call naming it. Both idioms
+are recovered — an id pushed as a literal, and a far pointer to a string whose
+text matches a named resource — so a bitmap says which function draws it and a
+loading call links straight to the artwork:
+
+```
+sith res list CHIPS.EXE
+  type            id                  offset     size  refs  loaded by
+  BITMAP          OBJ32_4             0000D800    73728    10  by name  seg02:1389 seg02:14ED …
+  MENU            CHIPSMENU           0003FC00      512     2  by name  seg02:090A seg02:22C1
+  DIALOG          DLG_GOTO            0003FE00      512     1  by name  seg02:20EA
+```
+
 ## Where the API data comes from
 
 `tools/fetch_ordinals.py` regenerates `crates/ne-core/data/win16_ordinals.json`

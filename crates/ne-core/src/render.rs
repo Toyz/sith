@@ -36,6 +36,20 @@ pub fn resource_text(ne: &NeFile, r: &Resource) -> Option<String> {
             Some(s)
         }
         rt::VERSION => rsrc::decode_version(data).map(|v| version_text(&v)),
+        rt::FONT => crate::fnt::parse(data).map(|f| font_text(&f)).or_else(|| {
+            // A vector font has no bitmaps, but its header still says what it
+            // is, and saying so beats a hex dump.
+            crate::fnt::parse_header(data).map(|h| {
+                format!(
+                    "vector font, version {}.{}\n{} point, weight {}\n",
+                    h.version >> 8,
+                    h.version & 0xFF,
+                    h.points,
+                    h.weight
+                )
+            })
+        }),
+        rt::FONTDIR => Some(fontdir_text(ne, data)),
         rt::BITMAP | rt::ICON | rt::CURSOR => {
             let body = if r.type_id.as_id() == Some(rt::CURSOR) && data.len() > 4 {
                 &data[4..]
@@ -56,6 +70,90 @@ pub fn resource_text(ne: &NeFile, r: &Resource) -> Option<String> {
         }
         _ => None,
     }
+}
+
+pub fn font_text(f: &crate::fnt::Font) -> String {
+    let h = &f.header;
+    let mut s = String::new();
+    s.push_str(&format!("FACE      {}\n", f.face));
+    if !f.device.is_empty() {
+        s.push_str(&format!("DEVICE    {}\n", f.device));
+    }
+    s.push_str(&format!(
+        "SIZE      {} point, {}x{} px cell, ascent {}\n",
+        h.points, h.pix_width, h.pix_height, h.ascent
+    ));
+    s.push_str(&format!(
+        "PITCH     {}{}\n",
+        if h.is_proportional() {
+            "proportional"
+        } else {
+            "fixed"
+        },
+        if h.is_proportional() {
+            format!(", average {} px, widest {} px", h.avg_width, h.max_width)
+        } else {
+            String::new()
+        }
+    ));
+    s.push_str(&format!(
+        "STYLE     weight {} ({}), family {}{}{}{}\n",
+        h.weight,
+        h.weight_name(),
+        h.family_name(),
+        if h.italic { ", italic" } else { "" },
+        if h.underline { ", underline" } else { "" },
+        if h.strikeout { ", strikeout" } else { "" }
+    ));
+    s.push_str(&format!(
+        "CHARSET   {} ({}), {:#04X}..{:#04X}, default {:#04X}, break {:#04X}\n",
+        h.charset_name(),
+        h.charset,
+        h.first_char,
+        h.last_char,
+        h.default_char,
+        h.break_char
+    ));
+    s.push_str(&format!(
+        "RESOLUTION {} x {} dpi, leading {} internal / {} external\n",
+        h.horiz_res, h.vert_res, h.internal_leading, h.external_leading
+    ));
+    s.push_str(&format!(
+        "GLYPHS    {} present, version {}.{}\n",
+        f.glyphs.len(),
+        h.version >> 8,
+        h.version & 0xFF
+    ));
+    if !h.copyright.is_empty() {
+        s.push_str(&format!("COPYRIGHT {}\n", h.copyright));
+    }
+    s
+}
+
+/// The font directory, described from the fonts it points at rather than from
+/// its own copies of their headers.
+pub fn fontdir_text(ne: &NeFile, data: &[u8]) -> String {
+    let ordinals = crate::fnt::parse_fontdir(data);
+    let mut s = format!("{} font(s)\n\n", ordinals.len());
+    for ord in ordinals {
+        match ne
+            .resource_by_type_ordinal(rt::FONT, ord)
+            .map(|r| ne.resource_data(r))
+            .and_then(crate::fnt::parse)
+        {
+            Some(f) => s.push_str(&format!(
+                "  @{:<5} {:<20} {} point  {}x{}  {}\n",
+                ord,
+                f.face,
+                f.header.points,
+                f.header.pix_width,
+                f.header.pix_height,
+                f.header.charset_name()
+            )),
+            None => s.push_str(&format!("  @{ord:<5} (font resource not found)\n")),
+        }
+    }
+    s
 }
 
 pub fn menu_text(m: &Menu) -> String {

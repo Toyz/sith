@@ -190,6 +190,10 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16) {
                     // Reconstructing the call is cheap and only done for rows
                     // actually on screen.
                     let call = callargs::reconstruct(code, *i, ApiDb::embedded());
+                    let loads = doc.res_links.resource_at(Addr {
+                        segment: segno,
+                        offset: code.insns[*i].offset,
+                    });
                     insn_row(
                         app,
                         ui,
@@ -201,6 +205,7 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, segno: u16) {
                         &labels,
                         highlight.as_deref(),
                         call.as_ref(),
+                        loads,
                         row_h,
                     );
                 }
@@ -505,6 +510,7 @@ fn insn_row(
     labels: &BTreeMap<u32, String>,
     highlight: Option<&str>,
     call: Option<&callargs::CallArgs>,
+    loads: Option<usize>,
     row_h: f32,
 ) {
     let selected = app.tab().and_then(|t| t.sel) == Some(insn.offset);
@@ -579,6 +585,25 @@ fn insn_row(
                             segment: segno,
                             offset: t,
                         }));
+                        consumed = true;
+                    }
+                }
+            }
+            // A call that loads a resource gets a link straight to it: the
+            // artwork is usually what you actually wanted to look at.
+            if let Some(res) = loads {
+                if let Some(r) = app.doc().and_then(|d| d.ne.resources.get(res)) {
+                    ui.add_space(2.0);
+                    icons::inline(ui, icons::for_resource(r.type_id.as_id()), col::orange());
+                    if widgets::link(
+                        ui,
+                        format!("{} {}", r.type_name(), r.res_id),
+                        col::orange(),
+                    )
+                    .on_hover_text("open this resource")
+                    .clicked()
+                    {
+                        act.push(Action::Go(Nav::Resource(res)));
                         consumed = true;
                     }
                 }

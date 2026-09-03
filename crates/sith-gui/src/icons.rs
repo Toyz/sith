@@ -34,6 +34,34 @@ pub enum Icon {
     Graph,
     Xref,
     Module,
+    Dialog,
+    Menu,
+    Font,
+    Cursor,
+    IconBadge,
+    Accelerator,
+    Version,
+}
+
+/// The icon for a resource type.
+///
+/// A picture frame on every resource says only "resource"; the whole point of
+/// the tree is to tell a dialog from a menu from a font at a glance.
+pub fn for_resource(type_id: Option<u16>) -> Icon {
+    use ne_core::resource::rt;
+    match type_id {
+        Some(rt::CURSOR) | Some(rt::GROUP_CURSOR) => Icon::Cursor,
+        Some(rt::BITMAP) => Icon::Resource,
+        Some(rt::ICON) | Some(rt::GROUP_ICON) => Icon::IconBadge,
+        Some(rt::MENU) => Icon::Menu,
+        Some(rt::DIALOG) => Icon::Dialog,
+        Some(rt::STRING) | Some(rt::MESSAGETABLE) | Some(rt::NAMETABLE) => Icon::Strings,
+        Some(rt::FONT) | Some(rt::FONTDIR) => Icon::Font,
+        Some(rt::ACCELERATOR) => Icon::Accelerator,
+        Some(rt::VERSION) => Icon::Version,
+        Some(rt::RCDATA) => Icon::Data,
+        _ => Icon::Resource,
+    }
 }
 
 /// Draw `icon` inside `rect`, scaled to fit.
@@ -173,6 +201,85 @@ pub fn draw(painter: &egui::Painter, rect: Rect, icon: Icon, color: Color32) {
             path(vec![p(10.5, 3.0), p(13.5, 5.5), p(10.5, 8.0)]);
             path(vec![p(13.0, 10.5), p(3.0, 10.5)]);
             path(vec![p(5.5, 8.0), p(2.5, 10.5), p(5.5, 13.0)]);
+        }
+        Icon::Dialog => {
+            painter.rect_stroke(
+                Rect::from_min_max(p(2.0, 3.0), p(14.0, 13.0)),
+                egui::CornerRadius::same(1),
+                stroke,
+                egui::StrokeKind::Inside,
+            );
+            line(p(2.0, 6.0), p(14.0, 6.0));
+            painter.circle_filled(p(12.2, 4.5), 0.9 * s, color);
+            painter.rect_stroke(
+                Rect::from_min_max(p(8.5, 9.0), p(12.5, 11.5)),
+                egui::CornerRadius::same(1),
+                stroke,
+                egui::StrokeKind::Inside,
+            );
+            line(p(4.0, 9.0), p(7.0, 9.0));
+            line(p(4.0, 11.0), p(7.0, 11.0));
+        }
+        Icon::Menu => {
+            line(p(2.0, 3.5), p(14.0, 3.5));
+            painter.rect_stroke(
+                Rect::from_min_max(p(5.0, 5.5), p(13.0, 13.5)),
+                egui::CornerRadius::same(1),
+                stroke,
+                egui::StrokeKind::Inside,
+            );
+            line(p(6.5, 8.0), p(11.5, 8.0));
+            line(p(6.5, 10.5), p(11.5, 10.5));
+        }
+        Icon::Font => {
+            // A letterform in a box reads as "font" at any size.
+            path(vec![p(4.0, 13.0), p(8.0, 3.0), p(12.0, 13.0)]);
+            line(p(5.6, 9.5), p(10.4, 9.5));
+        }
+        Icon::Cursor => {
+            painter.add(egui::Shape::convex_polygon(
+                vec![p(4.0, 2.5), p(4.0, 12.5), p(6.8, 9.8), p(8.6, 13.5), p(10.4, 12.6), p(8.6, 9.2), p(12.0, 8.8)],
+                Color32::TRANSPARENT,
+                stroke,
+            ));
+        }
+        Icon::IconBadge => {
+            painter.rect_stroke(
+                Rect::from_min_max(p(2.5, 2.5), p(13.5, 13.5)),
+                egui::CornerRadius::same(3),
+                stroke,
+                egui::StrokeKind::Inside,
+            );
+            painter.add(egui::Shape::convex_polygon(
+                vec![p(8.0, 4.8), p(9.4, 7.4), p(12.0, 7.8), p(10.0, 9.6), p(10.6, 12.2), p(8.0, 10.9), p(5.4, 12.2), p(6.0, 9.6), p(4.0, 7.8), p(6.6, 7.4)],
+                color,
+                Stroke::NONE,
+            ));
+        }
+        Icon::Accelerator => {
+            painter.rect_stroke(
+                Rect::from_min_max(p(2.0, 4.0), p(14.0, 12.0)),
+                egui::CornerRadius::same(2),
+                stroke,
+                egui::StrokeKind::Inside,
+            );
+            for x in [4.5f32, 7.0, 9.5] {
+                line(p(x, 6.5), p(x + 1.2, 6.5));
+            }
+            line(p(11.8, 6.5), p(12.4, 6.5));
+            line(p(5.0, 9.5), p(11.0, 9.5));
+        }
+        Icon::Version => {
+            // A luggage tag: a label attached to something.
+            path(vec![
+                p(2.5, 7.5),
+                p(8.0, 2.0),
+                p(14.0, 2.0),
+                p(14.0, 8.0),
+                p(8.5, 13.5),
+                p(2.5, 7.5),
+            ]);
+            painter.circle_stroke(p(11.3, 4.7), 1.2 * s, stroke);
         }
         Icon::Module => {
             path(vec![

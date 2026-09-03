@@ -371,12 +371,28 @@ fn resources_section(
 
     header(ui, Icon::Resource, "RESOURCES", total, true, |ui| {
         for (t, idxs) in by_type {
+            let type_id = doc
+                .ne
+                .resources
+                .get(idxs[0])
+                .and_then(|r| r.type_id.as_id());
             egui::CollapsingHeader::new(
                 egui::RichText::new(format!("{t}   {}", idxs.len()))
                     .size(11.0)
                     .color(col::faint()),
             )
             .id_salt(("restype", &t))
+            .icon(move |ui, openness, resp| {
+                let c = if resp.hovered() { col::text() } else { col::faint() };
+                let r = resp.rect;
+                // The group's own type icon, rotating out of the way as it
+                // opens, rather than a nondescript triangle.
+                if openness > 0.5 {
+                    icons::draw(ui.painter(), r.shrink(2.0), icons::for_resource(type_id), c);
+                } else {
+                    icons::draw(ui.painter(), r.shrink(3.0), Icon::Forward, c);
+                }
+            })
             .default_open(idxs.len() <= 16)
             .show(ui, |ui| {
                 ui.spacing_mut().item_spacing.y = 1.0;

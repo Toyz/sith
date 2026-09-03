@@ -381,7 +381,11 @@ fn tab_strip(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                         .show(ui, |ui| {
                             ui.horizontal(|ui| {
                                 ui.spacing_mut().item_spacing.x = 6.0;
-                                icons::inline(ui, tab.nav.icon(), if active { col::accent() } else { col::dim() });
+                                icons::inline(
+                                    ui,
+                                    tab.nav.icon_for(app.docs.get(tab.doc)),
+                                    if active { col::accent() } else { col::dim() },
+                                );
                                 ui.label(egui::RichText::new(&title).color(text_col).size(12.0));
                                 // A tab from another file says so: with several
                                 // modules open the title alone is ambiguous.
