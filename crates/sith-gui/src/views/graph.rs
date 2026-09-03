@@ -79,9 +79,44 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
     );
     let edges = edges(app, doc, &nodes);
 
+    // Which drawn nodes the search picks out. Computed once and shared, so
+    // the count in the toolbar and the rings on the canvas cannot disagree.
+    let hits: Vec<usize> = matching(&nodes, &g.find);
+
     header(app, ui, act, root_fn, &nodes, &edges, !g.root_history.is_empty());
-    controls(app, ui, act, g);
-    canvas(app, ui, act, g, &nodes, &edges);
+    controls(app, ui, act, g, hits.len());
+    canvas(app, ui, act, g, &nodes, &edges, &hits);
+}
+
+/// The nodes whose name contains the needle, left to right.
+///
+/// Substring rather than fuzzy: a graph search is used to find a name you
+/// already know, and a fuzzy match on two hundred short labels returns
+/// everything.
+fn matching(nodes: &[Node], needle: &str) -> Vec<usize> {
+    if needle.trim().is_empty() {
+        return Vec::new();
+    }
+    let needle = needle.trim().to_ascii_lowercase();
+    let mut hits: Vec<usize> = nodes
+        .iter()
+        .enumerate()
+        .filter(|(_, n)| {
+            !n.is_overflow
+                && (n.label.to_ascii_lowercase().contains(&needle)
+                    || n.sub.to_ascii_lowercase().contains(&needle))
+        })
+        .map(|(i, _)| i)
+        .collect();
+    hits.sort_by(|a, b| {
+        nodes[*a]
+            .rect
+            .min
+            .x
+            .total_cmp(&nodes[*b].rect.min.x)
+            .then(nodes[*a].rect.min.y.total_cmp(&nodes[*b].rect.min.y))
+    });
+    hits
 }
 
 /// Title, root, and the actions that apply to the whole view.
@@ -146,7 +181,7 @@ fn header(
 }
 
 /// What the graph is showing: direction, how far, and whether imports count.
-fn controls(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, g: &GraphState) {
+fn controls(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, g: &GraphState, matches: usize) {
     egui::Frame::new()
         .fill(col::raised())
         .corner_radius(egui::CornerRadius::same(6))
@@ -189,6 +224,48 @@ fn controls(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, g: &GraphState) {
                     act.push(Action::ToggleGraphImports);
                 }
 
+                widgets::strip_item(ui, |ui| {
+                    icons::inline(ui, Icon::Search, col::faint());
+                    let mut needle = g.find.clone();
+                    if ui
+                        .add(
+                            egui::TextEdit::singleline(&mut needle)
+                                .desired_width(150.0)
+                                .hint_text("find a node")
+                                .font(egui::TextStyle::Monospace),
+                        )
+                        .changed()
+                    {
+                        act.push(Action::SetGraphFind(needle));
+                    }
+                });
+                if !g.find.is_empty() {
+                    widgets::strip_item(ui, |ui| {
+                        let total = matches;
+                        ui.label(
+                            egui::RichText::new(if total == 0 {
+                                "no matches".to_owned()
+                            } else {
+                                format!("{} of {total}", g.find_at % total + 1)
+                            })
+                            .size(11.0)
+                            .color(if total == 0 { col::orange() } else { col::faint() }),
+                        );
+                    });
+                    if let Some(step) = widgets::strip_item(ui, |ui| {
+                        let mut step = None;
+                        if icons::button(ui, Icon::Back, "previous match").clicked() {
+                            step = Some(-1);
+                        }
+                        if icons::button(ui, Icon::Forward, "next match").clicked() {
+                            step = Some(1);
+                        }
+                        step
+                    }) {
+                        act.push(Action::GraphFindStep(step));
+                    }
+                }
+
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     ui.label(
                         egui::RichText::new(format!("{:.0}%", g.zoom * 100.0))
@@ -225,6 +302,7 @@ fn canvas(
     g: &GraphState,
     nodes: &[Node],
     edges: &[(usize, usize)],
+    hits: &[usize],
 ) {
     let _ = app;
     egui::Frame::new()
@@ -253,6 +331,12 @@ fn canvas(
             }
             if g.zoom_nudge != 1.0 {
                 zoom = (zoom * g.zoom_nudge).clamp(0.12, 4.0);
+            }
+            // Centre on the current match. The index wraps, so stepping past
+            // the last one comes back to the first rather than stopping.
+            if g.find_jump && !hits.is_empty() {
+                let n = &nodes[hits[g.find_at % hits.len()]];
+                pan = n.rect.center().to_vec2();
             }
 
             // Node rectangles are needed before the drag is resolved, so the
@@ -362,6 +446,22 @@ fn canvas(
                 } else {
                     (col::raised(), col::border(), col::text())
                 };
+                if hits.contains(&i) {
+                    // Every match is ringed, and the one the toolbar is
+                    // counting is filled as well: finding a name is only half
+                    // the job if you then have to hunt for which ring is the
+                    // current one.
+                    let current = hits[g.find_at % hits.len()] == i;
+                    painter.rect_stroke(
+                        r.expand(if current { 5.0 } else { 3.0 }),
+                        radius_of(zoom),
+                        Stroke::new(
+                            ((if current { 2.4 } else { 1.4 }) * zoom).clamp(1.0, 4.0),
+                            col::orange(),
+                        ),
+                        egui::StrokeKind::Outside,
+                    );
+                }
                 if n.addr.is_some() && n.addr == g.selected {
                     painter.rect_stroke(
                         r.expand(3.0),
@@ -576,6 +676,9 @@ fn canvas(
 
             if zoom != g.zoom || pan != g.pan || !g.framed || g.zoom_nudge != 1.0 {
                 act.push(Action::SetGraphView { pan, zoom });
+            }
+            if g.find_jump {
+                act.push(Action::GraphFindLanded);
             }
         });
 }
@@ -946,4 +1049,63 @@ fn elide(s: &str, max: usize) -> String {
     }
     let head: String = s.chars().take(max.saturating_sub(1)).collect();
     format!("{head}\u{2026}")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn node(label: &str, sub: &str, x: f32) -> Node {
+        Node {
+            key: label.to_owned(),
+            addr: None,
+            label: label.to_owned(),
+            sub: sub.to_owned(),
+            level: 0,
+            is_root: false,
+            is_import: false,
+            is_overflow: false,
+            rect: Rect::from_min_size(Pos2::new(x, 0.0), Vec2::new(NODE_W, NODE_H)),
+        }
+    }
+
+    #[test]
+    fn a_needle_matches_names_and_addresses() {
+        let nodes = vec![
+            node("MAINWNDPROC", "seg02:225C", 0.0),
+            node("sub_02_0DC6", "seg02:0DC6", 10.0),
+            node("BOARDWNDPROC", "seg02:274E", 20.0),
+        ];
+        assert_eq!(matching(&nodes, "proc"), vec![0, 2]);
+        assert_eq!(matching(&nodes, "0DC6"), vec![1]);
+        assert_eq!(matching(&nodes, "seg02"), vec![0, 1, 2]);
+    }
+
+    #[test]
+    fn an_empty_needle_matches_nothing_rather_than_everything() {
+        let nodes = vec![node("MAINWNDPROC", "seg02:225C", 0.0)];
+        assert!(matching(&nodes, "").is_empty());
+        assert!(matching(&nodes, "   ").is_empty());
+    }
+
+    #[test]
+    fn matches_come_back_in_reading_order() {
+        // Left to right, so stepping through them walks the graph the way it
+        // is drawn rather than the order the layout happened to build it in.
+        let nodes = vec![
+            node("c_proc", "", 300.0),
+            node("a_proc", "", 100.0),
+            node("b_proc", "", 200.0),
+        ];
+        assert_eq!(matching(&nodes, "proc"), vec![1, 2, 0]);
+    }
+
+    #[test]
+    fn a_placeholder_is_not_a_match() {
+        // The "+35 more" stand-in has no function behind it, so landing on it
+        // would be landing on nothing.
+        let mut n = node("+35 more", "", 0.0);
+        n.is_overflow = true;
+        assert!(matching(&[n], "more").is_empty());
+    }
 }

@@ -206,6 +206,15 @@ pub struct GraphState {
     pub expanded: std::collections::HashSet<i32>,
     /// Roots visited before this one, so re-centring can be undone.
     pub root_history: Vec<Option<Addr>>,
+    /// What to look for among the drawn nodes.
+    ///
+    /// A graph big enough to be worth drawing is one you cannot read by
+    /// looking, so it needs the same search everything else has.
+    pub find: String,
+    /// Which match to centre on, wrapped into range at draw time.
+    pub find_at: usize,
+    /// Set when the view should pan to the current match.
+    pub find_jump: bool,
 }
 
 impl Default for GraphState {
@@ -226,6 +235,9 @@ impl Default for GraphState {
             selected: None,
             expanded: Default::default(),
             root_history: Vec::new(),
+            find: String::new(),
+            find_at: 0,
+            find_jump: false,
         }
     }
 }
@@ -334,6 +346,12 @@ pub enum Action {
     GraphBack,
     ConsumeScroll,
     SetGraphDir(GraphDir),
+    /// Change what the graph is searching for.
+    SetGraphFind(String),
+    /// Step to the next or previous match, and pan to it.
+    GraphFindStep(i32),
+    /// The view has centred on the match, so stop asking it to.
+    GraphFindLanded,
     ToggleGraphImports,
     ToggleNavigator,
     ToggleInspector,
@@ -1212,6 +1230,29 @@ impl SithApp {
             Action::SetGraphDir(d) => {
                 if let Some(t) = self.tab_mut() {
                     t.graph.dir = d;
+                }
+            }
+            Action::SetGraphFind(text) => {
+                if let Some(t) = self.tab_mut() {
+                    // A changed needle starts from the first match again,
+                    // and pans there, so typing walks the graph.
+                    let changed = t.graph.find != text;
+                    t.graph.find = text;
+                    if changed {
+                        t.graph.find_at = 0;
+                        t.graph.find_jump = true;
+                    }
+                }
+            }
+            Action::GraphFindStep(delta) => {
+                if let Some(t) = self.tab_mut() {
+                    t.graph.find_at = t.graph.find_at.saturating_add_signed(delta as isize);
+                    t.graph.find_jump = true;
+                }
+            }
+            Action::GraphFindLanded => {
+                if let Some(t) = self.tab_mut() {
+                    t.graph.find_jump = false;
                 }
             }
             Action::ToggleGraphImports => {
