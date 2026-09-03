@@ -242,10 +242,15 @@ fn segments_section(
                     // A size bar makes the shape of the binary obvious at a
                     // glance: which segment holds the bulk of the code.
                     bar(ui, s.length as f32 / biggest as f32, color);
-                    ui.label(mono_c(format!("{:>6}", human(s.length as u64)), col::faint()));
-                    if !s.relocs.is_empty() {
-                        widgets::chip(ui, &format!("{}", s.relocs.len()), col::orange());
-                    }
+                    // Pinned to the right edge, like every other row in the
+                    // tree. Packed left they trail off mid-panel and the
+                    // column stops being a column.
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if !s.relocs.is_empty() {
+                            widgets::chip(ui, &format!("{}", s.relocs.len()), col::orange());
+                        }
+                        ui.label(mono_c(human(s.length as u64), col::faint()));
+                    });
                 },
             );
             let flags: Vec<String> =
