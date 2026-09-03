@@ -83,6 +83,9 @@ pub fn link(ui: &mut Ui, text: impl Into<String>, color: Color32) -> Response {
     r
 }
 
+/// Height shared by the small toolbar controls, so a row of them lines up.
+pub const CONTROL_H: f32 = 22.0;
+
 /// A segmented control: several exclusive choices in one strip.
 ///
 /// egui's selectable labels look like text that happens to highlight; a
@@ -96,6 +99,7 @@ pub fn segmented<T: PartialEq + Copy>(ui: &mut Ui, current: T, options: &[(T, &s
         .inner_margin(egui::Margin::same(2))
         .show(ui, |ui| {
             ui.horizontal(|ui| {
+                ui.set_min_height(CONTROL_H);
                 ui.spacing_mut().item_spacing.x = 2.0;
                 for (value, label) in options {
                     let active = *value == current;
@@ -133,6 +137,9 @@ pub fn stepper(ui: &mut Ui, label: &str, value: usize, min: usize, max: usize) -
             .inner_margin(egui::Margin::same(2))
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
+                    // The same inner height as the segmented control, so the
+                    // two sit level in a toolbar.
+                    ui.set_min_height(CONTROL_H);
                     ui.spacing_mut().item_spacing.x = 2.0;
                     ui.add_enabled_ui(value > min, |ui| {
                         if ui.add(small_glyph("\u{2212}")).clicked() {
@@ -176,7 +183,8 @@ pub fn toggle_chip(ui: &mut Ui, on: bool, label: &str, color: Color32) -> bool {
         if on { color } else { col::faint() },
     );
     let pad = egui::vec2(7.0, 3.0);
-    let (rect, resp) = ui.allocate_exact_size(galley.size() + pad * 2.0, Sense::click());
+    let size = egui::vec2(galley.size().x + pad.x * 2.0, CONTROL_H + 4.0);
+    let (rect, resp) = ui.allocate_exact_size(size, Sense::click());
     let fill = if on {
         color.gamma_multiply(0.22)
     } else if resp.hovered() {
@@ -192,7 +200,8 @@ pub fn toggle_chip(ui: &mut Ui, on: bool, label: &str, color: Color32) -> bool {
         egui::StrokeKind::Inside,
     );
     let color = if on { color } else { col::faint() };
-    ui.painter().galley(rect.min + pad, galley, color);
+    let text_at = rect.min + egui::vec2(pad.x, (rect.height() - galley.size().y) / 2.0);
+    ui.painter().galley(text_at, galley, color);
     resp.clicked()
 }
 

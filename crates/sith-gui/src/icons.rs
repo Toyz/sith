@@ -334,6 +334,11 @@ pub fn button(ui: &mut Ui, icon: Icon, tooltip: &str) -> Response {
 /// An icon rendered inline, sized to the current text.
 pub fn inline(ui: &mut Ui, icon: Icon, color: Color32) {
     let h = ui.text_style_height(&egui::TextStyle::Body);
-    let (rect, _) = ui.allocate_exact_size(Vec2::splat(h), Sense::hover());
-    draw(ui.painter(), rect.shrink(1.0), icon, color);
+    inline_sized(ui, icon, color, h);
+}
+
+/// An icon rendered inline at a chosen size, for pairing with a heading.
+pub fn inline_sized(ui: &mut Ui, icon: Icon, color: Color32, size: f32) {
+    let (rect, _) = ui.allocate_exact_size(Vec2::splat(size), Sense::hover());
+    draw(ui.painter(), rect.shrink(size * 0.08), icon, color);
 }

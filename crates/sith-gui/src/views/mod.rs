@@ -32,67 +32,7 @@ pub fn welcome(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
                         .color(col::dim()),
                 );
             });
-            ui.add_space(20.0);
-
-            // A project that opened but holds nothing looks exactly like a
-            // cold start, so it gets said plainly along with the way out.
-            if app.project.path.is_some() && app.docs.is_empty() {
-                let width = 720.0_f32.min(ui.available_width() - 40.0);
-                centered(ui, width, |ui| {
-                    egui::Frame::new()
-                        .fill(col::raised())
-                        .corner_radius(egui::CornerRadius::same(8))
-                        .stroke(egui::Stroke::new(1.0, col::orange()))
-                        .inner_margin(egui::Margin::symmetric(16, 13))
-                        .show(ui, |ui| {
-                            ui.set_width(ui.available_width());
-                            ui.horizontal(|ui| {
-                                icons::inline(ui, Icon::Overview, col::orange());
-                                ui.label(
-                                    egui::RichText::new(format!(
-                                        "{} lists no binaries",
-                                        if app.project.name.is_empty() {
-                                            "This project"
-                                        } else {
-                                            &app.project.name
-                                        }
-                                    ))
-                                    .strong(),
-                                );
-                            });
-                            ui.label(dim(
-                                "The project opened, but it has nothing in it yet. Add the \
-                                 binaries you want to annotate, or start again from a folder.",
-                            ));
-                            // The path is context and can be long, so it gets
-                            // its own line rather than sharing one with the
-                            // buttons and running over them.
-                            ui.label(
-                                egui::RichText::new(
-                                    app.project
-                                        .path
-                                        .as_ref()
-                                        .map(|p| p.display().to_string())
-                                        .unwrap_or_default(),
-                                )
-                                .size(10.5)
-                                .color(col::faint()),
-                            );
-                            ui.add_space(8.0);
-                            ui.horizontal(|ui| {
-                                if ui.button("Add a binary…").clicked() {
-                                    act.push(Action::AddBinaryToProject);
-                                }
-                                if ui.button("New project from a folder…").clicked() {
-                                    act.push(Action::ShowWizard);
-                                }
-                            });
-                        });
-                });
-                ui.add_space(16.0);
-            }
-
-            ui.add_space(8.0);
+            ui.add_space(28.0);
 
             // The two starting moves, given equal weight: open a binary to
             // look at, or reopen the project where the work already lives.
@@ -323,6 +263,104 @@ fn start_card(
             act.push(a);
         }
     }
+}
+
+/// Shown when a project is open but holds no binaries.
+///
+/// The project *is* open, so the window should say that rather than showing a
+/// start screen with a warning taped to it. What is missing is content, not
+/// the project, and the two things worth doing about it sit under the message.
+pub fn empty_project(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {
+    egui::ScrollArea::vertical()
+        .auto_shrink([false, false])
+        .show(ui, |ui| {
+            ui.add_space(120.0);
+            ui.vertical_centered(|ui| {
+                let name = if app.project.name.is_empty() {
+                    "Untitled project"
+                } else {
+                    &app.project.name
+                };
+                ui.horizontal(|ui| {
+                    // Centre an icon and a heading together, which a plain
+                    // vertical_centered cannot do on its own.
+                    let w = 220.0;
+                    ui.add_space((ui.available_width() - w) / 2.0);
+                    icons::inline_sized(ui, Icon::Overview, col::purple(), 24.0);
+                    ui.label(egui::RichText::new(name).size(26.0).strong());
+                });
+                ui.label(
+                    egui::RichText::new(
+                        app.project
+                            .path
+                            .as_ref()
+                            .map(|p| p.display().to_string())
+                            .unwrap_or_default(),
+                    )
+                    .size(11.0)
+                    .color(col::faint()),
+                );
+
+                ui.add_space(22.0);
+                ui.label(
+                    egui::RichText::new("Nothing in it yet.")
+                        .size(14.0)
+                        .color(col::dim()),
+                );
+                ui.label(
+                    egui::RichText::new(
+                        "Add the binaries you want to annotate; your names and notes are \
+                         kept against them.",
+                    )
+                    .size(12.0)
+                    .color(col::faint()),
+                );
+
+                ui.add_space(18.0);
+                ui.horizontal(|ui| {
+                    let w = 330.0;
+                    ui.add_space((ui.available_width() - w) / 2.0);
+                    if ui.button("  Add a binary…  ").clicked() {
+                        act.push(Action::AddBinaryToProject);
+                    }
+                    if ui.button("  Scan a folder instead  ").clicked() {
+                        act.push(Action::ShowWizard);
+                    }
+                });
+
+                ui.add_space(28.0);
+                if ui
+                    .add(egui::Label::new(
+                        egui::RichText::new("open something else")
+                            .size(11.5)
+                            .color(col::faint()),
+                    )
+                    .sense(egui::Sense::click()))
+                    .on_hover_cursor(egui::CursorIcon::PointingHand)
+                    .clicked()
+                {
+                    if let Some(p) = rfd::FileDialog::new()
+                        .add_filter(
+                            "16-bit executables",
+                            &["exe", "dll", "drv", "fon", "EXE", "DLL", "DRV", "FON"],
+                        )
+                        .add_filter("sith project", &["sith"])
+                        .add_filter("All files", &["*"])
+                        .pick_file()
+                    {
+                        let is_project = p
+                            .extension()
+                            .and_then(|e| e.to_str())
+                            .is_some_and(|e| e.eq_ignore_ascii_case("sith"));
+                        act.push(if is_project {
+                            Action::OpenProjectAt(p)
+                        } else {
+                            Action::Open(p)
+                        });
+                    }
+                }
+            });
+        });
 }
 
 pub fn central(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>) {

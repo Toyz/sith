@@ -341,6 +341,11 @@ pub fn install(ctx: &egui::Context) {
         &mut v.widgets.open,
     ] {
         w.corner_radius = CornerRadius::same(4);
+        // egui grows a widget by a pixel on hover, which nudges everything
+        // beside it. In a toolbar of adjacent controls that reads as the row
+        // twitching, so the growth is switched off and hover is shown by
+        // colour alone.
+        w.expansion = 0.0;
     }
     v.widgets.noninteractive.bg_stroke = Stroke::new(1.0, p.border);
     v.widgets.inactive.weak_bg_fill = p.raised;

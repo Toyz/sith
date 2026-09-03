@@ -69,7 +69,13 @@ pub fn frame(app: &mut SithApp, ui: &mut Ui) {
 
     egui::CentralPanel::default_margins().show(ui, |ui| {
         if app.doc().is_none() {
-            views::welcome(app, ui, &mut act);
+            // An open project with nothing in it is not a cold start, and
+            // should not look like one.
+            if app.project.path.is_some() {
+                views::empty_project(app, ui, &mut act);
+            } else {
+                views::welcome(app, ui, &mut act);
+            }
             return;
         }
         views::central(app, ui, &mut act);
