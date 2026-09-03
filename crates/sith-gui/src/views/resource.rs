@@ -2,7 +2,8 @@
 
 use crate::state::{Action, SithApp};
 use crate::theme::{col, *};
-use crate::icons::{self};
+use crate::icons::{self, Icon};
+use std::collections::BTreeMap;
 use crate::widgets;
 use eframe::egui::{self, Ui};
 use ne_core::render;
@@ -27,6 +28,14 @@ pub fn show(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, index: usize) {
         if r.type_id.as_id() != Some(ne_core::resource::rt::FONT) {
             return;
         }
+    }
+
+    // A string table is a table. Rendering it as sixteen lines of text
+    // throws away the one thing worth having: which line of code asks for
+    // which string.
+    if r.type_id.as_id() == Some(ne_core::resource::rt::STRING) {
+        strings_table(app, ui, act, index);
+        return;
     }
 
     if let Some(text) = render::resource_text(&doc.ne, r) {
@@ -162,4 +171,138 @@ fn checkerboard(ui: &Ui, rect: egui::Rect) {
             p.rect_filled(cell, egui::CornerRadius::ZERO, egui::Color32::from_gray(38));
         }
     }
+}
+
+/// A string block as a table, with the code that loads each entry.
+fn strings_table(app: &SithApp, ui: &mut Ui, act: &mut Vec<Action>, index: usize) {
+    let Some(doc) = app.doc() else { return };
+    let Some(r) = doc.ne.resources.get(index) else { return };
+    let Some(block) = r.res_id.as_id() else { return };
+    let entries = ne_core::rsrc::decode_string_block(doc.ne.resource_data(r), block);
+    if entries.is_empty() {
+        crate::ui::empty(ui, "this block holds no strings");
+        return;
+    }
+
+    // Load sites, grouped by the string each one asked for.
+    let mut sites: BTreeMap<u16, Vec<&ne_analysis::resrefs::ResourceUse>> = BTreeMap::new();
+    for u in doc.res_links.uses(index) {
+        if let Some(id) = u.string_id {
+            sites.entry(id).or_default().push(u);
+        }
+    }
+    let used = entries.iter().filter(|(id, _)| sites.contains_key(id)).count();
+
+    ui.horizontal(|ui| {
+        widgets::strip_item(ui, |ui| {
+            ui.label(mono_c(
+                format!("block {block}   ids {}-{}", (block - 1) * 16, (block - 1) * 16 + 15),
+                col::dim(),
+            ));
+        });
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            widgets::strip_item(ui, |ui| {
+                // Zero is a real answer, not a failure: plenty of modules
+                // carry a string table that nothing loads by a literal id.
+                let (text, color) = if used == 0 {
+                    (
+                        "no LoadString call passes a literal id".to_owned(),
+                        col::faint(),
+                    )
+                } else {
+                    (
+                        format!("{used} of {} traced to code", entries.len()),
+                        col::green(),
+                    )
+                };
+                widgets::chip(ui, &text, color);
+            });
+        });
+    });
+    ui.add_space(6.0);
+
+    egui::ScrollArea::vertical()
+        .id_salt("strtable")
+        .auto_shrink([false, false])
+        .show(ui, |ui| {
+            ui.spacing_mut().item_spacing.y = 1.0;
+            for (n, (id, text)) in entries.iter().enumerate() {
+                let uses = sites.get(id).map(Vec::as_slice).unwrap_or(&[]);
+                let (_, resp) = widgets::row_sized(
+                    ui,
+                    ui.id().with(("strrow", id)),
+                    22.0,
+                    false,
+                    n % 2 == 1,
+                    |ui| {
+                        ui.spacing_mut().item_spacing.x = 10.0;
+                        ui.label(mono_c(format!("{id:>5}"), col::addr()));
+                        ui.label(mono_c(
+                            format!("{id:04X}"),
+                            col::faint(),
+                        ));
+                        ui.label(mono_c(
+                            text.replace('\n', "\\n").replace('\t', "\\t"),
+                            col::text(),
+                        ));
+                        if !uses.is_empty() {
+                            ui.with_layout(
+                                egui::Layout::right_to_left(egui::Align::Center),
+                                |ui| {
+                                    for u in uses.iter().take(4) {
+                                        if widgets::link(
+                                            ui,
+                                            u.addr.to_string(),
+                                            col::accent(),
+                                        )
+                                        .clicked()
+                                        {
+                                            act.push(Action::Goto(u.addr));
+                                        }
+                                    }
+                                    if uses.len() > 4 {
+                                        ui.label(mono_c(
+                                            format!("+{}", uses.len() - 4),
+                                            col::faint(),
+                                        ));
+                                    }
+                                },
+                            );
+                        }
+                    },
+                );
+                let owners: Vec<String> = uses
+                    .iter()
+                    .map(|u| {
+                        let owner = doc
+                            .program
+                            .function_containing(u.addr)
+                            .map(|f| app.label(f))
+                            .unwrap_or_else(|| "?".into());
+                        format!("{owner}  {}", u.addr)
+                    })
+                    .collect();
+                widgets::hover_card(
+                    resp,
+                    Some((Icon::Strings, col::orange())),
+                    &format!("string {id}"),
+                    "",
+                    |ui| {
+                        widgets::hover_row(ui, "text", text.clone(), col::text());
+                        widgets::hover_row(ui, "length", text.len().to_string(), col::dim());
+                        if owners.is_empty() {
+                            // Not proof it is dead: a string can be loaded
+                            // with an id held in a register, which this pass
+                            // cannot follow.
+                            widgets::hover_note(
+                                ui,
+                                "No LoadString call passes this id as a literal.",
+                            );
+                        } else {
+                            widgets::hover_chips(ui, &owners, col::comment());
+                        }
+                    },
+                );
+            }
+        });
 }

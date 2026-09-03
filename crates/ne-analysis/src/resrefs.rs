@@ -38,6 +38,12 @@ pub struct ResourceUse {
     /// The API that does the loading, e.g. `LoadBitmap`.
     pub api: String,
     pub confidence: Confidence,
+    /// Which string was asked for, when the loader was `LoadString`.
+    ///
+    /// A string resource is a block of sixteen, so knowing the block is only
+    /// a sixteenth of the answer. The id the call actually passed is what
+    /// ties a line of code to a line of text.
+    pub string_id: Option<u16>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -128,6 +134,7 @@ pub fn analyze(ne: &NeFile, program: &Program, db: &ApiDb) -> ResourceLinks {
             let Some(value) = arg.value else { continue };
 
             // A string id names the block of sixteen that holds it.
+            let string_id = (res_type == rt::STRING).then_some(value as u16);
             let id = if res_type == rt::STRING {
                 (value / 16 + 1) as u16
             } else {
@@ -145,6 +152,7 @@ pub fn analyze(ne: &NeFile, program: &Program, db: &ApiDb) -> ResourceLinks {
                 addr,
                 api: call.function.clone(),
                 confidence: Confidence::Id,
+                string_id,
             });
             links.by_addr.insert(addr, res);
         }
@@ -193,6 +201,7 @@ fn link_by_name(ne: &NeFile, program: &Program, links: &mut ResourceLinks) {
                         addr: *addr,
                         api: "by name".into(),
                         confidence: Confidence::Name,
+                        string_id: None,
                     });
                 links.by_addr.entry(*addr).or_insert(*res);
             }
