@@ -359,6 +359,9 @@ pub fn install(ctx: &egui::Context) {
     style.spacing.item_spacing = egui::vec2(8.0, 4.0);
     style.spacing.button_padding = egui::vec2(8.0, 3.0);
     style.spacing.menu_margin = egui::Margin::same(6);
+    // Tooltips are cards in this tool, not sentences, so they need room and
+    // the same frame as everything else.
+    style.spacing.tooltip_width = 340.0;
     style.spacing.scroll.bar_width = 10.0;
 
     // The tool is themed by its own palette, so both of egui's slots get the

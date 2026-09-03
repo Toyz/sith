@@ -45,7 +45,11 @@ pub fn row_sized<R>(
     let mut rect = inner.response.rect;
     rect.min.x = ui.max_rect().min.x;
     rect.max.x = ui.max_rect().max.x;
-    rect.max.y = rect.min.y + height;
+    // Never shorter than what was drawn. Clamping to the assumed height lets a
+    // row with a chip in it overflow its own hit rect, so the row below -- laid
+    // out later, and therefore on top -- steals the hover and the tooltip
+    // flickers out.
+    rect.max.y = rect.min.y + height.max(inner.response.rect.height());
 
     let resp = ui.interact(rect, id, Sense::click());
     let fill = if selected {
@@ -101,6 +105,65 @@ pub fn section(ui: &mut Ui, text: &str) {
     ui.add_space(10.0);
     ui.label(egui::RichText::new(text).color(col::dim()).size(11.0).strong());
     ui.add_space(2.0);
+}
+
+/// A styled tooltip: a title line, then facts.
+///
+/// egui's default is a raw block of text, which is fine for a sentence and
+/// poor for the six facts a function or a module actually has to offer.
+pub fn hover_card<R>(
+    resp: Response,
+    icon: Option<(crate::icons::Icon, Color32)>,
+    title: &str,
+    subtitle: &str,
+    body: impl FnOnce(&mut Ui) -> R,
+) -> Response {
+    resp.on_hover_ui(|ui| {
+        ui.set_max_width(340.0);
+        ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 7.0;
+            if let Some((icon, color)) = icon {
+                crate::icons::inline(ui, icon, color);
+            }
+            ui.label(
+                egui::RichText::new(title)
+                    .monospace()
+                    .size(13.0)
+                    .strong()
+                    .color(col::text()),
+            );
+        });
+        if !subtitle.is_empty() {
+            ui.label(
+                egui::RichText::new(subtitle)
+                    .monospace()
+                    .size(11.0)
+                    .color(col::faint()),
+            );
+        }
+        ui.add_space(5.0);
+        body(ui);
+    })
+}
+
+/// A fact line inside a tooltip: a dim label and its value.
+pub fn hover_row(ui: &mut Ui, key: &str, value: impl Into<String>, color: Color32) {
+    ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = 8.0;
+        ui.label(
+            egui::RichText::new(format!("{key:<12}"))
+                .monospace()
+                .size(11.0)
+                .color(col::faint()),
+        );
+        ui.label(egui::RichText::new(value).monospace().size(11.0).color(color));
+    });
+}
+
+/// A wrapped note at the foot of a tooltip.
+pub fn hover_note(ui: &mut Ui, text: &str) {
+    ui.add_space(4.0);
+    ui.label(egui::RichText::new(text).size(11.0).color(col::dim()));
 }
 
 /// Width to keep clear on the right of a scrolling panel.

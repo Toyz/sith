@@ -42,6 +42,18 @@ pub enum FuncKind {
 }
 
 impl FuncKind {
+    /// A sentence explaining why this address is believed to start a function.
+    pub fn describe(self) -> &'static str {
+        match self {
+            FuncKind::Export => "named in the entry table, so the address is certain",
+            FuncKind::Entry => "an unnamed entry-table slot",
+            FuncKind::EntryPoint => "the module's own entry point",
+            FuncKind::Relocated => "referenced by a relocation from somewhere in the module",
+            FuncKind::Called => "the target of a near call in this segment",
+            FuncKind::Prologue => "only a recognised stack-frame prologue: the weakest evidence",
+        }
+    }
+
     pub fn as_str(self) -> &'static str {
         match self {
             FuncKind::Export => "export",

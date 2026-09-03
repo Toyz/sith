@@ -637,21 +637,50 @@ fn modules_step(w: &Wizard, ui: &mut Ui, act: &mut Vec<Action>) {
                 ui.label(mono_c(file_name(m), col::faint()));
             });
         });
-        let resp = resp.on_hover_text(format!(
-            "{}\n{}\n{}\nimports: {}",
-            m.path.display(),
-            if m.description.is_empty() {
-                "(no description)".to_string()
-            } else {
-                m.description.clone()
+        let resp = widgets::hover_card(
+            resp,
+            Some((
+                Icon::Module,
+                if m.is_library { col::purple() } else { col::green() },
+            )),
+            &m.module,
+            if m.is_library { "library" } else { "application" },
+            |ui| {
+                widgets::hover_row(ui, "file", file_name(m), col::text());
+                widgets::hover_row(ui, "size", human(m.file_size), col::text());
+                widgets::hover_row(ui, "segments", m.segments.to_string(), col::text());
+                widgets::hover_row(ui, "exports", m.exports.to_string(), col::text());
+                widgets::hover_row(ui, "resources", m.resources.to_string(), col::text());
+                if m.is_library {
+                    widgets::hover_row(
+                        ui,
+                        "used by",
+                        if uses > 0 {
+                            format!("{uses} selected module(s)")
+                        } else {
+                            "nothing selected".to_string()
+                        },
+                        if uses > 0 { col::accent() } else { col::faint() },
+                    );
+                }
+                if !m.imports.is_empty() {
+                    ui.add_space(4.0);
+                    ui.label(
+                        egui::RichText::new("imports")
+                            .size(10.0)
+                            .color(col::faint()),
+                    );
+                    ui.horizontal_wrapped(|ui| {
+                        for name in &m.imports {
+                            widgets::chip(ui, name, col::comment());
+                        }
+                    });
+                }
+                if !m.description.is_empty() {
+                    widgets::hover_note(ui, &m.description);
+                }
             },
-            human(m.file_size),
-            if m.imports.is_empty() {
-                "none".to_string()
-            } else {
-                m.imports.join(", ")
-            }
-        ));
+        );
         if resp.clicked() {
             act.push(Action::WizardToggle(i));
         }

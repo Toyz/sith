@@ -194,15 +194,27 @@ fn segments_section(
                     }
                 },
             );
-            let resp = resp.on_hover_text(format!(
-                "segment {}  {}\nfile {:08X}  {} bytes  {} relocation records\n{}",
-                s.index,
+            let flags: Vec<&str> = s.flag_names().into_iter().skip(1).collect();
+            let resp = widgets::hover_card(
+                resp,
+                Some((if s.is_code() { Icon::Code } else { Icon::Data }, color)),
+                &format!("Segment {}", s.index),
                 s.kind().as_str(),
-                s.file_offset,
-                s.length,
-                s.relocs.len(),
-                s.flag_names().join(" ")
-            ));
+                |ui| {
+                    widgets::hover_row(ui, "file offset", format!("{:08X}", s.file_offset), col::text());
+                    widgets::hover_row(ui, "size", format!("{} bytes", s.length), col::text());
+                    widgets::hover_row(ui, "alloc", format!("{} bytes", s.min_alloc), col::text());
+                    widgets::hover_row(ui, "fixups", s.relocs.len().to_string(), col::text());
+                    if !flags.is_empty() {
+                        ui.add_space(4.0);
+                        ui.horizontal_wrapped(|ui| {
+                            for f in flags {
+                                widgets::chip(ui, f, col::dim());
+                            }
+                        });
+                    }
+                },
+            );
             if resp.clicked() {
                 act.push(Action::Go(Nav::Segment(s.index)));
             }
@@ -314,15 +326,45 @@ fn function_row(
             ));
         },
     );
-    let resp = resp.on_hover_text(format!(
-        "{}\n{}  {} bytes, {} instructions\nfound by: {}\ncalls {} targets",
-        app.label(f),
-        f.addr,
-        f.size(),
-        f.insn_count,
-        f.kind.as_str(),
-        f.calls.len()
-    ));
+    let external: Vec<String> = app
+        .doc()
+        .map(|d| d.program.external_calls_of(f))
+        .unwrap_or_default();
+    let resp = widgets::hover_card(
+        resp,
+        Some((Icon::Code, kind_color)),
+        &app.label(f),
+        &f.addr.to_string(),
+        |ui| {
+            widgets::hover_row(ui, "size", format!("{} bytes", f.size()), col::text());
+            widgets::hover_row(ui, "instructions", f.insn_count.to_string(), col::text());
+            widgets::hover_row(ui, "calls", f.calls.len().to_string(), col::text());
+            if app.user_name(f.addr.segment, f.addr.offset).is_some() {
+                widgets::hover_row(ui, "generated", f.label(), col::faint());
+            }
+            if !external.is_empty() {
+                ui.add_space(4.0);
+                ui.label(
+                    egui::RichText::new("calls out to")
+                        .size(10.0)
+                        .color(col::faint()),
+                );
+                ui.horizontal_wrapped(|ui| {
+                    for name in external.iter().take(8) {
+                        widgets::chip(ui, name, col::comment());
+                    }
+                    if external.len() > 8 {
+                        ui.label(
+                            egui::RichText::new(format!("+{}", external.len() - 8))
+                                .size(10.0)
+                                .color(col::faint()),
+                        );
+                    }
+                });
+            }
+            widgets::hover_note(ui, f.kind.describe());
+        },
+    );
     if resp.clicked() {
         act.push(Action::Goto(f.addr));
     }
@@ -522,17 +564,37 @@ fn workspace_section(
                     });
                 },
             );
-            let resp = resp.on_hover_text(format!(
-                "{}\n{}\n{} exports{}",
-                m.path.display(),
-                if m.description.is_empty() {
-                    "(no description)"
-                } else {
-                    &m.description
+            let resp = widgets::hover_card(
+                resp,
+                Some((
+                    Icon::Module,
+                    if m.is_library { col::purple() } else { col::green() },
+                )),
+                &m.module,
+                if m.is_library { "library" } else { "application" },
+                |ui| {
+                    widgets::hover_row(ui, "exports", m.exports.len().to_string(), col::text());
+                    widgets::hover_row(
+                        ui,
+                        "file",
+                        m.path
+                            .file_name()
+                            .map(|s| s.to_string_lossy().to_string())
+                            .unwrap_or_default(),
+                        col::text(),
+                    );
+                    if !m.description.is_empty() {
+                        widgets::hover_note(ui, &m.description);
+                    }
+                    if is_current {
+                        widgets::hover_note(ui, "currently open");
+                    } else if open_here {
+                        widgets::hover_note(ui, "open in another tab");
+                    } else {
+                        widgets::hover_note(ui, "click to open this module");
+                    }
                 },
-                m.exports.len(),
-                if is_current { "\n\ncurrently open" } else { "" }
-            ));
+            );
             if resp.clicked() {
                 act.push(Action::OpenModule {
                     module: m.module.clone(),
